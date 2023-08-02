@@ -1,0 +1,176 @@
+__FORCETOC__
+{{GameVersion|1.16}}
+<languages/>
+<translate>
+= Introduction = <!--T:1-->
+
+<!--T:2-->
+A block entity is a construct that you can tack onto an existing block to give it additional functionality. Whenever a block should do something on a regular interval or store extra information, such as the contents of a chest block, you need a block entity. It's highly recommend to have read the tutorial about [[Basic Modding|Basic Blocks]] and [[Advanced Blocks|Block Class]] in order to understand this tutorial properly.
+
+== The Texture Flipper == <!--T:3-->
+
+<!--T:4-->
+Let's create a block which switches its texture every 3 seconds. It should have two variants <code>"on"</code> and <code>"off"</code>. Additionally we need to define the blockentity class like so:
+<syntaxhighlight lang="json">
+	entityClass: "tickingcounter",
+</syntaxhighlight>
+
+<!--T:5-->
+You can download the assets [https://wiki.vintagestory.at/images/d/d4/Ticking_-_No_CS_File.zip here] and place it in your mods directory.
+
+== The BlockEntity == <!--T:6-->
+
+<!--T:7-->
+Now we need to register our blockentity class and therefore we need to create a new *.cs file in our project. Let's name it <code>Ticking.cs</code>.
+
+<!--T:8-->
+First of all you need to create the blockentity class itself. Therefore you need to extend <code>BlockEntity</code>:
+
+<!--T:9-->
+<syntaxhighlight lang="c#">
+    public class TickingBlockEntity : BlockEntity
+    {
+    
+    }
+</syntaxhighlight>
+
+<!--T:10-->
+----
+
+<!--T:11-->
+This class needs to have a timer, once the timer reaches 3 seconds it should replace the current block with the different state.
+
+<!--T:12-->
+In order to create a timer we need to register a tick listener. Therefore we need to override <code>Initialize(ICoreAPI)</code>:
+
+<!--T:13-->
+<syntaxhighlight lang="c#">
+        public override void Initialize(ICoreAPI api)
+        {
+            base.Initialize(api);
+        }
+</syntaxhighlight>
+
+<!--T:14-->
+add a counter (which should increase per tick) ...
+
+<!--T:15-->
+<syntaxhighlight lang="c#">
+        public float timer;
+</syntaxhighlight>
+
+<!--T:16-->
+... and the actual ticking method ...
+
+<!--T:17-->
+<syntaxhighlight lang="c#">
+        public void OnGameTick(float dt)
+        {
+        
+        }
+</syntaxhighlight>
+
+<!--T:18-->
+To register the ticking method we can use <code>RegisterGameTickListener</code> in <code>Initialize</code>
+
+<!--T:19-->
+<syntaxhighlight lang="c#">
+        public override void Initialize(ICoreAPI api)
+        {
+            base.Initialize(api);
+            RegisterGameTickListener(OnGameTick, 50);
+        }
+</syntaxhighlight>
+
+<!--T:20-->
+The timer itself should increment by dt, the time difference in seconds between the current tick and the previous tick. It ticks about every 50ms or less often if the game is slow. So if the timer is greater than 3, it should replace the block:
+
+<!--T:21-->
+<syntaxhighlight lang="c#">
+        public void OnGameTick(float dt)
+        {
+            timer += dt;
+            if(timer >= 3)
+            {
+                Block block = Api.World.BlockAccessor.GetBlock(Pos);
+                if (block.Code.Path.EndsWith("-on"))
+                {
+                    block = Api.World.GetBlock(block.CodeWithParts("off"));
+                }
+                else
+                {
+                    block = Api.World.GetBlock(block.CodeWithParts("on"));
+                }
+
+                <!--T:22-->
+Api.World.BlockAccessor.SetBlock(block.BlockId, Pos);
+            }
+        }
+</syntaxhighlight>
+
+<!--T:23-->
+----
+
+<!--T:24-->
+Furthermore we need to save the current time:
+
+<!--T:25-->
+<syntaxhighlight lang="c#">
+        public override void ToTreeAttributes(ITreeAttribute tree)
+        {
+            base.ToTreeAttributes(tree);
+            tree.SetFloat("timer", timer);
+        }
+
+        <!--T:26-->
+public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
+        {
+            base.FromTreeAttributes(tree, worldForResolving);
+            timer = tree.GetFloat("timer");
+        }
+
+<!--T:27-->
+</syntaxhighlight>
+
+== Registering the Block Entity == <!--T:28-->
+
+<!--T:29-->
+Registering the blockentity class is rather simple (rather similar to registering a block class). You need a mod class and override <code>Start(ICoreAPI)</code>:
+
+<!--T:30-->
+<syntaxhighlight lang="c#">
+    public class Ticking : ModSystem
+    {
+
+        <!--T:31-->
+public override void Start(ICoreAPI api)
+        {
+            base.Start(api);
+            api.RegisterBlockEntityClass("tickingcounter", typeof(TickingBlockEntity));
+        }
+
+    <!--T:32-->
+}
+</syntaxhighlight>
+
+== Testing == <!--T:33-->
+
+<!--T:34-->
+Now everything is ready to run the first test:
+
+<!--T:35-->
+<youtube>QQUibC4H9TI</youtube>
+
+== Distribution == <!--T:36-->
+
+<!--T:37-->
+In order to finish everything, open the modtools and type in <code>pack <your mod id></code>. Now you can take the zip file and share it with other people. It will work in the same way as ordinary mods, you can install it by copying it into the mods folder.
+
+= Mod Download = <!--T:38-->
+* for VS 1.12 (Source only): [https://github.com/anegostudios/vsmodexamples/tree/ac7eeaed597b8a25dcfc2366b9c51cd92850d2b9/Mods/Ticking GitHub]
+* for VS 1.9: [https://wiki.vintagestory.at/images/8/80/Ticking_v1.0.0.zip Ticking_v1.0.0.zip]
+* for VS 1.6: [https://wiki.vintagestory.at/images/6/65/Ticking.zip Ticking.zip]
+
+</translate>
+
+{{Navbox/modding|Vintage Story}}

@@ -1,0 +1,1078 @@
+__NOTOC__
+<languages/><translate>
+== Overview == <!--T:1-->
+A complete list of all available properties
+</translate>
+<table id="treeviewtable" class="table table-bordered tt-table" style='table-layout: fixed'>
+  <tr style='background-color: rgba(0,0,0,0.2);'>
+    <th width='300' align='left'>Property</th>
+    <th width='200' align='left'>Type</th>
+    <th width='150' align='left'>Default</th>
+    <th align='left'>Usage</th>
+  </tr>
+  <tr>
+    <td><div class="tt" data-tt-id="root">json</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td colspan="4" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Core (no byType available)</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_code" data-tt-parent="root">code</div></td>
+    <td>string</td>
+    <td>required</td>
+    <td>A unique identifier for the entity.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_code_info" data-tt-parent="p_code" data-invisible="true"></div></td>
+    <td colspan="3">
+A '''domain prefix''' will be added dynamically depending on the location of the file. Every mod and VintageStory itself have a unique prefix.
+
+For example the code '''<code>rabbit</code>''' turns into '''<code>game:rabbit</code>'''. 
+
+The code identifier has to be unique inside its domain. In theory there could be equal identifiers with different domain prefixes.
+Find out more about [[Basic Modding#Domains|Domains]].
+    </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_enabled" data-tt-parent="root">enabled</div></td>
+    <td>boolean</td>
+    <td>true</td>
+    <td>If the entity will be loaded or not. Can be used to temporarily remove the entity.</td>
+  </tr>
+   <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_variantgroups" data-tt-parent="root">variantgroups</div></td>
+    <td>array of object</td>
+    <td>-</td>
+    <td>Allows you define multiple variants of the same entity.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_variantgroups_info" data-tt-parent="p_variantgroups" data-invisible="true"></div></td>
+    <td colspan="3">
+The variantgroups property allows you to define multiple variants of this entity. All of them will have their unique pattern, which will be added to the entity code.
+
+An easy example would be a sheep, which can either be small or tall:
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ code:"size", states: ["small", "tall"] },
+	],
+</syntaxhighlight>
+
+Meaning there will be two blocks <code>sheep-small</code> and <code>sheep-tall</code>.
+
+----
+
+It's also possible to define multiple groups. 
+
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ code:"size", states: ["small", "tall"] },
+		{ code:"color", states: ["white", "black"] },
+	],
+</syntaxhighlight>
+
+As a result you will have 2x2 groups, which will be added one after each other: <code>sheep-small-white</code>, <code>sheep-tall-white</code>, <code>sheep-small-black</code> and <code>sheep-tall-black</code>.
+
+----
+
+Additionally it is possible to refer to external lists that are found in the worldproperties folder, such as <code>block/rock</code>, which contains all states of all rock types. This used for <code>gravel</code>, <code>sand</code> and <code>rock</code>. It's a good way to keep everything organized:
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ loadFromProperties: "block/rock" },
+	],
+</syntaxhighlight>
+
+Here is a full list of all groups and their variants (you can also find them in the <code>assets/worldproperties</code> folder):
+{{:json:block:worldvariantgroups}}
+	
+----
+
+Futhermore there are two ways of combining groups together. So far we covered the default combination mode, which is <code>multiplicative</code> (the total count of variants is the product of all states).
+
+Imagine you want to implement a living tree, were either flowers, mushrooms or saplings or on it. You can use the <code>additive</code> combination mode for that:
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ code: "type", loadFromProperties: "block/wood" },
+		{ code: "flower", loadFromProperties: "block/flower", combine: "additive" },
+		{ code: "mushroom", loadFromProperties: "block/mushroom", combine: "additive" },
+		{ code: "sapling", loadFromProperties: "block/wood", combine: "additive" },
+	],
+</syntaxhighlight>
+
+The living trees exists for every wood type (birch, oak, maple, pine, acacia, kapok) and can either have a flower, mushroom or a sapling suffix: <code>livingtree-{wood type}-{flower}</code>, <code>livingtree-{wood type}-{all flowers}</code>, <code>livingtree-{wood type}-{all mushrooms}</code> and <code>livingtree-{wood type}-{all saplings}</code>.
+    </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_byType" data-tt-parent="root">(any) bytype</div></td>
+    <td>key: string; value: object</td>
+    <td>-</td>
+    <td>You can create properties for certain variants of the block.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_byType_info" data-tt-parent="p_byType" data-invisible="true"></div></td>
+    <td colspan="3">
+In order to define properties for specific variants you can add '''byType''' to the property name. This allows you to define it depending on the type and always follows the same syntax:
+<syntaxhighlight lang="json">
+	(property)ByType: {
+		"selector": property,
+		"selector2": property2,
+		...
+	}
+</syntaxhighlight>
+
+If the selector matches the name of the variant the given property will be used. Keep in mind that only the first matching one will be used (everything below will be ignored).
+
+An entity for example has two variants ('''big''', '''small'''):
+<syntaxhighlight lang="json">
+	falldamagebyType: {
+		"*-big": true,
+		"*-small": false
+	},
+</syntaxhighlight>
+
+Since Vintagestory v1.8 it is also possible to use the variantgroup as a placeholder:
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ code: "type", states: ["normal", "bamboo"] },
+	],
+	texture: { base: "entity/fish/{type}" }
+</syntaxhighlight>
+</td>
+  </tr>
+  <tr>
+    <td colspan="4" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Common</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_class" data-tt-parent="root">class</div></td>
+    <td>string</td>
+    <td>&quot;entity&quot;</td>
+    <td>The entity class can add special functionalities for the entity.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_class_info" data-tt-parent="p_class" data-invisible="true"></div></td>
+    <td colspan="3">
+Can be used to add interaction to the entity or other special functionalities. Example uses are <code>EntityItem</code> and <code>EntityPlayer</code>.
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_habitat" data-tt-parent="root">habitat</div></td>
+    <td>string</td>
+    <td>&quot;land&quot;</td>
+    <td>There is <code>sea</code>, <code>land</code> and <code>air</code></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_hitboxsize" data-tt-parent="root">hitboxsize</div></td>
+    <td>object</td>
+    <td>x: 0.125, y: 0.125</td>
+    <td>The size of the hitbox, either to hit the entity or to interact with it.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_eyeheight" data-tt-parent="root">eyeheight</div></td>
+    <td>decimal number</td>
+    <td>0.1</td>
+    <td>Height of the eyes, measured from the bottom of the hitbox in meters. Used for camera angle and various other things.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_canclimb" data-tt-parent="root">canclimb</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>Whether the entity can climb on ladders or other blocks which are climbable.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_canclimbanywhere" data-tt-parent="root">canclimbanywhere</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>Whether the entity can climb on any block, doesn't matter if it's a ladder or not.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_falldamage" data-tt-parent="root">falldamage</div></td>
+    <td>boolean</td>
+    <td>true</td>
+    <td>Whether the entity will take fall damage.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_climbtouchdistance" data-tt-parent="root">climbtouchdistance</div></td>
+    <td>decimal number</td>
+    <td>0.5</td>
+    <td>Distance at which the entity can climb on something.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_rotatemodelonclimb" data-tt-parent="root">rotatemodelonclimb</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true the entity model will be rotated to face the block its climbing on.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_knockbackresistance" data-tt-parent="root">knockbackresistance</div></td>
+    <td>decimal number</td>
+    <td>0.0</td>
+    <td>The higher the number is the less knockback will be applied. Useful for heavy entities.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attributes" data-tt-parent="root">attributes</div></td>
+    <td>key: string, value: object</td>
+    <td>-</td>
+    <td>Custom Attributes associated with this entity.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attributes_info" data-tt-parent="p_attributes" data-invisible="true"></div></td>
+    <td colspan="3">
+Extra attributes added to the entity. Those are final and cannot be modified. It's a good way to keep things organized and and modifiable. These can be used by behaviors or the entity class:
+<syntaxhighlight lang="json">
+    attributes: {
+		"attackPower": 10
+	},
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds" data-tt-parent="root">sounds</div></td>
+    <td>key: string, value: string</td>
+    <td>-</td>
+    <td>Sounds of the entity, you can also add your own sounds and play them, but here is a list of default sounds used <code>death</code>, <code>hurt</code>, <code>idle</code>, <code>jump</code>, <code>swim</code> and <code>eat</code></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_idlesoundchance" data-tt-parent="root">idlesoundchance</div></td>
+    <td>decimal number</td>
+    <td>0.3</td>
+    <td>How likely it is for the entity to play an idle sound.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_idlesoundrange" data-tt-parent="root">idlesoundrange</div></td>
+    <td>decimal number</td>
+    <td>24</td>
+    <td>How far the idle sound played by the entity can be heard.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_drops" data-tt-parent="root">drops</div></td>
+    <td>array of object</td>
+    <td>-</td>
+    <td>The items that should drop from breaking this block.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_drops_info" data-tt-parent="p_drops" data-invisible="true"></div></td>
+    <td colspan="3">
+
+'''No drop'''
+
+By default an entity does not drop anything at all:
+<syntaxhighlight lang="json">
+	drops: [],
+</syntaxhighlight>
+
+----
+
+'''Drop'''
+
+You can also specify an item or block to drop. Therefore you need to define an '''ItemStack''', with the given properties:
+
+<table class="wikitable">
+  <tr style="background-color: rgba(0,0,0,0.2);">
+    <th style="background-color: rgba(0,0,0,0.2);">Property</th>
+    <th style="background-color: rgba(0,0,0,0.2);">Default</th>
+	<th style="background-color: rgba(0,0,0,0.2);">Explanation</th>
+  </tr>
+  <tr>
+    <td>'''type'''</td>
+	<td>''block''</td>
+	<td>Can either be '''''block''''' or '''''item'''''.</td>
+  </tr>
+  <tr>
+    <td>'''code''' (required)</td>
+	<td>-</td>
+	<td>The complete code (can also include domain) of the item or block.</td>
+  </tr>
+  <tr>
+    <td>'''lastdrop'''</td>
+	<td>false</td>
+	<td>If true and the quantity dropped is >=1 any subsequent drop in the list will be ignored.</td>
+  </tr>
+  <tr>
+    <td>'''attributes'''</td>
+	<td>-</td>
+	<td>Tree Attributes that will be attached to the resulting itemstack.</td>
+  </tr>
+  <tr>
+    <td>'''tool'''</td>
+	<td>-</td>
+	<td>If specified then given tool is required to break this block.</td>
+  </tr>
+  <tr>
+    <td>'''quantity'''</td>
+	<td>- (one)</td>
+	<td>Determines the quantity of items which will be dropped.</td>
+  </tr>
+</table>
+
+For example, if the entity should drop '''charcoalpile''':
+
+<syntaxhighlight lang="json">
+	drops: [
+		{ type: "item", code: "charcoal" }
+	],
+</syntaxhighlight>
+
+You can also specify drop special itemstack if the entity is killed by certain tool, similar to '''Tallgrass''' which only drops something if it's mined by a knife:
+
+<syntaxhighlight lang="json">
+	drops: [
+		{ type: "item", code: "drygrass", tool: "knife"  },
+	],
+</syntaxhighlight>
+
+----
+
+'''Chance drops'''
+
+Let's take a look at an example. This is the drop property of rock:
+
+<syntaxhighlight lang="json">	
+	drops: [
+		{
+			type: "item", 
+			code: "stone-{rock}", 
+			quantity: { avg: 2.5, var: 0.5 } 
+		},
+	]
+</syntaxhighlight>
+
+This will drop 2-3 blocks.
+
+'''''avg''''': Stands for the default drop quantity. If var is 0 or not specified it will always drop the given average.
+
+'''''var''''': How much the drop rate can vary. Meaning the drop rate can be <code>avg - var</code> at minimum and <code>age + var</code> at maximum.
+
+Furthermore you can also switch between different distribution modes using the '''''dist''''' property.
+
+<table class="wikitable mw-collapsible mw-collapsed">
+  <tr>
+	<th colspan="2">Overview - Distribution modes</th>
+  </tr>
+  <tr style="background-color: rgba(0,0,0,0.2);">
+    <th style="background-color: rgba(0,0,0,0.2);">Name</th>
+	<th style="background-color: rgba(0,0,0,0.2);">Explanation</th>
+  </tr>
+  <tr>
+    <td>'''uniform'''</td>
+	<td>''Select completely random numbers within avg-var until avg+var.''</td>
+  </tr>
+  <tr>
+    <td>'''triangle'''</td>
+	<td>''Select random numbers with numbers near avg being the most commonly selected ones, following a triangle curve.''</td>
+  </tr>
+  <tr>
+    <td>'''gaussian'''</td>
+	<td>''Select random numbers with numbers near avg being the most commonly selected ones, following a gaussian curve.''</td>
+  </tr>
+  <tr>
+    <td>'''narrowgaussian'''</td>
+	<td>''Select random numbers with numbers near avg being the most commonly selected ones, following a narrow gaussian curve.''</td>
+  </tr>
+  <tr>
+    <td>'''inversegaussian'''</td>
+	<td>''Select random numbers with numbers near avg being the least commonly selected ones, following an upside down gaussian curve.''</td>
+  </tr>
+  <tr>
+    <td>'''narrowinversegaussian'''</td>
+	<td>''Select random numbers with numbers near avg being the least commonly selected ones, following an upside down gaussian curve.''</td>
+  </tr>
+  <tr>
+    <td>'''invexp'''</td>
+	<td>''Select numbers in the form of avg + var, wheras low value of var are preferred.''</td>
+  </tr>
+  <tr>
+    <td>'''stronginvexp'''</td>
+	<td>''Select numbers in the form of avg + var, wheras low value of var are strongly preferred.''</td>
+  </tr>
+  <tr>
+    <td>'''strongerinvexp'''</td>
+	<td>''Select numbers in the form of avg + var, wheras low value of var are very strongly preferred.''</td>
+  </tr>
+ <tr>
+    <td>'''dirac'''</td>
+	<td>''Select completely random numbers within avg-var until avg+var only ONCE and then always 0.''</td>
+  </tr>
+</table>
+
+----
+	
+'''Multiple Drops'''
+
+Of course you can also define multiple drops at once. A '''Sapling''' for example can drop a sapling and a stick:
+
+<syntaxhighlight lang="json">
+	drops: [
+		{ 
+			type: "block", 
+			code: "sapling-{wood}",
+			quantity: { avg: 0.02, var: 0 },
+		},
+		{ 
+			type: "item", 
+			code: "stick",
+			quantity: { avg: 0.02, var: 0 },
+		}
+	],
+</syntaxhighlight>
+
+----
+
+'''Last Drop'''
+
+In order to add a special drop, which (if dropped) prevents all other drops, you can use the lastDrop property:
+
+<syntaxhighlight lang="json">
+	drops: [
+		{ type: "item", code: "stick",  quantity: { avg: 0.2, var: 0 }, lastDrop: true },
+		{ type: "item", code: "sapling",  quantity: { avg: 1.25, var: 0 }  }
+	],
+</syntaxhighlight>
+
+The entity will either drop a stick with a chance of 20% or an average of 1.25 saplings.
+	</td>
+  </tr>
+  <tr>
+    <td colspan="4" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>client: {</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_renderer" data-tt-parent="root">renderer</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Name of there renderer system that draws this entity.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_texture" data-tt-parent="root">texture</div></td>
+    <td>object</td>
+    <td></td>
+    <td>The texture of the entity. It will overwrite all textures of the shape.</td>
+  </tr>
+  <tr>
+    <td scope="row" valign="top"><div class="tt" data-tt-id="p_texture_base" data-tt-parent="p_texture">base</div><br><br><div class="tt" data-tt-id="p_texture_overlays" data-tt-parent="p_texture">overlays</div><br><br><div class="tt" data-tt-id="p_texture_base" data-tt-parent="p_texture">alternates</div></td>
+    <td colspan="3">Default example (player model): <syntaxhighlight lang='json'>texture: {
+		base: "entity/humanoid/player"
+	}</syntaxhighlight>
+Using variantgroups (rock):<syntaxhighlight lang='json'>texture: {
+		base: "entity/humanoid/player-{type}"
+	}</syntaxhighlight>
+Overlay texutre: <syntaxhighlight lang='json'>
+	texture: {
+		base: "entity/humanoid/player-{type}",
+		overlays: [ "entity/humanoid/player-{type}-overlay" ],
+	}</syntaxhighlight>
+Random textures: 
+<syntaxhighlight lang='json'>
+	texture: {
+		base: "entity/humanoid/player-{type}",
+		alternates: [
+			{ base: "entity/humanoid/player-{type}2" },
+			{ base: "entity/humanoid/player-{type}3"}
+		]
+	}</syntaxhighlight>
+Random textures and overlays combined:
+<syntaxhighlight lang='json'>
+	texture: {
+		base: "entity/humanoid/player-{type}",
+		overlays: [ "entity/humanoid/player-{type}-overlay" ],
+		alternates: [
+			{ base: "entity/humanoid/player-{type}2", overlays: [ "entity/humanoid/player-{type}2-overlay" ] },
+			{ base: "entity/humanoid/player-{type}3", overlays: [ "entity/humanoid/player-{type}3-overlay" ] }
+		]
+	}</syntaxhighlight>
+</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures" data-tt-parent="root">textures</div></td>
+    <td>key: string, value: object</td>
+    <td></td>
+    <td>Can be used to replace specific textures of the shape.</td>
+  </tr>
+  <tr>
+    <td scope="row" valign="top"><div class="tt" data-tt-id="p_textures_base" data-tt-parent="p_textures">base</div><br><br><div class="tt" data-tt-id="p_textures_overlays" data-tt-parent="p_textures">overlays</div><br><br><div class="tt" data-tt-id="p_textures_base" data-tt-parent="p_textures">alternates</div></td>
+    <td colspan="3">Replace <code>arrow</code> texture of the shape, the <code>stick</code> texture remains untouched: <syntaxhighlight lang='json'>	textures: {
+		"arrow": { 
+			base: "entity/arrow/stone"
+		}
+	}</syntaxhighlight>
+</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shape" data-tt-parent="root">shape</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>The shape of the entity.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_base" data-tt-parent="p_shape">base</div></td>
+    <td></td>
+    <td></td>
+    <td>The path to the shape json file, the base dir is <code>assets/shapes/</code>. <syntaxhighlight lang='json'>shape: { base: "entity/arrow" }</syntaxhighlight></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_glowlevel" data-tt-parent="root">glowlevel</div></td>
+    <td>0 ... 255</td>
+    <td>0</td>
+    <td>Causes the entity to visually glow if Bloom is enabled.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_size" data-tt-parent="root">size</div></td>
+    <td>decimal number</td>
+    <td>1</td>
+    <td>Can be used to scale the entity up or down.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_behaviors_client" data-tt-parent="root">behaviors</div></td>
+    <td>array of object</td>
+    <td></td>
+    <td>A behavior adds custom abilities to the entity.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_behaviors_client_info" data-tt-parent="p_behaviors_client" data-invisible="true"></div></td>
+    <td colspan="3">
+{{:json:entity:behavior}}
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations" data-tt-parent="root">animations</div></td>
+    <td>array of object</td>
+    <td></td>
+    <td>WIP</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_code" data-tt-parent="p_animations">code</div></td>
+    <td>string</td>
+    <td></td>
+    <td>The identifier of the animation.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_animation" data-tt-parent="p_animations">animation</div></td>
+    <td>string</td>
+    <td></td>
+    <td>The animation code identifier to play.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_weight" data-tt-parent="p_animations">weight</div></td>
+    <td>decimal number</td>
+    <td>1.0</td>
+    <td>Animations with a high weight value will be prioritized over the other animations when the animations are combined.
+	For example if the player aims with a bow while jumping around, the aiming animation has a higher weight (for the upper body) so the jumping animation will be reduced.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_code" data-tt-parent="p_animations">elementweight</div></td>
+    <td>key: string, value: decimal number</td>
+    <td></td>
+    <td>Allows you to specify a weight for each element individually.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_animationspeed" data-tt-parent="p_animations">animationspeed</div></td>
+    <td>decimal number</td>
+    <td>1.0</td>
+    <td>The speed of the animation.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_mulwithwalkspeed" data-tt-parent="p_animations">mulwithwalkspeed</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>Whether the animation should be affected by the walk speed.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_easeinspeed" data-tt-parent="p_animations">easeinspeed</div></td>
+    <td>decimal number</td>
+    <td>10</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_easeoutspeed" data-tt-parent="p_animations">easeoutspeed</div></td>
+    <td>decimal number</td>
+    <td>10</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby" data-tt-parent="p_animations">triggeredby</div></td>
+    <td></td>
+    <td></td>
+    <td>Specifies by what the animation is triggered.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols" data-tt-parent="p_animations_triggeredby">oncontrols</div></td>
+    <td>array of object</td>
+    <td></td>
+    <td>An array of activities.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_none" data-tt-parent="p_animations_triggeredby_oncontrols">none</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_idle" data-tt-parent="p_animations_triggeredby_oncontrols">idle</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_move" data-tt-parent="p_animations_triggeredby_oncontrols">move</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_sprintmode" data-tt-parent="p_animations_triggeredby_oncontrols">sprintmode</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_sneakmode" data-tt-parent="p_animations_triggeredby_oncontrols">sneakmode</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_fly" data-tt-parent="p_animations_triggeredby_oncontrols">fly</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_swim" data-tt-parent="p_animations_triggeredby_oncontrols">swim</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_jump" data-tt-parent="p_animations_triggeredby_oncontrols">jump</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_fall" data-tt-parent="p_animations_triggeredby_oncontrols">fall</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_climb" data-tt-parent="p_animations_triggeredby_oncontrols">climb</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_floorsitting" data-tt-parent="p_animations_triggeredby_oncontrols">floorsitting</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_dead" data-tt-parent="p_animations_triggeredby_oncontrols">dead</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_break" data-tt-parent="p_animations_triggeredby_oncontrols">break</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_oncontrols_place" data-tt-parent="p_animations_triggeredby_oncontrols">place</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_matchexact" data-tt-parent="p_animations_triggeredby">matchexact</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_triggeredby_defaultanim" data-tt-parent="p_animations_triggeredby">defaultanim</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_blendmode" data-tt-parent="p_animations">blendmode</div></td>
+    <td>string</td>
+    <td></td>
+    <td>Animation blend mode for all elements.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_blendmode_add" data-tt-parent="p_animations_blendmode">add</div></td>
+    <td></td>
+    <td></td>
+    <td>Add the animation without taking other animations into considerations.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_blendmode_average" data-tt-parent="p_animations_blendmode">average</div></td>
+    <td></td>
+    <td></td>
+    <td>Add the pose and average it together with all other running animations with blendmode Average or AddAverage.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_blendmode_addaverage" data-tt-parent="p_animations_blendmode">addaverage</div></td>
+    <td></td>
+    <td></td>
+    <td>Add the animation without taking other animations into consideration, but add it's weight for averaging.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animations_elementblendmode" data-tt-parent="p_animations">elementblendmode</div></td>
+    <td>key: string, value: string</td>
+    <td></td>
+    <td>Allows you to specify a blend mode for each element individually.</td>
+  </tr>
+  <tr>
+    <td colspan="4" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>}</b></td>
+  </tr>
+  <tr>
+    <td colspan="4" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>server: {</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attributes_server" data-tt-parent="root">attributes</div></td>
+    <td>key: string, value: object</td>
+    <td>-</td>
+    <td>Custom Attributes associated with this entity only known by the server. They will not be send to the client.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attributes_server_info" data-tt-parent="p_attributes_server" data-invisible="true"></div></td>
+    <td colspan="3">
+Extra attributes added to the entity for server use only. Those are final and cannot be modified. It's a good way to keep things organized and and modifiable. These can be used by behaviors or the entity class:
+<syntaxhighlight lang="json">
+    attributes: {
+		"attackPower": 10
+	},
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_behaviors_server" data-tt-parent="root">behaviors</div></td>
+    <td>array of object</td>
+    <td></td>
+    <td>A behavior adds custom abilities to the entity.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_behaviors_server_info" data-tt-parent="p_behaviors_server" data-invisible="true"></div></td>
+    <td colspan="3">
+{{:json:entity:behavior}}
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions" data-tt-parent="root">spawnConditions</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>Specifies the circumstances of the entity spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime" data-tt-parent="p_spawnconditions">runtime</div></td>
+    <td>object</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_group" data-tt-parent="p_spawnconditions_runtime">group</div></td>
+    <td>string</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_chance" data-tt-parent="p_spawnconditions_runtime">chance</div></td>
+    <td>decimal number</td>
+    <td>1.0</td>
+    <td>How long it takes to make an attempt to spawn the entity: 1.0 -> 4 seconds, 0.1 -> 40 seconds.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_maxquantity" data-tt-parent="p_spawnconditions_runtime">maxquantity</div></td>
+    <td>integer</td>
+    <td>20</td>
+    <td>Maximum number of entities inside the chunk, if this is exceeded the entity will not spawn there.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_mindistancetoplayer" data-tt-parent="p_spawnconditions_runtime">mindistancetoplayer</div></td>
+    <td>integer</td>
+    <td>18</td>
+    <td>Minimum distance the entity can spawn away from the player.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_minlightlevel" data-tt-parent="p_spawnconditions_runtime">minlightlevel</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_maxlightlevel" data-tt-parent="p_spawnconditions_runtime">maxlightlevel</div></td>
+    <td>integer</td>
+    <td>32</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_lightleveltype" data-tt-parent="p_spawnconditions_runtime" data-hide="true">lightleveltype</div></td>
+    <td>string</td>
+    <td>&quot;MaxLight&quot;</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_group_onlyblocklight" data-tt-parent="p_spawnconditions_runtime_lightleveltype">onlyblocklight</div></td>
+    <td></td>
+    <td></td>
+    <td>Will get you just the block light</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_group_onlysunLight" data-tt-parent="p_spawnconditions_runtime_lightleveltype">onlysunlight</div></td>
+    <td></td>
+    <td></td>
+    <td>Will get you just the sun light unaffected by the day/night cycle</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_group_maxlight" data-tt-parent="p_spawnconditions_runtime_lightleveltype">maxlight</div></td>
+    <td></td>
+    <td></td>
+    <td>Will get you max(onlysunlight, onlyblocklight)</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_group_maxtimeofdaylight" data-tt-parent="p_spawnconditions_runtime_lightleveltype">maxtimeofdaylight</div></td>
+    <td></td>
+    <td></td>
+    <td>Will get you max(sunlight * sunbrightness, blocklight)</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_groupsize" data-tt-parent="p_spawnconditions_runtime">groupsize</div></td>
+    <td>object</td>
+    <td><code>{ avg: 1, var: 0 } </code></td>
+    <td>Determines the size of the group. By default the size of the group is always one. Find out more about the [[Json Random Generator|random generator]].</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_companions" data-tt-parent="p_spawnconditions_runtime">companions</div></td>
+    <td>array of string</td>
+    <td>-</td>
+    <td>Codes of all possible companions.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_insideblockcodes" data-tt-parent="p_spawnconditions_runtime">insideblockcodes</div></td>
+    <td>array of string</td>
+    <td><code>[ "game:air" ]</code></td>
+    <td>The block codes in which the entity can spawn. Entities which can spawn underwater might use <code>[ "game:water" ]</code> instead.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_requiresolidground" data-tt-parent="p_spawnconditions_runtime">requiresolidground</div></td>
+    <td>boolean</td>
+    <td>true</td>
+    <td>If the entity requires a solid block below it. For example birds and fishes do not require it.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_tryonlysurface" data-tt-parent="p_spawnconditions_runtime">tryonlysurface</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If false the game will also try to spawn the entity below the surface (in a cave for example). For ordinary animals this should be true so they only spawn on the surface.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_mintemp" data-tt-parent="p_spawnconditions_runtime">mintemp</div></td>
+    <td>integer</td>
+    <td>-40</td>
+    <td>Minimum temperature at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_maxtemp" data-tt-parent="p_spawnconditions_runtime">maxtemp</div></td>
+    <td>integer</td>
+    <td>40</td>
+    <td>Maximum temperature at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_minrain" data-tt-parent="p_spawnconditions_runtime">minrain</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>Minimum rain average at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_maxrain" data-tt-parent="p_spawnconditions_runtime">maxrain</div></td>
+    <td>decimal number</td>
+    <td>1</td>
+    <td>Maximum rain average at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_minforest" data-tt-parent="p_spawnconditions_runtime">minforest</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>Minimum forest density at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_maxforest" data-tt-parent="p_spawnconditions_runtime">maxforest</div></td>
+    <td>decimal number</td>
+    <td>1</td>
+    <td>Maximum forest density at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_minshrubs" data-tt-parent="p_spawnconditions_runtime">minshrubs</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>Minimum shrubs density at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_maxshrubs" data-tt-parent="p_spawnconditions_runtime">maxshrubs</div></td>
+    <td>decimal number</td>
+    <td>1</td>
+    <td>Maximum shrubs density at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_runtime_minforestorshrubs" data-tt-parent="p_spawnconditions_runtime">minforestorshrubs</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>Minimum shrubs or forest density at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen" data-tt-parent="p_spawnconditions">worldgen</div></td>
+    <td>object</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_group" data-tt-parent="p_spawnconditions_worldgen">group</div></td>
+    <td>string</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_triesperchunk" data-tt-parent="p_spawnconditions_worldgen">triesperchunk</div></td>
+    <td>object</td>
+    <td>zero</td>
+    <td>How many tries per chunk the entity has to spawn. Find out more about the [[Json Random Generator|random generator]].</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_minlightlevel" data-tt-parent="p_spawnconditions_worldgen">minlightlevel</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_maxlightlevel" data-tt-parent="p_spawnconditions_worldgen">maxlightlevel</div></td>
+    <td>integer</td>
+    <td>32</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_lightleveltype" data-tt-parent="p_spawnconditions_worldgen" data-hide="true">lightleveltype</div></td>
+    <td>string</td>
+    <td>&quot;MaxLight&quot;</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_group_onlyblocklight" data-tt-parent="p_spawnconditions_worldgen_lightleveltype">onlyblocklight</div></td>
+    <td></td>
+    <td></td>
+    <td>Will get you just the block light</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_group_onlysunLight" data-tt-parent="p_spawnconditions_worldgen_lightleveltype">onlysunlight</div></td>
+    <td></td>
+    <td></td>
+    <td>Will get you just the sun light unaffected by the day/night cycle</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_group_maxlight" data-tt-parent="p_spawnconditions_worldgen_lightleveltype">maxlight</div></td>
+    <td></td>
+    <td></td>
+    <td>Will get you max(onlysunlight, onlyblocklight)</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_group_maxtimeofdaylight" data-tt-parent="p_spawnconditions_worldgen_lightleveltype">maxtimeofdaylight</div></td>
+    <td></td>
+    <td></td>
+    <td>Will get you max(sunlight * sunbrightness, blocklight)</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_groupsize" data-tt-parent="p_spawnconditions_worldgen">groupsize</div></td>
+    <td>object</td>
+    <td><code>{ avg: 1, var: 0 } </code></td>
+    <td>Determines the size of the group. By default the size of the group is always one. Find out more about the [[Json Random Generator|random generator]].</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_companions" data-tt-parent="p_spawnconditions_worldgen">companions</div></td>
+    <td>array of string</td>
+    <td>-</td>
+    <td>Codes of all possible companions.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_insideblockcodes" data-tt-parent="p_spawnconditions_worldgen">insideblockcodes</div></td>
+    <td>array of string</td>
+    <td><code>[ "game:air" ]</code></td>
+    <td>The block codes in which the entity can spawn. Entities which can spawn underwater might use <code>[ "game:water" ]</code> instead.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_requiresolidground" data-tt-parent="p_spawnconditions_worldgen">requiresolidground</div></td>
+    <td>boolean</td>
+    <td>true</td>
+    <td>If the entity requires a solid block below it. For example birds and fishes do not require it.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_tryonlysurface" data-tt-parent="p_spawnconditions_worldgen">tryonlysurface</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If false the game will also try to spawn the entity below the surface (in a cave for example). For ordinary animals this should be true so they only spawn on the surface.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_mintemp" data-tt-parent="p_spawnconditions_worldgen">mintemp</div></td>
+    <td>integer</td>
+    <td>-40</td>
+    <td>Minimum temperature at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_maxtemp" data-tt-parent="p_spawnconditions_worldgen">maxtemp</div></td>
+    <td>integer</td>
+    <td>40</td>
+    <td>Maximum temperature at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_minrain" data-tt-parent="p_spawnconditions_worldgen">minrain</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>Minimum rain average at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_maxrain" data-tt-parent="p_spawnconditions_worldgen">maxrain</div></td>
+    <td>decimal number</td>
+    <td>1</td>
+    <td>Maximum rain average at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_minforest" data-tt-parent="p_spawnconditions_worldgen">minforest</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>Minimum forest density at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_maxforest" data-tt-parent="p_spawnconditions_worldgen">maxforest</div></td>
+    <td>decimal number</td>
+    <td>1</td>
+    <td>Maximum forest density at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_minshrubs" data-tt-parent="p_spawnconditions_worldgen">minshrubs</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>Minimum shrubs density at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_maxshrubs" data-tt-parent="p_spawnconditions_worldgen">maxshrubs</div></td>
+    <td>decimal number</td>
+    <td>1</td>
+    <td>Maximum shrubs density at which the entity can spawn.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_spawnconditions_worldgen_minforestorshrubs" data-tt-parent="p_spawnconditions_worldgen">minforestorshrubs</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>Minimum shrubs or forest density at which the entity can spawn.</td>
+  </tr>
+
+  <tr>
+    <td colspan="4" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>}</b></td>
+  </tr>
+ </table>
+
+
+
+{{Navbox/modding|Vintage Story}}

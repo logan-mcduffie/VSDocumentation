@@ -1,0 +1,345 @@
+__FORCETOC__
+{{GameVersion|1.15}}
+<languages/><translate>
+<!--T:1-->
+Before starting, you should have a development environment set up. If you don't have one already you should read the tutorial [[Setting up your Development Environment]]. Furthermore, we assume that you have a basic understanding of the C# language and Object Oriented Programming. Let's get started!
+
+<!--T:2-->
+'''Hint''': If you need to send data for Entities or BlockEntities, it may be more appropriate to use the inbuilt network methods for these. Check out the [http://apidocs.vintagestory.at/api/Vintagestory.API.Server.IServerNetworkAPI.html IServerNetworkAPI] and [http://apidocs.vintagestory.at/api/Vintagestory.API.Client.IClientNetworkAPI.html IClientNetworkAPI] interfaces for more information.
+
+== Introduction == <!--T:3-->
+
+<!--T:4-->
+In this example mod we will show you how to send custom data back and forth between the Server and the Client. To do this, we will set up a network channel through which string messages will be sent in a network channel.
+
+<!--T:5-->
+We will create a server command that will send out a message to all clients, and if a client receives this, it will send a response back to the server; upon receiving this response, the server will display it along with the responding client's player name.
+
+== Preparation == <!--T:6-->
+
+<!--T:7-->
+Let's start by creating a new .cs file for this mod, and adding our imports and the namespace in which we'll wrap all of our classes:
+</translate>
+<syntaxhighlight lang="c#">
+using System;
+using ProtoBuf;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
+using Vintagestory.API.Server;
+
+namespace Vintagestory.ServerMods
+{
+
+}
+</syntaxhighlight>
+
+== ProtoContracts ==
+
+VintageStory uses the [https://github.com/protobuf-net/protobuf-net Protobuf-net] library to serialize classes declared with the <code>ProtoContract</code> attribute. 
+
+Inside our namespace block, let's create our <code>ProtoContract</code> classes:
+
+<syntaxhighlight lang="c#">
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    public class NetworkApiTestMessage
+    {
+        public string message;
+    }
+
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    public class NetworkApiTestResponse
+    {
+        public string response;
+    }
+</syntaxhighlight>
+
+The argument we pass to <code>ProtoContract</code> makes it so all <code>public</code> fields will be serialized; without this, we'd declare fields for serialization by using <code>ProtoMember</code> attributes. If we chose this approach, we'd write our classes like so:
+<syntaxhighlight lang="c#">
+    [ProtoContract]
+    public class NetworkApiTestMessage
+    {
+        [ProtoMember(1)]
+        public string message;
+    }
+
+    [ProtoContract]
+    public class NetworkApiTestResponse
+    {
+        [ProtoMember(1)]
+        public string response;
+    }
+</syntaxhighlight>
+
+The argument we pass to <code>ProtoMember</code> is a unique unsigned integer called a tag, and it's used to identify the fields flagged for serialization. When the client receives the packet containing the serialized <code>ProtoContract</code>, it won't know the type of its members, and will identify them by the tag number. We use the <code>ImplicitFields.AllPublic</code> to flag all public fields for serialization, and tags are assigned in alphabetic order. ProtoBuf is beyond the scope of this tutorial, but you can read more about this powerful library [https://developers.google.com/protocol-buffers/docs/csharptutorial here].
+
+The fields in these classes hold the data we wish to send through our channel. We'll use <code>NetworkApiTestMessage</code> to encase the initial message from the server, while <code>NetWorkApiTestResponse</code> will be used by the Client to send its response.
+
+== NetworkApiTest == 
+
+Now we will create our main class that inherits from the <code>ModSystem</code> class, which is the base class for mod systems. You can read more about this [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.ModSystem.html here]. Moreover, we'll be separating our Client and Server sides within the class with region blocks for readability purposes.
+
+<syntaxhighlight lang="c#">
+    public class NetworkApiTest : ModSystem
+    {
+        #region Client
+            //Client side here
+        #endregion
+
+        #region Server
+            //Server side here
+        #endregion 
+    }
+</syntaxhighlight>
+
+Next, we'll set up our network channel on the Server side, and register a server command to dispatch our message.
+
+== Server Setup ==
+
+After declaring our Server side fields, we create an override for the <code>StartServerSide</code> method. This method of the <code>ModSystem</code> is called for all mods on the Server side by the game.
+
+<syntaxhighlight lang="c#">
+#region Server
+        IServerNetworkChannel serverChannel;
+        ICoreServerAPI serverApi;
+
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            serverApi = api;
+
+            serverChannel =
+                api.Network.RegisterChannel("networkapitest")
+                .RegisterMessageType(typeof(NetworkApiTestMessage))
+                .RegisterMessageType(typeof(NetworkApiTestResponse))
+                .SetMessageHandler<NetworkApiTestResponse>(OnClientMessage)
+            ;
+
+            api.RegisterCommand("nwtest", "Send a test network message", "", OnNwTestCmd, Privilege.controlserver);
+        }
+#endregion
+</syntaxhighlight>
+
+The Core Server API contains the Network member, which provides us with the <code>RegisterChannel</code> method. We pass this method a string containing the name we choose for our channel, in this case we'll call our channel "networkapitest". A channel with this exact name will be registered on the Client side.
+
+We then register the ProtoContract classes that we'll be using to this channel with the <code>RegisterMessageType</code> method.
+
+Finally, we call <code>SetMessageHandler<T></code>, which takes a delegate that will be called every time a <code>ProtoContract</code> of type <code>T</code> is received from a client, in this case <code>NetworkApiTestResponse</code> will be handled by <code>OnClientMessage</code> which we'll declare later.
+
+Now that our channel is set up on the Server side, we'll want to register a server command that will broadcast a network message to all the clients listening to our "networkapitest" channel.
+
+<syntaxhighlight lang="c#">
+#region Server
+        IServerNetworkChannel serverChannel;
+        ICoreServerAPI serverApi;
+
+        public override void StartServerSide(ICoreServerAPI api)...
+
+        private void OnNwTestCmd(IServerPlayer player, int groupId, CmdArgs args)
+        {
+            serverChannel.BroadcastPacket(new NetworkApiTestMessage()
+            {
+                message = "Hello World!",
+            });
+        }
+#endregion
+</syntaxhighlight>
+
+The server channel gives us the <code>BroadcastPacket</code> method which we'll use to send out a <code>NetworkApiTestMessage</code> instance to all clients listening to the "networkapitest" channel, in this case we send "Hello World!" as the message.
+
+== Client Setup ==
+
+Above the Server Side region, we'll create our Client fields and an override for the <code>StartClientSide</code>, which is a Client side version of its Server side counterpart.
+
+<syntaxhighlight lang="c#">
+#region Client
+        IClientNetworkChannel clientChannel;
+        ICoreClientAPI clientApi;
+
+        public override void StartClientSide(ICoreClientAPI api)
+        {
+            clientApi = api;
+
+            clientChannel =
+                api.Network.RegisterChannel("networkapitest")
+                .RegisterMessageType(typeof(NetworkApiTestMessage))
+                .RegisterMessageType(typeof(NetworkApiTestResponse))
+                .SetMessageHandler<NetworkApiTestMessage>(OnServerMessage)
+            ;
+        }
+#endregion
+</syntaxhighlight>
+
+On the Client side, we set up the "networkapitest" channel much in the same way as we did on the Server side. The <code>IClientNetworkChannel</code> type is the client side equivalent of the <code>IServerNetworkChannel</code>, and shares much of the same functionality.
+
+This time we call <code>SetMessageHandler</code> to listen for messages of type <code>NetworkApiTestMessage</code>, using a delegate named <code>OnServerMessage</code>.
+
+<syntaxhighlight lang="c#">
+#region Client
+        IClientNetworkChannel clientChannel;
+        ICoreClientAPI clientApi;
+
+        public override void StartClientSide(ICoreClientAPI api)...
+
+        private void OnServerMessage(NetworkApiTestMessage networkMessage)
+        {
+            clientApi.ShowChatMessage("Received following message from server: " + networkMessage.message);
+            clientApi.ShowChatMessage("Sending response.");
+            clientChannel.SendPacket(new NetworkApiTestResponse()
+            {
+                response = "RE: Hello World!"
+            });
+        }
+#endregion
+</syntaxhighlight>
+
+Here we simply show a chat message to the client with the contents of the message sent from the server.
+
+We then let the client know that we're sending our response to the server, and call <code>SendPacket</code> passing it an instance of <code>NetworkApiTestResponse</code>.
+
+Now let's go back to the Server side and create the handler for this response!
+
+== Handling Client Responses ==
+
+In our Server side region, let's write a final delegate method:
+
+<syntaxhighlight lang="c#">
+#region Server
+        IServerNetworkChannel serverChannel;
+        ICoreServerAPI serverApi;
+
+        public override void StartServerSide(ICoreServerAPI api)...
+
+        private void OnNwTestCmd(IServerPlayer player, int groupId, CmdArgs args)...
+
+        private void OnClientMessage(IPlayer fromPlayer, NetworkApiTestResponse networkMessage)
+        {
+            serverApi.SendMessageToGroup(
+                GlobalConstants.GeneralChatGroup,
+                "Received following response from " + fromPlayer.PlayerName + ": " + networkMessage.response,
+                EnumChatType.Notification
+            );
+        }
+#endregion
+</syntaxhighlight>
+
+Message handlers on the server have an additional parameter compared to client handlers, which is the player whose client sent the message.
+
+In this handler we simply broadcast a server-wide message containing the responding player's name and the content of the response.
+
+== Conclusion ==
+
+If you followed the steps correctly, you should have the following code:
+
+<syntaxhighlight lang="c#">
+using System;
+using ProtoBuf;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
+using Vintagestory.API.Server;
+
+namespace Vintagestory.ServerMods
+{
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    public class NetworkApiTestMessage
+    {
+        public string message;
+    }
+
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    public class NetworkApiTestResponse
+    {
+        public string response;
+    }
+
+    /// <summary>
+    /// A basic example of client<->server networking using a custom network communication
+    /// </summary>
+    public class NetworkApiTest : ModSystem
+    {
+        #region Client
+        IClientNetworkChannel clientChannel;
+        ICoreClientAPI clientApi;
+
+        public override void StartClientSide(ICoreClientAPI api)
+        {
+            clientApi = api;
+
+            clientChannel =
+                api.Network.RegisterChannel("networkapitest")
+                .RegisterMessageType(typeof(NetworkApiTestMessage))
+                .RegisterMessageType(typeof(NetworkApiTestResponse))
+                .SetMessageHandler<NetworkApiTestMessage>(OnServerMessage)
+            ;
+        }
+
+        private void OnServerMessage(NetworkApiTestMessage networkMessage)
+        {
+            clientApi.ShowChatMessage("Received following message from server: " + networkMessage.message);
+            clientApi.ShowChatMessage("Sending response.");
+            clientChannel.SendPacket(new NetworkApiTestResponse()
+            {
+                response = "RE: Hello World!"
+            });
+        }
+
+        #endregion
+
+        #region Server
+        IServerNetworkChannel serverChannel;
+        ICoreServerAPI serverApi;
+
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            serverApi = api;
+
+            serverChannel =
+                api.Network.RegisterChannel("networkapitest")
+                .RegisterMessageType(typeof(NetworkApiTestMessage))
+                .RegisterMessageType(typeof(NetworkApiTestResponse))
+                .SetMessageHandler<NetworkApiTestResponse>(OnClientMessage)
+            ;
+
+            api.RegisterCommand("nwtest", "Send a test network message", "", OnNwTestCmd, Privilege.controlserver);
+        }
+
+        private void OnNwTestCmd(IServerPlayer player, int groupId, CmdArgs args)
+        {
+            serverChannel.BroadcastPacket(new NetworkApiTestMessage()
+            {
+                message = "Hello World!",
+            });
+        }
+
+        private void OnClientMessage(IPlayer fromPlayer, NetworkApiTestResponse networkMessage)
+        {
+            serverApi.SendMessageToGroup(
+                GlobalConstants.GeneralChatGroup,
+                "Received following response from " + fromPlayer.PlayerName + ": " + networkMessage.response,
+                EnumChatType.Notification
+            );
+        }
+
+        
+        #endregion
+    }
+}
+</syntaxhighlight>
+
+== Testing == 
+
+Let's run the mod now! Once you're ingame, try entering <code>/nwtest</code>. You should be met with an initial "Hello World!" message as well as a confirmation message that the server received the response from the Client!
+
+
+
+== Distribution ==
+
+To distribute this mod, you may run the following command in the modtools cli <code>pack <your mod id></code>, then copy the .zip file into your VintageStory mods folder.
+
+Here are the official versions:
+* for VS v1.10-rc.4: [https://wiki.vintagestory.at/images/7/73/NetworkApiTest_vs1.10-rc.4_v1.0.0.zip NetworkApiTest_vs1.10-rc.4_v1.0.0.zip]
+* for VS v1.6: [https://wiki.vintagestory.at/images/d/d1/NetworkApiTest_vs1.6_v1.0.0.zip NetworkApiTest_vs1.6_v1.0.0.zip]
+
+{{Navbox/modding|Vintage Story}}

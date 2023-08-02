@@ -1,0 +1,170 @@
+<languages/><translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+
+<!--T:2-->
+__TOC__
+
+<!--T:3-->
+Vintage Story comes with a powerful patching system that lets you perform pinpoint modifications on Assets in JSON format. This significantly improves mod interoperability as you don't have to fully replace these files and overwrite other mod changes in the process. Furthermore you can change multiple files at once.
+
+<!--T:4-->
+Below is a basic guide to help you understand how patches are working. A [https://tools.ietf.org/html/rfc6902 full reference doc] is also available however. To make your patching live easier in the long term you can also use the ModMaker 3000™, which is a command line tool that ships with the game itself. If you modify vanilla assets, you can run ModMaker 3000™ to create a mod consisting of a set of patches based on the changes you made to the assets. You can then undo or reinstall the game to get your original files back.
+
+=== The basics === <!--T:5-->
+
+<!--T:6-->
+The first thing you need to do is to setup a generic mod as outlined on the wiki. That information can be found on the [[Mod Packaging|mod packaging]] page. In that example the domain is the name of your mod. Patching is considered a content mod but if you have a .dll or .cs in your mod it is a code mod. Patches go in assets/domain/patches.
+
+<!--T:7-->
+Now that the mod files and folders are setup it is time to make the first patch. Start by making a .json and name it however you'd like. Open the file with your favorite text editor and fill it in with the following.
+<syntaxhighlight lang="json">
+[
+	{ file: "", op: "", path: "", value: }
+]
+</syntaxhighlight>
+
+<!--T:8-->
+* '''File''' is where the file you want to change is located. 
+* '''Op''' stands for operation and it's what you want to do. Valid operations are '''add''', '''addeach''', '''remove''', '''replace''', '''move''' and '''copy'''.
+* '''Path''' is where the value you want to change in the file is located.
+* '''Value''' is what you want to put in the file.
+
+<!--T:9-->
+Now lets give an example. For these examples I'll be modifying the wolf-male.json because it was the first one I modified, I'm very familiar with it, and it provides a good basis for examples. In this first example, we'll modify wolf damage.
+
+<!--T:10-->
+For the file put, 
+<syntaxhighlight lang="json">
+file: "game:entities/land/wolf-male"
+</syntaxhighlight>
+The '''game:''' is the domain. In this case, it's the domain for vanilla VS. Note that this is not the same thing as the mod folder; all three of the vanilla folders (survival, game, and creative) all use the domain "game".
+
+<!--T:11-->
+You can change the domain to modify other peoples mods as well.
+
+<!--T:12-->
+If﻿ you look in the vanilla game folders, under assets you'll find the file we are modifying under '''entities/land/wolf-male'''. That is why that part comes after the domain.
+
+<!--T:13-->
+Next put,
+<syntaxhighlight lang="json">
+op: "replace"
+</syntaxhighlight>
+Since wolves already deal damage we simply want to replace the damage value.
+
+<!--T:14-->
+Now for the path,
+<syntaxhighlight lang="json">
+path: "/server/behaviors/5/aitasks/0/damage"
+</syntaxhighlight>
+This is the truly tricky part. In these JSON files, you'll find labels such as '''server:''' and '''behaviors:'''. You'll know it's a label because it's followed by the colon. '''Colon  :'''
+
+<!--T:15-->
+Next, we have arrays. These start and end in square brackets. '''Square brackets  [ ]'''
+
+<!--T:16-->
+Within these square brackets, you'll find sections between curly braces. '''Curly braces { }'''
+
+<!--T:17-->
+These sections don't have a label so they must be referenced by number. To figure out the number you must count starting with 0.
+
+<!--T:18-->
+Now to break down the example. We see the value we want to modify on line 52. To get to that we trace it back to the first label which is '''server'''. From there the next label is behavoirs. Here we notice the square brackets, so we must count. In this case to 5. Next is the label '''aitasks''', then we hit more square brackets. The count for this is 0 because that's the number you start on. Finally we get to the label '''damage'''.
+
+<!--T:19-->
+We can now move on to the last part, value
+<syntaxhighlight lang="json">
+value: 6
+</syntaxhighlight>
+Since the value is a number we just put a number. If it were text, the value would be "'''6'''".
+
+=== Advanced patching === <!--T:20-->
+
+<!--T:21-->
+We will now move on to a more complex example using the same file. This time we'll add a drop to the male wolf. For this, you can make a new file or put a comma after the first patch and put the new patch on the next line.
+<syntaxhighlight lang="json">
+[ 
+	{ file: "game:entities/land/wolf-male", op: "replace", path: "/server/behaviors/4/aitasks/0/damage", value: 6},
+	{ file: "game:entities/land/wolf-male", op: "add", path: "/drops/-", value: { 
+		type: "item", 
+		code: "stick", 
+		quantity: { avg: 2, var: 1 } 
+	} } 
+]
+</syntaxhighlight>
+In this second example, we'll skip straight to the path. You'll notice the label '''drops''' and then a dash. '''Dash -'''
+
+<!--T:22-->
+This dash means append to the end of the array. This is useful because it prevents us from overwriting another drop and we may not know the number of drops if other mods added drops as well.
+
+<!--T:23-->
+For the value, there is an entire section showing that the value doesn't just have to be a number or text. In this case, we added the stick to the drops but by specifying a domain in front of stick like we do for the file it could be a stick from any mod!
+
+=== Disabling Assets === <!--T:24-->
+
+<!--T:25-->
+Sometimes you'll want to disable a json entirely. This might be to disable a vanilla recipe for example. For this example I'll be disabling wolves because I don't want to upload another file and hopefully you are quite familiar with the file by this time. All jsons have various labels that the game looks for even if they are not there. In this case the file doesn't have the enabled label so we'll be adding it and setting it to false like so.
+<syntaxhighlight lang="json">
+[
+	{ file: "game:entities/land/wolf-male", op: "add", path: "/enabled", value: "false"}
+]
+</syntaxhighlight>
+That's all you have to do. If there's already an enabled label in the file then we'd need to switch op from add to replace.
+
+=== Targeting server or client assets ===
+If you know that a target JSON file is only applied on the server or client, you can use the attribute "side" with the appropriate value to avoid unnecessary processing and the accompanying warnings in log files such as "''Hint: This asset is usually only loaded Server side''". For example, a cooking recipe will only be loaded by the server and you could therefore add the attribute :
+<syntaxhighlight lang="json">
+"server": "side"
+</syntaxhighlight>
+so the client doesn't try to patch anything.
+
+=== File Path and Name Considerations === <!--T:28-->
+By default, when you generate a mod using ModMaker 3000™, the folder structure will use '''game''' as the domain, and use the same file name as the vanilla JSON file. This can lead to mod conflicts.
+
+<!--T:29-->
+Let's use the wolf examples from above. If you run ModMaker after making these changes to '''wolf-male.json''', the resulting ZIP will contain the file '''assets\game\patches\survival-entities-land-wolf-male.json'''. This seems to suggest two conventions that VS expects; that you should put JSON patches under the '''game''' folder, and that you should match the source file name using a folder-hyphen notation. Neither are true, however.
+
+<!--T:30-->
+Say you split up the two different wolf changes into two different mods. The first is '''WolvesAreWimps''' and the second is '''WolvesDropSticks'''. ModMaker would generate identical folder structures and files for these two different mods; that is, both would contain the file '''assets\game\patches\survival-entities-land-wolf-male.json'''. These two mods will not work together because they have a filename conflict. (The one that is alphabetically last will take precedence: '''WolvesDropSticks'''.)
+
+To avoid the possibility of mod conflicts, do not use the '''game''' folder. Instead, use a folder with the same name as your '''modid'''; that is, your mod's domain. So in this example, WolvesAreWimps.zip should instead have the folders '''assets\wolvesarewimps\patches''' and WolvesDropSticks.zip should instead have the folders '''assets\wolvesdropsticks\patches'''. File names are also arbitrary, you do not need to use '''survival-entities-land-wolf-male.json''' and can name the file anything you want, since its contents direct the game on what and how to patch, not the file's name.
+ 
+=== Overwriting issue === <!--T:33-->  
+
+<!--T:31-->
+Patches that are creating e.g. behaviors or attributes (for example, if item does not have it), will be overwritten by patches from other mods that are doing same, but with another value.
+
+<!--T:32-->
+For example, this patch will be overwritten with patch from example below, even if '''add''' operation is used:
+<syntaxhighlight lang="json">
+[
+  {
+    "op": "add",
+    "path": "/behaviors",
+    "value": [{ "name": "SealPlacedCrock" }],
+    "file": "game:itemtypes/resource/fat.json"
+  }
+]
+</syntaxhighlight>
+<syntaxhighlight lang="json">
+[
+  {
+    "op": "add",
+    "path": "/behaviors",
+    "value": [{ "name": "Placeable" }],
+    "file": "game:itemtypes/resource/fat.json"
+  }
+]
+</syntaxhighlight>
+
+<!--T:34-->
+'''Note''' : see the [[Modding:CompatibilityLib|Compatibility]] page for possible ways to handle conflicts and dependencies between mods.
+
+
+<!--T:26-->
+At this point, you have all the tools for modifying assets using the patching system. This is an incredibly powerful tool that only limited by your imagination. Have fun patching!
+
+<!--T:27-->
+{{Navbox/modding|Vintage Story}}
+</translate>

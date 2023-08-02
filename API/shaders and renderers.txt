@@ -1,0 +1,11 @@
+<languages/><translate>
+<!--T:1-->
+A thorough tutorial is still missing, but until then you can look at the sample code on GitHub!
+
+<!--T:2-->
+* Setting up a custom Shader: https://github.com/anegostudios/vsmodexamples/tree/master/Mods/ScreenOverlayShaderExample
+* Rendering a HUD Element: https://github.com/anegostudios/vsmodexamples/tree/master/Mods/HudOverlaySample
+
+</translate>
+
+{{Navbox/modding|Vintage Story}}

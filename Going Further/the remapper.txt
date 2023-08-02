@@ -1,0 +1,57 @@
+<languages/><translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+
+<!--T:2-->
+The Remapper. A server side system that, under ideal circumstances, no one should know it even exists. It's the thing that makes sure your world doesn't go bonkers from installing or removing a mod that adds blocks or items. 
+
+<!--T:3-->
+Let's say a user wants to craft your modded in Uberbasket. You would want to write a recipe that tells the game which item should get created. This is done by referencing the items unique code - a sequence of letters, usually a written word separated by dashes. 
+
+<!--T:4-->
+However those codes do not store very efficiently and thus, in order to reduce memory usage, the engine internally assigns a per-world unique number to each item and block, then stores a mapping from code to id into the save game. Those ids are created when the game loads the blocks and items, and once created, are never deleted from the mapping. Like this, just to give you an idea.
+
+<!--T:5-->
+{| class="wikitable"
+!Code!!Id
+|-
+|stick||1
+|-
+|coal||2
+|-
+|ingot-iron||3
+|-
+|...||...
+|}
+
+<!--T:6-->
+Storing this mapping into the save game is necessary, because otherwise, if a new block gets added, for example, before the stick, the numbering would change, and suddenly every stick in the world would turn into coal, every iron ingot would become coal and so on. New blocks can get added and removed either when a new version is out or when the user adds or removes mods. 
+
+==== So how does this affect you, the modder? ==== <!--T:7-->
+
+<!--T:8-->
+Well, the issue arises when you decide to change the code of a block or item. Or when a user wants to remove one of your mods and have the now modded blocks replaced with something else. 
+Let's say your mod added the Uberbasket, but you realize it was not powerful enough and changed it into the Hyperbasket, including its item code, in your latest mod update. As soon as a player updates to your latest version of the mod, all their Uberbaskets will become unknown items, because, remember, the code<->id mapping for the uberbasket is still stored in the savegame. 
+
+<!--T:9-->
+Thankfully you can help the player fix this! There are commands (/bir and /iir) that let you edit this table. In this case, the player would need to type 
+
+<!--T:10-->
+<code>/iir remap hyperbasket uberbasket force</code>
+
+<!--T:11-->
+What this command effectively does, is to search for "uberbasket" in the mapping table, then replace the id with the hyperbasket id. And so, upon world reload all the uberbaskets will have turned into hyperbaskets.
+
+==== The remaps.json ==== <!--T:12-->
+
+<!--T:13-->
+For even greater player convenience. You can create a json patch to add an entry to assets/game/config/remaps.json. This file lets you add your remaps and the player will get a user friendly dialog popping up that remappings are required. You might want to use the "remapq" subcommand to reduce chat log spam. 
+
+==== Can I remap 2 blocks/items into 1 block/item ==== <!--T:14-->
+
+<!--T:15-->
+No. By definition, all ids must be unique. If you were to remap 2 to 1, it would mean an item or block would have 2 ids. The game was not designed to handle multiple ids for the same block or item.
+
+<!--T:16-->
+{{Navbox/modding|Vintage Story}}
+</translate>

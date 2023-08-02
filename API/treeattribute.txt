@@ -1,0 +1,41 @@
+{{GameVersion|1.15}}
+<languages/><translate>
+<!--T:1-->
+A TreeAttribute is a nested data structure whose primary purpose is to store data. It can hold generic data for most primitives, such as int, string, float, as well as more complex types like ItemStacks and other TreeAttributes (hence a nested structure). 
+
+<!--T:2-->
+Additionally you can store data as <code>byte[]</code> if it is not supported by the TreeAttribute itself (for this you could use <code>Vintagestory.API.Util.SerializerUtil</code>).
+Attributes are written and read via keys. 
+
+To use TreeAttribute, add the using statement for '''Vintagestory.API.Datastructures'''.<br><br>
+== Use in API == <!--T:3-->
+Within the API, TreeAttribute is often employed to store persistent entity data (items a basket contains, content of a barrel/bucket) and to access data extracted from JSON files. '''TreeAttribute''' is often supplied as the interface '''ITreeAttribute'''.<br>
+
+== Example in code ==  <!--T:4-->
+<syntaxhighlight lang="c#">
+using Vintagestory.API.Datastructures;
+
+<!--T:5-->
+class Example
+{
+    Example()
+    {
+        // Setting and getting values
+        TreeAttribute tree;
+        tree = new TreeAttribute();
+
+        <!--T:6-->
+float someValue = 0.35f;
+        string someKey = "valueKey";
+
+        <!--T:7-->
+// Set the value
+        tree.SetFloat(someKey, someValue);
+        // Retrieve the value
+        tree.GetFloat(someKey);
+    }
+}
+</syntaxhighlight>
+For documentation, see [http://apidocs.vintagestory.at/api/Vintagestory.API.Datastructures.TreeAttribute.html TreeAttribute] and [http://apidocs.vintagestory.at/api/Vintagestory.API.Datastructures.ITreeAttribute.html ITreeAttribute].
+</translate>
+{{Navbox/modding|Vintage Story}}

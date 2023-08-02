@@ -1,0 +1,103 @@
+{{GameVersion|1.15}}
+__FORCETOC__
+<languages/><translate>
+<!--T:1-->
+This article introduces how world generation is handled in Vintage story, and the extent to which it can be modded. It is also intended as a general introduction for modding endeavors in regards to world generation.
+=== Terminology ===
+Important terminology to note while reading this article:
+* '''Chunk''': An data structure that holds 32x32x32 blocks. It is of note that chunks do not span the world height.
+* '''Chunk column''': A set of chunks spanning the vertical height of the world. Given a world height of 256, a chunk column would represent 8 vertically stacked chunks
+* '''Map chunk''': A data structure that holds information on a chunk column, such as the rain height or snow accumulation
+* '''Map Region''': A data structure that holds information over an area of 16x16 chunk columns, such as weather and maps required for world generation
+== Concept ==
+World generation is the process of generating necessary data about the world when the player requires it. World generation is done on a region, map chunk and chunk column basis - each acting as a meaningful subdivision of the world. Each region, map chunk and chunk column is only generated once and stores important data about that area. 
+World generation is very modular. Almost all generated parts of the world, such as ore deposits, creatures or trees, are specified via JSON content mods. On a coding level, each stage of generation triggers an event which the base game registers handlers to. Event handlers can be registered or removed through the API to alter any part of generation.
+== Content modding ==
+Using content modding, here are the various things that can be added, modified or removed from world generation. Properties relative to world generation are generally located at <code>Vintagestory/assets/survival/worldgen</code>
+=== Moddable content ===
+{| class="wikitable"
+|-
+! Item !! Description
+|-
+| Deposits || Anything that is "deposited" in the ground on generation, such as ores or patches of blocks like gravel and chalk
+|-
+| Structures || Pre-defined structures, such as the ruins found throughout. The "[[How to use WorldEdit]]" page has instructions on building and exporting structures
+|-
+| Trees || Tree and shrub placement
+|-
+| Block layers || Layers of blocks found above the rock layer
+|-
+| Block patches || Patches of blocks, also vegetation
+|-
+| Geological provinces || Geological attributes and placement
+|-
+| Landforms || Land layout and the general arrangement of terrain
+|}
+
+== Code modding == <!--T:2-->
+Using code modding, it is possible to remove any specific part of world generation from the base game entirely, as well as add new functionality.
+=== World types ===
+There are currently three world types - "standard", "superflat", "empty". World types exist under '''EnumWorldGenPreset'''. World type has to be specified when registering event handlers for world generation.
+=== Passes ===
+The chunk column generation event is additionally subdivided into passes. Passes are essentially layers in the generation of a chunk column - first laying down the rock layer in one pass, and doing more general cross-chunk actions in later passes, such as flooding them with light or growing patches of grass. Passes exist under '''EnumWorldGenPass'''. The pass has to be specified when registering event handlers for chunk column generation.
+
+<!--T:3-->
+{| class="wikitable"
+|-
+! Index !! Name !! Description !! Requires neighbor chunks
+|-
+| 0 || None || Nothing generated yet || false
+|-
+| 1 || Terrain || Basic terrain, rock strata, caves, block layers || false
+|-
+| 2 || TerrainFeatures || Deposits, structures, ponds || true
+|-
+| 3 || Vegetation || Block patches, shrubbery and trees, rivulets, sunlight flooding in chunk || true 
+|-
+| 4 || NeighbourSunLightFlood || Snow layer, sunlight flooding to nearby chunks || true
+|-
+| 5 || PreDone || Done generating, spawn creatures, neighbor chunks might still generate additional things || true
+|-
+| 6 || Done || Pass is not triggered as an event || -
+|}
+
+=== Events === <!--T:4-->
+The generation of either a region ('''IMapRegion'''), map chunk ('''IMapChunk'''), or chunks contained in that chunk column ('''IServerChunk''' and '''IWorldChunk'''), triggers an event (in that order). Each of these interfaces holds some specific data about the given region. It is possible to register handlers to events, wherein access is provided for the given interface. The order in which the handlers are assigned is based on the execute order of their specific mod systems. 
+
+==== Accessing events ==== <!--T:5-->
+</translate>
+<syntaxhighlight lang="c#">
+class Mod : ModSystem
+{
+    public override double ExecuteOrder()
+    {
+        // Make sure all delegates have been assigned
+        return 10;
+    }
+
+    public override void StartServerSide(ICoreServerAPI api)
+    {
+        // Get the handler for interacting with world generation.
+        IWorldGenHandler handler = api.Event.GetRegisteredWorldGenHandlers("standard");
+
+        // Example registering events using a delegate.
+        api.Event.ChunkColumnGeneration(/* Handler here */, EnumWorldGenPass.None, "standard");
+        api.Event.MapChunkGeneration(/* Handler here */, "standard");
+        api.Event.MapRegionGeneration(/* Handler here */, "standard");
+
+        // Retrieving registered handlers.
+        List<MapChunkGeneratorDelegate> onMapChunkGen = handler.OnMapChunkGen;
+        List<ChunkColumnGenerationDelegate>[] onChunkColGen = handler.OnChunkColumnGen;
+        List<MapRegionGeneratorDelegate> onMapRegionGen = handler.OnMapRegionGen;
+
+        foreach (var deleg in onMapChunkGen)
+        {
+            // Printing class name of delegate instance.
+            // This can be useful for finding and removing any particular event from the list.
+            api.Server.LogEvent(deleg.Target.ToString());
+        }
+    } 
+}
+</syntaxhighlight>
+
+{{Navbox/modding|Vintage Story}}

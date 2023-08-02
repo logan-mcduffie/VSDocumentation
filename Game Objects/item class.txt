@@ -1,0 +1,208 @@
+__FORCETOC__
+{{GameVersion|1.15}}
+
+It's highly recommended to read [[Basic Item]] first. Additionally this tutorial requires a development environment. If you don't have one already you should read the tutorial [[Setting up your Development Environment]].
+
+= Tunnel pickaxe =
+
+Let's create an item, which allows you to dig a 3x3 tunnel by mining just one block.
+
+== Item Assets ==
+
+First of all we need to create a new item, including a texture and a lang file. Those assets are pretty straight forward and you can download them [https://wiki.vintagestory.at/images/c/cd/Tunnler_-_No_CS_File.zip here]. Just place the file in your mods folder and you are ready to start programming.
+
+There is only one new property in your json item file called <code>class</code>:
+<syntaxhighlight lang="json">
+	class: "tunnler",
+</syntaxhighlight>
+
+We will create this class, to give the item the desired functionality, so if you pick a different name make sure it matches the one below.
+
+== The Item Class ==
+
+If you have read the [[Advanced Blocks]] Tutorial already, this should be familar to you.
+
+In order to register your item class, we need to create a mod, which is basically a class exendting ModSystem:
+
+<syntaxhighlight lang="c#">
+public class TunnlerMod : ModSystem
+{
+    
+}
+</syntaxhighlight>
+
+By overriding the <code>Start(ICoreAPI)</code> method, we can register our class. Remember if you have picked a different class name you have to use that one instead.
+
+<syntaxhighlight lang="c#">
+public class TunnlerMod : ModSystem
+{
+    public override void Start(ICoreAPI api)
+    {
+        base.Start(api);
+        api.RegisterItemClass("tunnler", typeof(TunnlerItem));
+    }
+}
+</syntaxhighlight>
+
+This should be marked as a syntax error because there is no <code>TunnlerItem</code> class yet.
+
+=== The Item Class ===
+
+Let's create our item class itself which of course has to extend <code>Item</code>:
+
+<syntaxhighlight lang="c#">
+public class TunnlerItem : Item
+{
+
+}
+</syntaxhighlight>
+
+This should solve all syntax errors.
+
+'''So what should our tool do?''' Once the player mines a block with this tool every block around it should be mined as well. This is rather easy to implement by overriding the method <code>void OnBlockBroken(IWorldAccessor world, IEntity byEntity, IItemSlot itemslot, BlockSelection blockSel)</code>.
+
+We need to take care of the facing (which side the player is focusing) and if the player is in creative or survival mode (whether items should be dropped or not). Before we are going to override OnBlockBroken we should create a method which destroys all blocks between two block positions (min & max). It should also only drop items if the player is in survival mode:
+
+<syntaxhighlight lang="c#">
+public void destroyBlocks(IWorldAccessor world, BlockPos min, BlockPos max, IPlayer player)
+{
+    BlockPos tempPos = new BlockPos();
+    for (int x = min.X; x <= max.X; x++)
+    {
+        for (int y = min.Y; y <= max.Y; y++)
+        {
+            for (int z = min.Z; z <= max.Z; z++)
+            {
+                tempPos.Set(x, y, z);
+                if (player.WorldData.CurrentGameMode == EnumGameMode.Creative)
+                    world.BlockAccessor.SetBlock(0, tempPos);
+                else
+                    world.BlockAccessor.BreakBlock(tempPos, player);
+            }
+        }
+    }
+}
+</syntaxhighlight>
+
+Now we can implement <code>OnBlockBroken</code> rather easily, by taken care of every possible axis the player could face:
+<syntaxhighlight lang="c#">
+public override bool OnBlockBrokenWith(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, BlockSelection blockSel)
+{
+    if (base.OnBlockBrokenWith(world, byEntity, itemslot, blockSel))
+    {
+        if (byEntity is EntityPlayer)
+        {
+            IPlayer player = world.PlayerByUid((byEntity as EntityPlayer).PlayerUID);
+            switch (blockSel.Face.Axis)
+            {
+                case EnumAxis.X:
+                    destroyBlocks(world, blockSel.Position.AddCopy(0, -1, -1), blockSel.Position.AddCopy(0, 1, 1), player);
+                    break;
+                case EnumAxis.Y:
+                    destroyBlocks(world, blockSel.Position.AddCopy(-1, 0, -1), blockSel.Position.AddCopy(1, 0, 1), player);
+                    break;
+                case EnumAxis.Z:
+                    destroyBlocks(world, blockSel.Position.AddCopy(-1, -1, 0), blockSel.Position.AddCopy(1, 1, 0), player);
+                    break;
+            }
+        }
+        return true;
+    }
+    return false; 
+}
+</syntaxhighlight>
+
+
+----
+
+If you have done everything right, your file should look similar to this:
+<syntaxhighlight lang="c#">
+using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.MathTools;
+
+namespace ExampleMods
+{
+    public class TunnlerMod : ModSystem
+    {
+
+        public override void Start(ICoreAPI api)
+        {
+            base.Start(api);
+            api.RegisterItemClass("tunnler", typeof(TunnlerItem));
+        }
+
+    }
+
+    public class TunnlerItem : Item
+    {
+
+        public void destroyBlocks(IWorldAccessor world, BlockPos min, BlockPos max, IPlayer player)
+        {
+            BlockPos tempPos = new BlockPos();
+            for (int x = min.X; x <= max.X; x++)
+            {
+                for (int y = min.Y; y <= max.Y; y++)
+                {
+                    for (int z = min.Z; z <= max.Z; z++)
+                    {
+                        tempPos.Set(x, y, z);
+                        if (player.WorldData.CurrentGameMode == EnumGameMode.Creative)
+                            world.BlockAccessor.SetBlock(0, tempPos);
+                        else
+                            world.BlockAccessor.BreakBlock(tempPos, player);
+                    }
+                }
+            }
+        }
+
+        public override bool OnBlockBrokenWith(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, BlockSelection blockSel)
+        {
+            if (base.OnBlockBrokenWith(world, byEntity, itemslot, blockSel))
+            {
+                if (byEntity is EntityPlayer)
+                {
+                    IPlayer player = world.PlayerByUid((byEntity as EntityPlayer).PlayerUID);
+                    switch (blockSel.Face.Axis)
+                    {
+                        case EnumAxis.X:
+                            destroyBlocks(world, blockSel.Position.AddCopy(0, -1, -1), blockSel.Position.AddCopy(0, 1, 1), player);
+                            break;
+                        case EnumAxis.Y:
+                            destroyBlocks(world, blockSel.Position.AddCopy(-1, 0, -1), blockSel.Position.AddCopy(1, 0, 1), player);
+                            break;
+                        case EnumAxis.Z:
+                            destroyBlocks(world, blockSel.Position.AddCopy(-1, -1, 0), blockSel.Position.AddCopy(1, 1, 0), player);
+                            break;
+                    }
+                }
+                return true;
+            }
+            return false; 
+        }
+
+    }
+}
+
+</syntaxhighlight>
+
+You can also download the file directly: [https://wiki.vintagestory.at/images/a/ad/Tunnler.cs Tunnler.cs].
+
+== Testing ==
+
+This is how it looks ingame:
+
+<youtube>2MRzYKguVFY</youtube>
+
+== Distribution ==
+
+In order to finish everything, open the modtools and type in <code>pack <your mod id></code>. Now you can take the zip file and share it with other people. It will work in the same way as ordinary mods, you can install it by copying it into the <code>mods</code> folder.
+
+= Mod Download =
+
+Here is my version: 
+* for VS v1.9: [https://wiki.vintagestory.at/images/7/7b/Tunnler_vs1.9_v1.0.0.zip Tunnler_vs1.9_v1.0.0.zip]
+* for VS v1.8: [https://wiki.vintagestory.at/images/6/66/Tunnler.zip Tunnler.zip]
+
+
+{{Navbox/modding|Vintage Story}}

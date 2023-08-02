@@ -1,0 +1,245 @@
+<languages/>
+<translate>
+<!--T:40-->
+{{GameVersion|1.16}}
+
+<!--T:1-->
+__FORCETOC__
+Before creating recipes, we suggest you read [[Basic Item]] first in order to understand this tutorial.
+
+== Basics == <!--T:2-->
+
+<!--T:3-->
+Let's create a recipe for our wand, which we added in [[Basic Item|basic items]] tutorial. Other recipes can be found in <code>assets/survival/recipes/</code>
+
+=== Ingredient Pattern === <!--T:4-->
+
+<!--T:5-->
+Let's begin by declaring the pattern or layout of the recipe, in our example we'll want the player to place a pickaxe on top of 2 sticks
+
+<!--T:6-->
+[[File:Recipe Wand Pickaxe.png]]
+
+<!--T:7-->
+which would look like this:
+<syntaxhighlight lang="json">
+	ingredientPattern: "P,S,S",
+	width: 1,
+	height: 3,
+</syntaxhighlight>
+
+<!--T:8-->
+<code>P</code> and <code>S</code> are identifiers which will be defined later. Every row is separated with one comma or tab (no space!), while an empty cell is marked with an underscore <code>_</code>. The <code>width</code> of this recipe is <code>1</code> and it is <code>3</code> rows high.
+
+=== Ingredients === <!--T:9-->
+
+<!--T:10-->
+All we need to do now is to define the identifiers we have used before. In our example <code>P</code> stands for a copper pickaxe and <code>S</code> for an ordinary stick.
+
+<!--T:11-->
+<syntaxhighlight lang="json">
+	ingredients: {
+		"P": { type: "item", code: "game:pickaxe-copper"},
+		"S": { type: "item", code: "game:stick"}
+	},
+</syntaxhighlight>
+
+<!--T:12-->
+<code>Type</code> is either <code>block</code> or <code>item</code> depending whether it's an item or a block.
+
+<!--T:13-->
+When recipes have vanilla items they need <code>game:</code> in front of the item name. When they are from your own mod you can just put the item name.
+
+<!--T:14-->
+In order to find out the <code>code</code> of each item (or block), you can type <code>.edi</code> into console, which will add the code property to the tooltip:
+
+<!--T:15-->
+[[File:Recipe Stick Tooltip.png]]
+
+
+<!--T:16-->
+Furthermore, we could add a required quantity to our ingredients, so instead of one stick per slot we could make it require more:
+
+<!--T:17-->
+<syntaxhighlight lang="json">
+	ingredients: {
+		"P": { type: "item", code: "game:pickaxe-copper"},
+		"S": { type: "item", code: "game:stick", quantity: 2}
+	},
+</syntaxhighlight>
+
+<!--T:18-->
+Another thing we could do is instead of consuming the pickaxe, we could use it as a tool:
+
+<!--T:19-->
+<syntaxhighlight lang="json">
+	ingredients: {
+		"P": { type: "item", code: "game:pickaxe-copper", isTool: true},
+		"S": { type: "item", code: "game:stick"}
+	},
+</syntaxhighlight>
+
+<!--T:20-->
+This would cause the pickaxe to lose one durability during crafting, instead of consuming the whole pickaxe at once.
+
+=== Output === <!--T:21-->
+
+<!--T:22-->
+We still need to define the output, which is rather similar to defining the ingredients:
+<syntaxhighlight lang="json">
+	output: { type: "item", code: "wand-pickaxe"}
+</syntaxhighlight>
+
+<!--T:23-->
+Theoretically, we could add the <code>quantity</code> property here as well.
+
+=== Distributing === <!--T:24-->
+
+<!--T:25-->
+This is what our final recipe looks like:
+
+<!--T:26-->
+<syntaxhighlight lang="json">
+{
+	ingredientPattern: "P,S,S",
+	width: 1,
+	height: 3,
+	ingredients: {
+		"P": { type: "item", code: "game:pickaxe-copper"},
+		"S": { type: "item", code: "game:stick"}
+	},
+	output: { type: "item", code: "wand-pickaxe"}
+}
+</syntaxhighlight>
+
+<!--T:27-->
+In order to add those crafting recipes to your mod, you have to create another folder in your workspace <code>assets/myadvancedwand/recipes/grid/</code> and copy the files in there.
+
+<!--T:28-->
+You can download the full mod including the items (Pre 1.15)[[Media:MyWandRecipe.zip|here]].
+
+== Advanced == <!--T:29-->
+
+=== Type based recipes === <!--T:30-->
+
+<!--T:31-->
+There are more complicated things you can do with recipes. This the recipe for wooden planks which are crafted out of logs:
+<syntaxhighlight lang="json">
+{
+	ingredientPattern: "L",
+	ingredients: {
+		"L": { type: "block", code: "game:log-*-ud", name: "wood" }
+	},
+	width: 1,
+	height: 1,
+	output: { type: "block", code: "planks-{wood}-hor", quantity: 4  }
+}
+</syntaxhighlight>
+
+<!--T:32-->
+Instead of having a recipe for every wood type, you can assign a name to an ingredient (in this case it is <code>name: "wood"</code>) and everything identified by <code>*</code> will later on replaced be for the output. Meaning <code>{wood}</code> will be replaced by the type of the giving log.
+
+<!--T:33-->
+For example if we would have a birch log block, its code would be <code>log-birch-ud</code>, so <code>*</code> would stand for <code>birch</code>, therefore the output will be converted from <code>code: "planks-{wood}-hor"</code> to <code>code: "planks-birch-hor"</code>.
+
+=== Converting an ingredient to another item upon crafting === <!--T:34-->
+Sometimes you want to keep one or more of the ingredients, but convert them to a different item after crafting. For example, when crafting a honey-sulfur poultice, the player needs a bowl filled with honey, but the bowl is not consumed to craft it. Instead the bowl of honey is turned into an empty bowl. This is accomplished by adding the <code>returnedStack</code> property to the ingredient. This property's value needs to contain a <code>type</code> and <code>code</code> just like the standard ingredient properties. This tells the recipe which item to give the player back.
+
+<!--T:41-->
+Continuing with the honey-sulfur poultice example, a bowl of honey as an ingredient looks like <code>"B": { type: "block", code: "bowl-honey" }</code>, but the player would lose the bowl if the recipe were written this way. We need to add <code>returnedStack</code> to the ingredient's properties and indicate which item to replace it with. In this case, the player should receive an empty bowl in place of the bowl of honey <code>returnedStack: { type: "block", code: "bowl-burned" }</code>. This property is placed alongside the <code>type</code> and <code>code</code> properties of an ingredient. Putting it all together:
+<syntaxhighlight lang="json">
+{
+	ingredientPattern: "SBS,_L_",
+	ingredients: {
+		"L": { type: "block", code: "linen-*" },
+		"S": { type: "item", code: "powderedsulfur" },
+		"B": {
+			type: "block", 
+			code: "bowl-honey",
+			returnedStack: { type: "block", code: "bowl-burned" }
+		}
+	},
+	width: 3,
+	height: 2,
+	output: { type: "item", code: "poultice-linen-honey-sulfur", quantity: 4  }
+}
+</syntaxhighlight>
+
+=== Consuming more than one durability per tool === <!--T:35-->
+To balance durability consuming, it can be done by adding <code>toolDurabilityCost</code> and <code>isTool</code>. This is recipe for pulverizer pounder:
+<syntaxhighlight lang="json">
+{
+	ingredientPattern: "HL_,CL_,_L_",
+	ingredients: {
+		"H": { type: "item", code: "hammer-*", isTool: true, toolDurabilityCost: 10 },
+		"C": { type: "item", code: "chisel-*", isTool: true, toolDurabilityCost: 10 },
+		"L": { type: "block", code: "log-placed-*-ud", name: "wood" }
+	},
+	width: 3,
+	height: 3,
+	output: { type: "item", code: "pounder-oak", quantity: 1 }
+}
+</syntaxhighlight>
+
+=== Separating recipes on the same handbook page === <!--T:36-->
+Sometimes amount of recipes for one item can become overwhelming, to separate important ones, it can be done by adding <code>recipeGroup</code>. These are recipes for wooden ladder:
+<syntaxhighlight lang="json">
+{
+	ingredientPattern: "S_S,SSS,S_S",
+	ingredients: {
+		"S": { type: "item", code: "stick" }
+	},
+	width: 3,
+	height: 3,
+	recipeGroup: 1,
+	output: { type: "block", code: "ladder-wood-north", quantity: 3  }
+},
+{
+	ingredientPattern: "P_P,PSP,P_P",
+	ingredients: {
+		"P": { type: "item", code: "plank-*" },
+		"S": { type: "item", code: "stick" }
+	},
+	width: 3,
+	height: 3,
+	output: { type: "block", code: "ladder-wood-north", quantity: 3  }
+}
+</syntaxhighlight>
+
+=== Restricting to a specific class  === <!--T:37-->
+The recipe can be limited to a specific [[Classes|class]]. This can be done by adding <code>requiresTrait</code>. This is recipe for sewing kit:
+<syntaxhighlight lang="json">
+{
+	ingredientPattern: "FFS,FF_",
+	requiresTrait: "clothier",
+	ingredients: {
+		"F": { type: "item", code: "flaxtwine" },
+		"S": { type: "item", code: "stick" }
+	},
+	width: 3,
+	height: 2,
+	output: { type: "item", code: "sewingkit"  }
+}
+</syntaxhighlight>
+
+=== Copying attributes  === <!--T:38-->
+Some recipes can require to copy attributes. This is can be done by adding <code>copyAttributesFrom</code>. This is recipe for labeled crate:
+<syntaxhighlight lang="json">
+{
+	ingredientPattern: "S,C",
+	ingredients: {
+		"S": { type: "item", code: "paper-parchment" },
+		"C": { type: "block", code: "crate" }
+	},
+	shapeless: true,
+	copyAttributesFrom: 'C',
+	width: 1,
+	height: 2,
+	output: { type: "block", code: "crate", attributes: { label: "paper-empty" }  }
+}
+</syntaxhighlight>
+
+<!--T:39-->
+{{Navbox/modding|Vintage Story}}
+
+</translate>

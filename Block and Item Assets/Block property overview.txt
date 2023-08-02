@@ -1,0 +1,2837 @@
+<languages/>
+<translate>
+__NOTOC__
+== Overview == <!--T:1-->
+A complete list of all available propertiesr
+
+<!--T:2-->
+Definitions:
+
+<!--T:3-->
+'''Key''' - The name of the property, which should be used as it appears in the column.
+
+<!--T:4-->
+'''Value''' - A component of a property.
+
+<!--T:5-->
+'''Array''' - A list of objects or values that can be referenced in code.
+
+<!--T:6-->
+'''String''' - A sequence of characters that can be used as an identifier in code. Essentially a word that can be referenced and assigned to something. Generally does not use numbers.
+
+<!--T:7-->
+'''Boolean''' - A true or false value, essentially "on" or "off". 
+
+<!--T:8-->
+'''Int''' - An integer, or whole number. Cannot use decimal values. 
+
+<!--T:9-->
+'''Float''' - A decimal, specifically one that does not exceed more than 1 significant digit
+
+<!--T:10-->
+'''Object''' - This is a bit more complex, but essentially objects are the items, blocks and entities that can be interacted with. In most cases, when an "object" type appears it means you must use a specific item variant code, which follows the "itemcode-variant_1-variant_2-variant_n" style of naming. 
+
+</translate>
+<table id="treeviewtable" class="table table-bordered tt-table" style='table-layout: fixed'>
+  <tr>
+    <th width='200' align='left'>Property</th>
+    <th width='120' align='left'>Type</th>
+    <th width='120' align='left'>Default</th>
+    <th width='400' align='left'>Usage</th>
+    <th align='left'>Reference</th>
+  </tr>
+  <tr>
+    <td><div class="tt" data-tt-id="root">json</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Core (no byType available)</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_code" data-tt-parent="root">code</div></td>
+    <td>string</td>
+    <td>required</td>
+    <td>A unique identifier for the block.</td>
+    <td>Any Block</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_code_info" data-tt-parent="p_code" data-invisible="true"></div></td>
+    <td colspan="4">
+A '''domain prefix''' will be added dynamically depending on the location of the file. Every mod and VintageStory itself have a unique prefix.
+
+For example the code '''<code>stone</code>''' turns into '''<code>game:stone</code>'''. 
+
+The code identifier has to be unique inside its domain. In theory there could be equal identifiers with different domain prefixes.
+Find out more about [[Basic Modding#Domains|Domains]].
+    </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_enabled" data-tt-parent="root">enabled</div></td>
+    <td>boolean</td>
+    <td>true</td>
+    <td>If the block will be loaded or not. Can be used to temporarily remove the block.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_variantgroups" data-tt-parent="root">variantgroups</div></td>
+    <td>array of objects</td>
+    <td>-</td>
+    <td>Allows you define multiple variants of the same item.</td>
+    <td>armor, ore-graded, plank, </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_variantgroups_info" data-tt-parent="p_variantgroups" data-invisible="true"></div></td>
+    <td colspan="4">
+The variantgroups property allows you to define multiple variants of this item. All of them will have their unique pattern, which will be added to the item code.
+
+An easy example would be a bowl, which can either be raw or burned:
+<syntaxhighlight lang="json">
+	code: "bowl",
+	variantgroups: [
+		{ code:"type", states: ["raw", "burned"] },
+	],
+</syntaxhighlight>
+
+Meaning there will be two variants <code>bowl-raw</code> and <code>bowl-burned</code>.
+
+----
+
+It's also possible to define multiple groups. 
+
+<syntaxhighlight lang="json">
+	code: "barrel",
+	variantgroups: [
+		{ code:"state", states: ["closed", "opened"] },
+		{ code:"contents", states: ["empty", "cabbage"] },
+	],
+</syntaxhighlight>
+
+As a result you will have 2x2 groups, which will be added one after each other: <code>barrel-closed-empty</code>, <code>barrel-closed-cabbage</code>, <code>barrel-opened-empty</code> and <code>barrel-opened-cabbage</code>.
+
+----
+
+Additionally it is possible to refer to external lists (used for blocks) that are found in the worldproperties folder, such as <code>block/rock</code>, which contains all states of all rock types. This used for <code>gravel</code>, <code>sand</code> and <code>rock</code>. It's a good way to keep everything organized:
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ loadFromProperties: "block/rock" },
+	],
+</syntaxhighlight>
+
+Here is a full list of all groups and their variants (you can also find them in the <code>assets/worldproperties</code> folder):
+{{:json:block:worldvariantgroups}}
+	
+----
+
+Furthermore there are other ways of combining groups together. So far we covered the default combination mode, which is <code>Multiply</code> (the total count of variants is the product of all states). There are two other methods, Add and SelectiveMultiply. 
+
+Let's take a look at the <code>Add</code> combination mode used in this example of a flowerpot block:
+
+<syntaxhighlight lang="json">
+	code: "flowerpot",
+	variantgroups: [
+		{ code: "type", states: ["raw"] },
+		{ code: "empty", states: ["empty"], combine: "Add" },
+		{ code: "flower", loadFromProperties: "block/flower", combine: "Add" },
+		{ code: "mushroom", loadFromProperties: "block/mushroom", combine: "Add" },
+		{ code: "sapling", loadFromProperties: "block/wood", combine: "Add" },
+	],
+</syntaxhighlight>
+
+The variants are <code>flowerpot-raw</code>, <code>flowerpot-empty</code>, <code>flowerpot-{all flowers}</code>, <code>flowerpot-{all mushrooms}</code> and <code>flowerpot-{all saplings}</code>.
+
+<code>Add</code> mode could also be called separate, since it defines a variant separate from all the other groups:
+
+<syntaxhighlight lang="json">
+	code: "thingy",
+	variantgroups: [
+		{ code: "something", states: ["same", "different"] },
+		{ code: "type", states: ["raw", "baked"] },
+		{ code: "empty", states: ["red", "green"], "combine": "Add" },
+	],
+</syntaxhighlight>
+
+In this case, the result would be <code>thingy-same-raw</code>, <code>thingy-same-baked</code>, <code>thingy-different-raw</code>, <code>thingy-different-baked</code>, <code>thingy-red</code> and <code>thingy-green</code>
+
+The third combination mode <code>"SelectiveMultiply"</code> which allows you to specify which variant groups you want to combine multiplicatively with. There are many examples of this in the clothing item JSONS, as shown below with this example of a lowerbody asset:
+
+<syntaxhighlight lang="json">
+    code: "clothes",	
+    variantgroups: [
+	{ code: "category",  states: ["lowerbody"] },
+	{ code: "lowerbody", combine: "SelectiveMultiply", onVariant: "category", states: [
+"aristocrat-leggings", "dirty-linen-trousers", "fine-trousers", "jailor-pants", "lackey-breeches", "merchant-pants", "messenger-trousers", "minstrel-pants", "noble-pants", "prince-breeches", "raindeer-trousers", "raw-hide-trousers", "shepherd-pants", "squire-pants", "steppe-shepherds-trousers", "tattered-peasent-gown", "torn-riding-pants", "warm-woolen-pants", "woolen-leggings", "workmans-gown" 
+         ] },
+	],
+</syntaxhighlight>
+
+The parameter <code>onVariant</code> specifies which variant group (by using that groups <code>code</code>) to target and the <code>code</code> specifies which of the target variant groups <code>states</code> (only one) to selectively combine with, ignoring all other variants without that specific state. 
+
+Using this will result items called <code>clothes-lowerbody-aristocrat-leggings</code>, <code>clothes-lowerbody-dirty-linen-trousers</code>, etc.
+
+'''Variant group placeholder:'''
+
+Since Vintagestory v1.8 it is also possible to use the variantgroups codes as placeholders (<code>{variant_group_code}</code>) in for example paths to textures.:
+<syntaxhighlight lang="json">
+	code: "axe",
+	variantgroups: [
+		{ code: "metal", states: ["copper", "tinbronze", "bismuthbronze", "blackbronze", "gold", "silver", "iron" ] },
+	],
+	textures: {
+		"metal": { base: "block/metal/ingot/{metal}" },
+		"wood": { base: "item/tool/material/wood" } 
+	},
+</syntaxhighlight>
+
+Now the <code>metal</code> texture path will change based on the variant. For example the variant <code>axe-copper</code> will use <code>block/metal/ingot/copper</code> as its <code>metal</code> texture.
+
+    </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_byType" data-tt-parent="root">(any) bytype</div></td>
+    <td>key: string; value: object</td>
+    <td>-</td>
+    <td>You can create properties for certain variants of the item.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_byType_info" data-tt-parent="p_byType" data-invisible="true"></div></td>
+    <td colspan="4">
+In order to define properties for specific variants you can add '''byType''' to the property name. This allows you to define it depending on the type and always follows the same syntax:
+<syntaxhighlight lang="json">
+	(property)ByType: {
+		"selector": property,
+		"selector2": property2,
+		...
+	}
+</syntaxhighlight>
+
+If the selector matches the name of the variant the given property will be used. Keep in mind that only the first matching one will be used (everything below will be ignored).
+
+A slab for example has two variants ('''up''', '''down'''), which have different collision boxes:
+<syntaxhighlight lang="json">
+	collisionboxByType: {
+		"*-down": { x1: 0, y1: 0, z1: 0,   x2: 1, y2: 0.5, z2: 1 },
+		"*-up": { x1: 0, y1: 0.5, z1: 0,   x2: 1, y2: 1, z2: 1 }
+	},
+</syntaxhighlight>
+
+The char '''<code>*</code>''' stands for anything. In this case it ignores the code of the item.
+
+Furthermore this opens up even more possbilities for more advanced selectors like this one for doors:
+<code>*-north-*-opened-left</code>. This will ignore the second variantgroup. Additionally ByType can also be used for child properties:
+<syntaxhighlight lang="json">
+	collisionboxnbox: { 
+		x1: 0, y1: 0, z1: 0.875, x2: 1, y2: 1, z2: 1,
+		rotateYByType: {
+			"*-north-*-opened-left": 90,
+			"*-north-*-closed-left": 0,
+			"*-west-*-opened-left": 180,
+			"*-west-*-closed-left": 90,
+
+			"*-east-*-opened-left": 0,
+			"*-east-*-closed-left": 270,
+			"*-south-*-opened-left": 270,
+			"*-south-*-closed-left": 180,
+
+			"*-north-*-opened-right": 270,
+			"*-north-*-closed-right": 0,
+			"*-west-*-opened-right": 0,
+			"*-west-*-closed-right": 90,
+
+			"*-east-*-opened-right": 180,
+			"*-east-*-closed-right": 270,
+			"*-south-*-opened-right": 90,
+			"*-south-*-closed-right": 180
+		}
+	},
+</syntaxhighlight>
+
+    </td>
+  </tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_allowedVariants" data-tt-parent="root">allowedVariants</div></td>
+   <td>array of strings</td>
+   <td>-</td>
+   <td>Used to trim unnecessary items generated by combined variants. </td>
+   <td>crystalizedore-graded, ore-graded, ore-ungraded</td>
+</tr>
+<tr> 
+    <td scope="row"><div class="tt" data-tt-id="p_allowedVariants_info" data-tt-parent="p_allowedVariants" data-invisible="true"></div></td>
+    <td colspan="4">
+By using the <code>allowedVariants</code> you can specify which variants you want to be generated. Looks at this example of different armor parts (uses both <code>allowedVariants</code> and <code>skipVariants</code>):
+<syntaxhighlight lang="json">
+	code: "armor",
+	variantgroups: [
+		{ code: "bodypart",  states: ["head", "body", "legs"] },
+		{ code: "construction",  states: [
+			"improvised",
+			"jerkin",
+			"lamellar",
+			"sewn",
+			"brigandine",
+			"chain",
+			"scale",
+			"plate"
+		]},
+		{ code: "material", states: [
+			"wood",
+			"leather",
+			"linen",
+			"copper",
+			"tinbronze",
+			"bismuthbronze",
+			"blackbronze",
+			"iron",
+			"steel",
+			"gold",
+			"silver"
+		]},
+	],
+	skipVariants: [
+		"armor-*-brigandine-leather",
+		"armor-*-brigandine-linen",
+		"armor-*-brigandine-wood",
+		"armor-*-brigandine-gold",
+		"armor-*-brigandine-silver",
+		"armor-*-chain-leather",
+		"armor-*-chain-linen",
+		"armor-*-chain-wood",
+		
+		"armor-*-scale-leather",
+		"armor-*-scale-linen",
+		"armor-*-scale-wood",
+		"armor-*-scale-gold",
+		"armor-*-scale-silver",
+		
+		"armor-*-plate-leather",
+		"armor-*-plate-linen",
+		"armor-*-plate-wood",
+		"armor-*-sewn-wood",
+	],
+	allowedVariants: [
+		"armor-body-improvised-wood",
+		
+		"armor-body-jerkin-leather",
+		"armor-legs-jerkin-leather",
+		
+		"armor-*-lamellar-wood",
+		"armor-*-lamellar-copper",
+		"armor-*-lamellar-tinbronze",
+		"armor-*-lamellar-bismuthbronze",
+		"armor-*-lamellar-blackbronze",
+
+		"armor-*-sewn-linen",
+		"armor-*-sewn-leather",
+		
+		"armor-*-scale-*",
+		"armor-*-chain-*",
+		"armor-*-plate-*",
+		"armor-*-brigandine-*",
+	],</syntaxhighlight>
+
+The wildcard char '''<code>*</code>''' stands for anything, and can be used to target many variants with one string instead of having to write them all down.
+    </td>
+  </tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_skipVariants" data-tt-parent="root">skipVariants</div></td>
+   <td>array of strings</td>
+   <td>-</td>
+   <td>Similar to allowedVariants, but instead skips the creation of listed variants rather than assigning which are allowed. </td>
+   <td>armor</td>
+</tr>
+<tr> 
+    <td scope="row"><div class="tt" data-tt-id="p_skipVariants_info" data-tt-parent="p_skipVariants" data-invisible="true"></div></td>
+    <td colspan="4">
+By using the <code>skipVariants</code> you can specify which variants you do NOT want to be generated. For an example look above under <code>allowedVariants</code> which shows both <code>allowedVariants</code> and <code>skipVariants</code> in use at the same time.
+    </td>
+  </tr>
+  <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Specific</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_class" data-tt-parent="root">class</div></td>
+    <td>string</td>
+    <td>&quot;block&quot;</td>
+    <td>The block class can add special functionalities for the block.</td>
+    <td>anvil, firepit, quern, skep</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_class_info" data-tt-parent="p_class" data-invisible="true"></div></td>
+    <td colspan="4">
+It can be used to open guis or adding other extra functionality to the block. A complete tutorial of how to add your own class to the game can be found [[Advanced Blocks|here]]. An ongoing list of block classes used in JSONS can also be found [[Block Classes|here]].
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_entityclass" data-tt-parent="root">entityclass</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>The block entity class is able to tick and to store extra data. Allows for much more advanced properties.</td>
+    <td>anvil, firepit, quern, skep</td>
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_behaviors" data-tt-parent="root">behaviors</div></td>
+    <td>array of object</td>
+    <td>-</td>
+    <td>A behavior adds custom abilities such as falling block.</td>
+    <td>gravel, lantern, log, rock, torch</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_behaviors_info" data-tt-parent="p_behaviors" data-invisible="true"></div></td>
+    <td colspan="4">
+Behaviors are useful traits as many can be assigned to a single block. If you want to create your own custom behavior you can read [[Adding Block Behavior]].
+To see all of the current behaviors in the game see [[Json:block:behaviors|All Block Behaviors]]
+	</td>
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_ebehaviors" data-tt-parent="root">entityBehaviors</div></td>
+    <td>array of object</td>
+    <td>-</td>
+    <td>An entity behavior adds custom abilities to an entity assigned to a block, such as the mechanical power properties of the windmill.</td>
+    <td>angledgears, axle, brake, clutch, helvehammerbase, toggle, transmission, windmillrotor</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_ebehaviors_info" data-tt-parent="p_ebehaviors" data-invisible="true"></div></td>
+    <td colspan="4">
+Block entity behaviors are expanded capabilities that regular behaviors cannot accomplish. At the moment they are only used for Mechanical Power blocks, but if you're looking to make your own you can look through the existing files at the Vintage Story Github [https://github.com/anegostudios/vssurvivalmod/tree/master/Systems/MechanicalPower/BlockEntityBehavior here ].
+
+To see all of the current block entity behaviors in the game see [[Modding:Block_Entity_Behaviors|All Block Entity Behaviors]].
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_entityclass_info" data-tt-parent="p_entityclass" data-invisible="true"></div></td>
+    <td colspan="4">
+A chest for example uses the BlockEntity to store the inventory. A tutorial of creating your own entityclass can be found [[Block Entity|here]]. You can also find every existing block entity and their relevant github links [[Block Entities|here]].
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blockmaterial" data-tt-parent="root">blockmaterial</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>A behavior adds custom abilities such as falling block.</td>
+    <td>gravel</td>    
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blockmaterial_info" data-tt-parent="p_blockmaterial" data-invisible="true"></div></td>
+    <td colspan="4">
+Materials are hardcoded and currently only used to determine mining speed with a specific tool. The following materials are available:
+
+''Brick, Ceramic, Cloth, Fire, Glass, Gravel, Ice, Lava, Leaves, Liquid, Mantle, Metal, Other, Plant, Sand, Snow, Soil, Stone, Wood''
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_matterstate" data-tt-parent="root">matterstate</div></td>
+    <td>array of object</td>
+    <td>&quot;block&quot;</td>
+    <td>Determines whether the block is in a '''''solid''''', a '''''liquid''''', a '''''gas''''' or a '''''plasma''''' state.</td>
+    <td> water </td>
+  </tr>
+ <tr>
+ <td scope="row"><div class="tt" data-tt-id="p_blockmaterial_info" data-tt-parent="p_blockmaterial" data-invisible="true"></div></td>
+    <td colspan="4">
+Used for special collision behavior and rendering. Currently used for lava and water, which are liquids (All other blocks default to solid).
+
+Gas and plasma are not yet implemented.
+    </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_resistance" data-tt-parent="root">resistance</div></td>
+    <td>decimal number</td>
+    <td>6</td>
+    <td>How long it takes to break this block in seconds (with a mining speed of 1).</td>
+    <td>leaves, meteorite, sand</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_resistance_info" data-tt-parent="p_resistance" data-invisible="true"></div></td>
+    <td colspan="4">
+Resistance values range from very low with leaves (0.5) to the average of stone (6) to the very high resistance value of meteoric iron deposits (60).
+    </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_requiredminingtier" data-tt-parent="root">requiredminingtier</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td>Minimum required mining tier to get the drop out of the block.</td>
+    <td>ore-graded, rock</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_requiredminingtier_info" data-tt-parent="p_requiredminingtier" data-invisible="true"></div></td>
+    <td colspan="4">
+The following are examples of the mining tiers required for certian ores in Vintage Story:
+
+<table class="wikitable">
+  <tr style="background-color: rgba(0,0,0,0.2);">
+    <th style="background-color: rgba(0,0,0,0.2);">Tier</th>
+    <th style="background-color: rgba(0,0,0,0.2);">Ores</th>
+  </tr>
+  <tr>
+    <td>'''1'''</td>
+	<td>'''''galena''''' and '''''rocksalt_sylvite'''''</td>
+  </tr>
+  <tr>
+    <td>'''2'''</td>
+	<td>'''''lignite''''', '''''cassiterite''''', '''''sphalerite''''', '''''rocksalt''''', '''''sulfur''''' and '''''nativecopper'''''</td>
+  </tr>
+  <tr>
+    <td>'''3'''</td>
+	<td>'''''bituminouscoal''''', '''''quartz_nativegold''''', '''''quartz_nativesilver''''', '''''lapislazuli''''', '''''bismuthinite''''', '''''quartz''''', '''''magnetite''''' and '''''limonite'''''</td>
+  </tr>
+  <tr>
+    <td>'''4'''</td>
+	<td>'''''diamond''''' and '''''emerald'''''</td>
+  </tr>
+  <tr>
+    <td>'''5'''</td>
+	<td>'''''chromite''''', '''''platinum''''' and '''''ilmenite'''''</td>
+  </tr>
+</table>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_climbable" data-tt-parent="root">climbable</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true, walking against this block will make the player climb (used for ladders).</td>
+    <td>ladder</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_rainpermeable" data-tt-parent="root">rainpermeable</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If rain can fall through this block.</td>
+    <td>torch, torchholder</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_snowcoverage" data-tt-parent="root">snowcoverage</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>Whether snow may rest on top of this block.</td>
+    <td>leavesbranchy</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_snowcoverage_info" data-tt-parent="p_snowcoverage" data-invisible="true"></div></td>
+    <td colspan="4">
+All non-solid blocks can't be covered by snow unless it's defined different:
+*Leaves (also branchy): '''true''',
+*Water with particles, Lakeice: '''false'''
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_collisionbox" data-tt-parent="root">collisionbox</div></td>
+    <td>object</td>
+    <td>box (0,0,0 -> 1,1,1)</td>
+    <td>Defines a box with which the player collides with.</td>
+    <td>carcass, door, fence, all slabs</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_collisionbox_info" data-tt-parent="p_collisionbox" data-invisible="true"></div></td>
+    <td colspan="4">
+A '''half slab''' for example, has either a box going from 0,0,0 to 1,0.5,1 or going from 0,0.5,0 to 1,1,1, depending on whether it is a slab is down or up:
+<syntaxhighlight lang="json">
+	collisionboxByType: {
+		"*-down": { x1: 0, y1: 0, z1: 0,   x2: 1, y2: 0.5, z2: 1 },
+		"*-up": { x1: 0, y1: 0.5, z1: 0,   x2: 1, y2: 1, z2: 1 }
+	},
+</syntaxhighlight>
+
+Collision and selection boxes are most likely equal.
+
+Also, setting the entire property to <code>null</code> will eliminate the collision box entirely.
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_collisionboxes" data-tt-parent="root">collisionboxes</div></td>
+    <td>array of object</td>
+    <td>-</td>
+    <td>Defines multiple boxes with which the player collides with.</td>
+    <td>all stairs, crate</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_collisionboxes_info" data-tt-parent="p_collisionboxes" data-invisible="true"></div></td>
+    <td colspan="4">
+A '''crate''' for example requires multiple collision boxes:
+<syntaxhighlight lang="json">
+collisionboxesByType: {
+  "*-opened": [ 
+    { x1: 0, y1: 0, z1: 0, x2: 1, y2: 0.0625, z2: 1 },
+    { x1: 0, y1: 0, z1: 0, x2: 1, y2: 1, z2: 0.0625 },
+    { x1: 0, y1: 0, z1: 0, x2: 1, y2: 1, z2: 0.0625, rotateY: 90 },
+    { x1: 0, y1: 0, z1: 0, x2: 1, y2: 1, z2: 0.0625, rotateY: 180 },
+    { x1: 0, y1: 0, z1: 0, x2: 1, y2: 1, z2: 0.0625, rotateY: 270 },
+  ]
+},
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_collisionselectionboxes" data-tt-parent="root">collisionSelectionBoxes</div></td>
+    <td>array of object</td>
+    <td>-</td>
+    <td>Simultaneously defines multiple boxes with which the player collides with and can select.</td>
+    <td>all stairs</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_colselsboxes_info" data-tt-parent="p_collisionselectionboxes" data-invisible="true"></div></td>
+    <td colspan="4">
+A '''crate''' for example requires multiple collision boxes:
+<syntaxhighlight lang="json">
+	collisionSelectionBoxesByType: {
+		"*-down-*": [
+			{ x1: 0, y1: 0.5, z1: 0, x2: 1, y2: 1, z2: 1 },
+			{ 
+				x1: 0, y1: 0, z1: 0.5, x2: 1, y2: 0.5, z2: 1, 
+				rotateYByType: {
+					"*-north": 180,
+					"*-east": 90,
+					"*-south": 0,
+					"*-west": 270,
+				}
+			}			
+		],
+		"*-up-*": [
+			{ x1: 0, y1: 0, z1: 0, x2: 1, y2: 0.5, z2: 1 },
+			{ 
+				x1: 0, y1: 0.5, z1: 0.5, x2: 1, y2: 1, z2: 1, 
+				rotateYByType: {
+					"*-north": 180,
+					"*-east": 90,
+					"*-south": 0,
+					"*-west": 270,
+				}
+			}
+		],	
+	},
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_selectionbox" data-tt-parent="root">selectionbox</div></td>
+    <td>object</td>
+    <td>box (0,0,0 -> 1,1,1)</td>
+    <td>Defines a box which the player's mouse pointer collides with for selection.</td>
+    <td>carcass, door, fence, all slabs</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_selectionbox_info" data-tt-parent="p_selectionbox" data-invisible="true"></div></td>
+    <td colspan="4">
+A '''half slab''' for example, has either a box going from 0,0,0 to 1,0.5,1 or going from 0,0.5,0 to 1,1,1, depending on whether it is a slab is down or up:
+<syntaxhighlight lang="json">
+	selectionboxByType: {
+		"*-down": { x1: 0, y1: 0, z1: 0,   x2: 1, y2: 0.5, z2: 1 },
+		"*-up": { x1: 0, y1: 0.5, z1: 0,   x2: 1, y2: 1, z2: 1 }
+	},
+</syntaxhighlight>
+
+Collision and selection boxes are most likely equal.
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_selectionboxes" data-tt-parent="root">selectionboxes</div></td>
+    <td>array of object</td>
+    <td>-</td>
+    <td>Defines multiple boxes which the player's mouse pointer collides with for selection.</td>
+    <td>carcass, door, fence, all slabs</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_selectionboxes_info" data-tt-parent="p_selectionboxes" data-invisible="true"></div></td>
+    <td colspan="4">
+A '''crate''' for example requires multiple selection boxes:
+<syntaxhighlight lang="json">
+	selectionboxesByType: {
+		"*-opened": [ 
+			{ x1: 0, y1: 0, z1: 0, x2: 1, y2: 0.0625, z2: 1 },
+			{ x1: 0, y1: 0, z1: 0, x2: 1, y2: 1, z2: 0.0625 },
+			{ x1: 0, y1: 0, z1: 0, x2: 1, y2: 1, z2: 0.0625, rotateY: 90 },
+			{ x1: 0, y1: 0, z1: 0, x2: 1, y2: 1, z2: 0.0625, rotateY: 180 },
+			{ x1: 0, y1: 0, z1: 0, x2: 1, y2: 1, z2: 0.0625, rotateY: 270 },
+		]
+	},
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_replaceable" data-tt-parent="root">replaceable</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td>A value usually between 0-9999 that indicates which blocks may be replaced with others.</td>
+    <td>bigberrybush, tallgrass, water</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_replaceable_info" data-tt-parent="p_replaceable" data-invisible="true"></div></td>
+    <td colspan="4">
+<table class="wikitable">
+  <tr style="background-color: rgba(0,0,0,0.2);">
+    <th style="background-color: rgba(0,0,0,0.2);">value</th>
+    <th style="background-color: rgba(0,0,0,0.2);">effect (blocks)</th>
+  </tr>
+  <tr>
+    <td>'''0'''</td>
+	<td>'''''ordinary blocks''''' (stone for example)</td>
+  </tr>
+  <tr>
+    <td>'''5000'''</td>
+	<td>Everything equal or above will be washed away by water (such as '''''Fruit''''').</td>
+  </tr>
+  <tr>
+    <td>'''6000'''</td>
+	<td>Everything equal or above wwill replaced when the player tries to place a block (such as '''''Tallgrass''''').</td>
+  </tr>
+  <tr>
+    <td>'''9000'''</td>
+	<td>'''''Lava'''''</td>
+  </tr>
+  <tr>
+    <td>'''9500'''</td>
+	<td>'''''Water'''''</td>
+  </tr>
+  <tr>
+    <td>'''9999'''</td>
+	<td>'''''Air'''''</td>
+  </tr>
+</table>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_fertility" data-tt-parent="root">fertility</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td>Which plants can grow on top of this block.</td>
+    <td>clay, gravel, sand, soil</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_fertility_info" data-tt-parent="p_fertility" data-invisible="true"></div></td>
+    <td colspan="4">
+<table class="wikitable">
+  <tr style="background-color: rgba(0,0,0,0.2);">
+    <th style="background-color: rgba(0,0,0,0.2);">value</th>
+    <th style="background-color: rgba(0,0,0,0.2);">effect</th>
+  </tr>
+  <tr>
+    <td>'''0'''</td>
+	<td>''(rock) nothing can grow.''</td>
+  </tr>
+  <tr>
+    <td>'''10'''</td>
+	<td>''(sand) some tallgrass and small trees can be grow on it.''</td>
+  </tr>
+  <tr>
+    <td>'''100'''</td>
+	<td>''(soil) all grass and trees can grow on it.''</td>
+  </tr>
+</table>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_lightabsorption" data-tt-parent="root">lightabsorption</div></td>
+    <td>0 ... 32</td>
+    <td>0</td>
+    <td>For light blocking blocks. Any value above 32 will completely block all light.</td>
+    <td>full-plain (glass), water </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_walkspeedmultiplier" data-tt-parent="root">walkspeedmultiplier</div></td>
+    <td>decimal number</td>
+    <td>1.0</td>
+    <td>Percentage walk-speed when standing on or inside this block.</td>
+    <td>path, spiderweb, stonepath </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_walkspeedmultiplier_info" data-tt-parent="p_walkspeedmultiplier" data-invisible="true"></div></td>
+    <td colspan="4">
+<table class="wikitable">
+  <tr style="background-color: rgba(0,0,0,0.2);">
+    <th style="background-color: rgba(0,0,0,0.2);">blocks</th>
+    <th style="background-color: rgba(0,0,0,0.2);">value</th>
+  </tr>
+  <tr>
+    <td>''Spiderweb''</td>
+	<td>'''0.25'''</td>
+  </tr>
+  <tr>
+    <td>''Stonepath''</td>
+	<td>'''1.15'''</td>
+  </tr>
+</table>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_dragmultiplier" data-tt-parent="root">dragmultiplier</div></td>
+    <td>decimal number</td>
+    <td>1.0</td>
+    <td>Drag multiplier applied to entities standing on it (slipperiness factor).</td>
+    <td>Glacierice, Lakeice</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_dragmultiplier_info" data-tt-parent="p_dragmultiplier" data-invisible="true"></div></td>
+    <td colspan="4">
+<table class="wikitable">
+  <tr style="background-color: rgba(0,0,0,0.2);">
+    <th style="background-color: rgba(0,0,0,0.2);">blocks</th>
+    <th style="background-color: rgba(0,0,0,0.2);">value</th>
+  </tr>
+  <tr>
+    <td>''Glacierice'', ''Lakeice''</td>
+	<td>'''0.02'''</td>
+  </tr>
+</table>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_drops" data-tt-parent="root">drops</div></td>
+    <td>array of object</td>
+    <td>-</td>
+    <td>The items that should drop from breaking this block.</td>
+    <td>crops, skep</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_drops_info" data-tt-parent="p_drops" data-invisible="true"></div></td>
+    <td colspan="4">
+
+'''Drop itself'''
+
+If this property does not exist the block will drop itself.
+
+----
+
+'''No drop'''
+
+A '''firepit''' for example doesn't drop anything. You can do so if you specify an empty array:
+<syntaxhighlight lang="json">
+	drops: [],
+</syntaxhighlight>
+
+----
+
+'''Special drop'''
+
+You can also specify a special item/ block. Therefore you need to define an '''ItemStack''', with the given properties:
+
+<table class="wikitable">
+  <tr style="background-color: rgba(0,0,0,0.2);">
+    <th style="background-color: rgba(0,0,0,0.2);">property</th>
+    <th style="background-color: rgba(0,0,0,0.2);">default</th>
+	<th style="background-color: rgba(0,0,0,0.2);">explanation</th>
+  </tr>
+  <tr>
+    <td>'''type'''</td>
+	<td>''block''</td>
+	<td>Can either be '''''block''''' or '''''item'''''.</td>
+  </tr>
+  <tr>
+    <td>'''code''' (required)</td>
+	<td>-</td>
+	<td>The complete code (can also include domain) of the item or block.</td>
+  </tr>
+  <tr>
+    <td>'''lastdrop'''</td>
+	<td>false</td>
+	<td>If true and the quantity dropped is >=1 any subsequent drop in the list will be ignored.</td>
+  </tr>
+  <tr>
+    <td>'''attributes'''</td>
+	<td>-</td>
+	<td>Tree Attributes that will be attached to the resulting itemstack.</td>
+  </tr>
+  <tr>
+    <td>'''tool'''</td>
+	<td>-</td>
+	<td>If specified then given tool is required to break this block.</td>
+  </tr>
+  <tr>
+    <td>'''quantity'''</td>
+	<td>- (one)</td>
+	<td>Determines the quantity of items which will be dropped.</td>
+  </tr>
+</table>
+
+For example, the drop of a '''charcoalpile''' looks like this:
+
+<syntaxhighlight lang="json">
+	drops: [
+		{ type: "item", code: "charcoal" }
+	],
+</syntaxhighlight>
+
+'''Tallgrass''' will only drop something if it's mined by a knife:
+
+<syntaxhighlight lang="json">
+	drops: [
+		{ type: "item", code: "drygrass", tool: "knife"  },
+	],
+</syntaxhighlight>
+
+----
+
+'''Chance drops'''
+
+Let's take a look at an example. This is the drop property of rock:
+
+<syntaxhighlight lang="json">	
+	drops: [
+		{
+			type: "item", 
+			code: "stone-{rock}", 
+			quantity: { avg: 2.5, var: 0.5 } 
+		},
+	]
+</syntaxhighlight>
+
+This will drop 2-3 blocks.
+
+'''''avg''''': Stands for the default drop quantity. If var is 0 or not specified it will always drop the given average.
+
+'''''var''''': How much the drop rate can vary. Meaning the drop rate can be <code>avg - var</code> at minimum and <code>age + var</code> at maximum.
+
+For more information see [[NatFloat]] page.
+
+----
+	
+'''Multiple Drops'''
+
+Of course you can also define multiple drops at once. '''Sapling''' can drop a sapling and a stick:
+
+<syntaxhighlight lang="json">
+	drops: [
+		{ 
+			type: "block", 
+			code: "sapling-{wood}",
+			quantity: { avg: 0.02, var: 0 },
+		},
+		{ 
+			type: "item", 
+			code: "stick",
+			quantity: { avg: 0.02, var: 0 },
+		}
+	],
+</syntaxhighlight>
+
+----
+
+'''Last Drop'''
+
+In order to add a special drop, which (if dropped) prevents all other drops, you can use the lastDrop property:
+
+<syntaxhighlight lang="json">
+dropsByType: {
+	"ore-quartz-*": [
+		{ type: "item", code: "clearquartz",  quantity: { avg: 0.2, var: 0 }, lastDrop: true },
+		{ type: "item", code: "ore-{ore}",  quantity: { avg: 1.25, var: 0 }  }
+	],
+	"*": [ 
+		{ type: "item", code: "ore-{ore}",  quantity: { avg: 1.25, var: 0 }  }
+	],
+}
+</syntaxhighlight>
+
+Quartz ore will drop with a 20% chance clearquartz, if not it will drop the regular ore. If lastDrop wouldn't be true it could drop both at the same time.
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_particleproperties" data-tt-parent="root">particleproperties</div></td>
+    <td>array of object</td>
+    <td>-</td>
+    <td>Particles that should spawn in regular intervals from this block.</td>
+    <td>torch>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_particleproperties_info" data-tt-parent="p_particleproperties" data-invisible="true"></div></td>
+    <td colspan="4">
+{{:json:block:particle}}
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_liquidlevel" data-tt-parent="root">liquidlevel</div></td>
+    <td>0 ... 7</td>
+    <td>0</td>
+    <td>Value between 0...7 for Liquids to determine the height of the liquid.</td>
+    <td>water</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_cropprops" data-tt-parent="root">cropprops</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>Information about the block as a crop.</td>
+    <td>all crops</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_cprops_reqN" data-tt-parent="p_cropprops">requiredNutrient</div></td>
+    <td>Nutrient (N, P, or K)</td>
+    <td>-</td>
+    <td>The primary nutrient this crop uses and consumes from farmland.</td>
+    <td>all crops</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_cprops_consume" data-tt-parent="p_cropprops">nutrientConsumption</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The percentage value of the nutrient this plant will consume from farmland. This value should be whole, as in 50 = 50% consumption.</td>
+    <td>all crops</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_cprops_gstages" data-tt-parent="p_cropprops">growthStages</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The number of growth stages this plant will go through before it can be harvested.</td>
+    <td>all crops</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_cprops_gdays" data-tt-parent="p_cropprops">totalGrowthDays</div></td>
+    <td>Number</td>
+    <td>-</td>
+    <td>The average number of days required for a plant to reach maturity. This value can include decimals, such as 4.5 days.</td>
+    <td>all crops</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_cprops_behaviors" data-tt-parent="p_cropprops">behaviors (crop)</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Crops can have additional functionality with special crop behaviors, currently used only by pumpkins.</td>
+    <td>motherplant (pumpkin)</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_pumpkin" data-tt-parent="p_cprops_behaviors">Pumpkin</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>A unique pumpkin behavior utilize only by the pumpkin motherplant block.</td>
+    <td>motherplant (pumpkin)</td>
+  </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_pumpkin_info" data-tt-parent="p_pumpkin" data-invisible="true"></div></td>
+<td colspan="4">
+The most advanced of crops! Pumpkins utilize a special crop behavior allowing the mother plant to generate vines that will eventually produce pumpkin "fruits":
+
+<syntaxhighlight lang="json">
+cropProps: {
+  behaviors: [{name: "Pumpkin", properties: {vineGrowthStage: 3, vineGrowthQuantity: { dist: "invexp", avg: 2, var: 3  } }}],
+  requiredNutrient: "P",
+  nutrientConsumption: 30,
+  growthStages: 8,
+  totalGrowthDays: 3.5,
+},
+</syntaxhighlight>
+
+We can see that the special behavior defines how many vines can be produced by one pumpkin motherplant.
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_inside" data-tt-parent="p_sounds">inside</div></td>
+    <td colspan="4">The player is inside the block.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds" data-tt-parent="root">sounds</div></td>
+    <td>key: string, value: string</td>
+    <td>-</td>
+    <td>The sounds played for this block during step, break, build and walk.</td>
+    <td>anvil, rock, water</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_walk" data-tt-parent="p_sounds">walk</div></td>
+    <td colspan="4">An entity walks over it.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_inside" data-tt-parent="p_sounds">inside</div></td>
+    <td colspan="4">The player is inside the block.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_break" data-tt-parent="p_sounds">break</div></td>
+    <td colspan="4">Breaking the block.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_place" data-tt-parent="p_sounds">place</div></td>
+    <td colspan="4">Placing the block.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_hit" data-tt-parent="p_sounds">hit</div></td>
+    <td colspan="4">While mining the block.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_bytool" data-tt-parent="p_sounds">byTool</div></td>
+    <td colspan="4">Allows different sounds to be made based off the tool that's being used.</td>
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_bytool_info" data-tt-parent="p_sounds_bytool" data-invisible="true"></div></td>
+    <td colspan="4">
+
+We'll use the "rock" block as an example:
+
+<syntaxhighlight lang="json">
+sounds: {
+  walk: "walk/stone",
+  byTool: {
+    "Pickaxe": { hit: "block/rock-hit-pickaxe", break: "block/rock-break-pickaxe" }
+  }
+},
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_ambient" data-tt-parent="p_sounds">ambient</div></td>
+    <td colspan="4">Played from time to time if the player is close to it.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_ambient" data-tt-parent="p_sounds">ambientBlockCount</div></td>
+    <td colspan="4">The max number of blocks allowed to produce ambient sounds.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds_info" data-tt-parent="p_sounds" data-invisible="true"></div></td>
+    <td colspan="4">
+Here's a few examples of how different blocks have their own sound properties:
+
+'''Anvil''':
+<syntaxhighlight lang="json">
+    sounds: {
+        "place": "block/anvil",
+        "break": "block/anvil"
+    }
+</syntaxhighlight>
+
+'''Rails''':
+<syntaxhighlight lang="json">
+    sounds: {
+        place": "block/planks",
+        "walk": "walk/wood"
+    }
+</syntaxhighlight>
+
+'''Water''':
+<syntaxhighlight lang="json">
+    sounds: {
+        place: "block/water",
+        inside: "walk/water",
+        ambient: "environment/creek"
+    },
+</syntaxhighlight>
+	</td>
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_cprops_gstages" data-tt-parent="root">liquidCode</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>An identifier for other liquids to utilize during collisions.</td>
+    <td>lava, water</td>
+  </tr>
+  <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Common</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_creativeinventory" data-tt-parent="root">creativeinventory</div></td>
+    <td>key: string, value: string[]</td>
+    <td>-</td>
+    <td>In which creative inventory tabs the block should be visible in.</td>
+    <td>all blocks</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_creativeinventory_info" data-tt-parent="p_creativeinventory" data-invisible="true"></div></td>
+    <td colspan="4">
+There are several tabs to you can add your stuff. Note that general should always be included, since it should contain everything.
+
+*general
+*terrain
+*flora
+*construction
+*decorative
+*items
+
+'''Rock''' adds all of it's variantions to general, terrain and construction:
+<syntaxhighlight lang="json">
+	creativeinventory: { "general": ["*"], "terrain": ["*"], "construction": ["*"] },
+</syntaxhighlight>
+
+'''<code>*</code>''' reprents the variants which will be added. You can specify multiple and separate them with a comma. It follows the same way as the '''byType''' property.
+
+A '''Torch''' on the other hand only adds the variation '''<code>up</code>''':
+<syntaxhighlight lang="json">
+	creativeinventory: { "general": ["*-up"], "decorative": ["*-up"] },
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_creativestacks" data-tt-parent="root">CreativeInventoryStacks</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>If you want to add itemstacks with custom attributes to the creative inventory, add them to this list.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_notincreative" data-tt-parent="root">notCreateveInventoryStacks</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Prevents the variant from being included in the creative inventory.</td>
+    <td>tapestry</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_maxstacksize" data-tt-parent="root">maxstacksize</div></td>
+    <td>integer</td>
+    <td>64</td>
+    <td>Determines the maximum amount you can stack the block in one slot.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attackpower" data-tt-parent="root">attackpower</div></td>
+    <td>decimal number</td>
+    <td>0.5</td>
+    <td>The damage the deals when hitting an entity.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attackrange" data-tt-parent="root">attackrange</div></td>
+    <td>decimal number</td>
+    <td>1.5</td>
+    <td>The maximum distance you can hit an entity.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_materialdensity" data-tt-parent="root">materialdensity</div></td>
+    <td>integer</td>
+    <td>9999</td>
+    <td>Determines on whether an object floats on liquids or not.</td>
+    <td>hay, planks, lava, water</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_materialdensity_info" data-tt-parent="p_materialdensity" data-invisible="true"></div></td>
+    <td colspan="4">
+Water has a density of 1000, meaning everything below or equal will float on water. The same goes for lava which has a density of 5000.
+
+Vintage story uses real world densities for each material (where 1000 = 1 g/cm^3). To give an idea of the current range of densities, gold has a density of 19300, iron's is 7870, and a feather is 20. 
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_liquidselectable" data-tt-parent="root">liquidselectable</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If the block can select a liquid while holding it in hand.</td>
+    <td>bucket</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_liquidselectable_info" data-tt-parent="p_liquidselectable" data-invisible="true"></div></td>
+    <td colspan="4">
+Used for buckets in order to fill it with water and to place waterlily on top of water.
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_miningspeed" data-tt-parent="root">miningSpeed</div></td>
+    <td>key: string, value: decimal number</td>
+    <td>-</td>
+    <td>The mining speed for each material. Not to be confused with ''resistance'', which determines how long it takes to mine the block.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_miningspeed" data-tt-parent="root">miningTier</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td>Determines which blocks it can break. If the required miningtier is above the defined one there will be no drop from it.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_combustibleprops" data-tt-parent="root">combustibleprops</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>Information about the blocks burnable states.</td>
+    <td>log, wooden objects</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_burntemperature" data-tt-parent="p_combustibleprops">burntemperature</div></td>
+    <td>integer</td>
+    <td>-</td>
+    <td>The temperature at which it burns in degrees Celsius.</td>
+    <td>log, wooden objects</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_burnduration" data-tt-parent="p_combustibleprops">burnduration</div></td>
+    <td>decimal number</td>
+    <td>-</td>
+    <td>For how long it burns in seconds.</td>
+    <td>log, wooden objects</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_heatresistance" data-tt-parent="p_combustibleprops">heatresistance</div></td>
+    <td>integer</td>
+    <td>500</td>
+    <td>How many degrees celsius it can resists before it ignites (not implemented yet).</td>
+    <td>log, wooden objects</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_meltingpoint" data-tt-parent="p_combustibleprops">meltingpoint</div></td>
+    <td>integer</td>
+    <td>-</td>
+    <td>How many degrees celsius it takes to smelt/transform this into another. Only used when put in a firepit and SmeltedStack is set.</td>
+    <td>ingotmold, toolmold</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_meltingduration" data-tt-parent="p_combustibleprops">meltingduration</div></td>
+    <td>decimal number</td>
+    <td>-</td>
+    <td>For how many seconds the temperature has to be above the melting point until the item is smelted.</td>
+    <td>ingotmold, toolmold</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_smokelevel" data-tt-parent="p_combustibleprops">smokelevel</div></td>
+    <td>decimal number</td>
+    <td>1</td>
+    <td>How much smoke this item produces when being used as fuel.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_smeltedratio" data-tt-parent="p_combustibleprops">smeltedratio</div></td>
+    <td>integer</td>
+    <td>1</td>
+    <td>How many ores are required to produce one output stack.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_liquidlevel" data-tt-parent="p_combustibleprops">smeltedstack</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>If set, the block/item is smeltable in a furnace and this is the resulting itemstack once the MeltingPoint has been reached for the supplied duration.</td>
+    <td>ingotmold, toolmold</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_requirescontainer" data-tt-parent="p_combustibleprops">requirescontainer</div></td>
+    <td>boolean</td>
+    <td>true</td>
+    <td>If set to true, the block/item requires a smelting/cooking/baking container such as the Crucible. If false, it can be directly baked/melted without smelting/cooking/baking container.</td>
+    <td>ingotmold, toolmold</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_combustibleprops_info" data-tt-parent="p_combustibleprops" data-invisible="true"></div></td>
+    <td colspan="4">
+This property can be used to define a burning material. '''Plank''' for example can get on fire:
+<syntaxhighlight lang="json">
+    combustibleProps: {
+        burnTemperature: 800,
+        burnDuration: 12,
+    },
+</syntaxhighlight>
+
+Furthermore it can be used to define smelting processes. An example would be an '''ingotmold''' which turns into an ingotmold-burned:
+<syntaxhighlight lang="json">
+    combustiblePropsByType: {
+        "ingotmold-raw": {
+            meltingPoint: 600,
+            meltingDuration: 30,
+            smeltedRatio: 1,
+            smeltedStack: { type: "block", code: "ingotmold-burned" },
+            requiresContainer: false
+        }
+    },
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_nutritionprops" data-tt-parent="root">nutritionprops</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>Information about the blocks nutrients.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_nutritionprops_foodcategory" data-tt-parent="p_nutritionprops">foodcategory</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Defines the type of food. It can be '''''fruit''''', '''''vegetable''''', '''''protein''''', '''''grain''''' and '''''dairy'''''.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_nutritionprops_saturation" data-tt-parent="p_nutritionprops">saturation</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>How much saturation it can restore.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_nutritionprops_health" data-tt-parent="p_nutritionprops">health</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>How much health it can restore.</td>
+    <td>-</td>
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_transprops" data-tt-parent="root">transitionableProps</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Can be used to transition an item to another item or block.</td>
+    <td>redmeat, hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_type" data-tt-parent="p_transprops">type</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>The type of transition method to utilize.</td>
+    <td>redmeat, hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_type_cure" data-tt-parent="p_tprops_type">Cure</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Will "cure" an item by showing percent progress until cured.</td>
+    <td>hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_type_perish" data-tt-parent="p_tprops_type">Perish</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Will gradually reduce the saturation of a food item once it's fresh period has passed, eventually converting into the product item (usually rot).</td>
+    <td>hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_fresh" data-tt-parent="p_transprops">freshHours</div></td>
+    <td>number (hours)</td>
+    <td>-</td>
+    <td>An optional "fresh" period that must pass before the transition time starts. With food, this is the period of time that saturation is not affected.</td>
+    <td>bread, vegetable, redmeat</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_ttime" data-tt-parent="p_transprops">transitionHours</div></td>
+    <td>number (hours)</td>
+    <td>-</td>
+    <td>Number of hours before the item transitions into a different item.</td>
+    <td>redmeat, hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_stack" data-tt-parent="p_transprops">transitionedStack</div></td>
+    <td>object (item or block)</td>
+    <td>-</td>
+    <td>The item or block that the item will transition into.</td>
+    <td>redmeat, hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_ratio" data-tt-parent="p_transprops">transitionRatio</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The quantity of the item that will be consumed after the transition period.</td>
+    <td>redmeat, hide</td>
+  </tr>
+ <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Attributes</b></td>
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attributes_list" data-tt-parent="root">attributes</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Custom Attributes associated with this item.</td>
+    <td>barrel, chest, pot, skep</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attributes_info" data-tt-parent="p_attributes_list" data-invisible="true"></div></td>
+    <td colspan="4">
+Attributes constitute a large number of custom properties that an block can have, many of which are specific to unique blocks that rely on a C# class for additional functionality. If you wish to add your own JSON attributes to an item generally you must also have a class to utilize them.
+
+Values placed here are final and cannot be modified. For example, if you made a new type of block, say one that damages people when they get close you could define them here:
+
+<syntaxhighlight lang="json">
+    attributes: {
+		"touchDamage": 0.1,
+		"sneakAvoidTouchDamage": true,
+	},
+</syntaxhighlight>
+
+Here we have made two new attributes called "touchDamage" and "sneakAvoidTouchDamage" and have given them their own static values to be used in code. As is, these cannot do anything without the usage of C# code in a class. Regardless, we can see that this is a convenient way to create extra properties that can easily be used by other blocks that use the same class. 
+  </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_contain" data-tt-parent="root">(Container Attributes)</div></td>
+<td colspan="4">
+Attributes that define additional container information.
+</tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_allowheat" data-tt-parent="p_attributes_contain">allowHeating</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>Used by the pot block to allow it to be heated in either the output or input slot.</td>
+    <td>pot</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_bowlcontent" data-tt-parent="p_attributes_contain">bowlContents</div></td>
+    <td>string</td>
+    <td>null</td>
+    <td>The item code of the contents contained in the bowl, by default this value is '''null''' since most bowls will start with nothing inside them.</td>
+    <td>-</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_" data-tt-parent="p_attributes_contain">canHold</div></td>
+    <td>string (blockcode)</td>
+    <td>-</td>
+    <td>What blocks (liquids) a liquid container can hold.</td>
+    <td>bucket</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_caplitres" data-tt-parent="p_attributes_contain">capacityLitres</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The amount of litres that a liquid container can hold.</td>
+    <td>bucket</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_csound" data-tt-parent="p_attributes_contain">closeSound</div></td>
+    <td>Path to sound</td>
+    <td>-</td>
+    <td>The sound that plays when a container is opened.</td>
+    <td>chest, storagevessel</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_contentblock" data-tt-parent="p_attributes_contain">contentBlockCode</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used by the flowerpot to manually store the block contained in each variant, which drops when the block is broken.</td>
+    <td>flowerpot, planter</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_contentconfig" data-tt-parent="p_attributes_contain">contentConfig</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used by food troughs to determine the properties of each content type.</td>
+    <td>trough-large, trough-small</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_ccprops_code" data-tt-parent="p_alist_contentconfig">code</div></td>
+    <td>String</td>
+    <td>-</td>
+    <td>Identifier used for referencing in the JSON.</td>
+    <td>trough-large, trough-small</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_ccprops_content" data-tt-parent="p_alist_contentconfig">content</div></td>
+    <td>Item or Block code</td>
+    <td>-</td>
+    <td>The item or block placed in the trough.</td>
+    <td>trough-large, trough-small</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_ccprops_foodfor" data-tt-parent="p_alist_contentconfig">foodFor</div></td>
+    <td>Entity Code</td>
+    <td>-</td>
+    <td>The entity that can interact with (eat) the contents.</td>
+    <td>trough-large, trough-small</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_ccprops_quant" data-tt-parent="p_alist_contentconfig">quantityPerFillLevel</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The number of the item or block required to fill a "portion" of the trough.</td>
+    <td>trough-large, trough-small</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_ccprops_max" data-tt-parent="p_alist_contentconfig">maxFillLevels</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The maximum number of portions that the trough can be filled with.</td>
+    <td>trough-large, trough-small</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_ccprops_shapes" data-tt-parent="p_alist_contentconfig">shapesPerFillLevel</div></td>
+    <td>Array of Shape Paths</td>
+    <td>-</td>
+    <td>A list of shapes for each level of the trough, with first being empty, the second with one layer etc.</td>
+    <td>trough-large, trough-small</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_ccprops_texture" data-tt-parent="p_alist_contentconfig">textureCode</div></td>
+    <td>Path to texture</td>
+    <td>-</td>
+    <td>The flat texture used for the contents in the trough.</td>
+    <td>trough-large, trough-small</td> 
+ </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_cconfig_info" data-tt-parent="p_alist_contentconfig" data-invisible="true"></div></td>
+<td colspan="4">
+
+The large trough is a good example of how the contentConfig attribute is used, since it uses two different shape progressions for regular seed and dry grass:
+<syntaxhighlight lang="json">
+contentConfig: [
+  {
+    code: "flax",
+    content: { type: "item", code: "grain-flax" }, 
+    foodFor: ["pig-*", "sheep-*"],
+    quantityPerFillLevel: 2,
+    maxFillLevels: 8,
+    shapesPerFillLevel: ["block/wood/trough/large/grainfill1", "block/wood/trough/large/grainfill1", "block/wood/trough/large/grainfill2", "block/wood/trough/large/grainfill2", "block/wood/trough/large/grainfill3", "block/wood/trough/large/grainfill3", "block/wood/trough/large/grainfill4", "block/wood/trough/large/grainfill4"],
+    textureCode: "contents-flax"
+  },
+  {
+    code: "drygrass",
+    content: { type: "item", code: "drygrass" }, 
+    quantityPerFillLevel: 8,
+    maxFillLevels: 8,
+    shapesPerFillLevel: ["block/wood/trough/large/hayfill1", "block/wood/trough/large/hayfill1", "block/wood/trough/large/hayfill2", "block/wood/trough/large/hayfill2", "block/wood/trough/large/hayfill3", "block/wood/trough/large/hayfill3", "block/wood/trough/large/hayfill4", "block/wood/trough/large/hayfill4"],
+    foodFor: ["pig-*", "sheep-*"]
+  }
+]
+</syntaxhighlight>
+</tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_contentitemcode" data-tt-parent="p_attributes_contain">contentItemCode</div></td>
+    <td>Item</td>
+    <td>-</td>
+    <td>The id of an item stored in a container.</td>
+    <td>-</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_contentitem2block" data-tt-parent="p_attributes_contain">contentItem2BlockCode</div></td>
+    <td>Item</td>
+    <td>-</td>
+    <td>Items that are converted into blocks when store in this container.</td>
+    <td>bowl</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_cookslots" data-tt-parent="p_attributes_contain">cookingContainerSlots</div></td>
+    <td>Number</td>
+    <td>-</td>
+    <td>The number of slots a cooking container has.</td>
+    <td>crucible, pot</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_defaulttype" data-tt-parent="p_attributes_contain">defaultTyped</div></td>
+    <td>String</td>
+    <td>-</td>
+    <td>Since containers have a unique variant form called "types" this is used to determine what the default type is.</td>
+    <td>chest, storagevessel</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_langcode" data-tt-parent="p_attributes_contain">dialogTitleLangCode</div></td>
+    <td>String</td>
+    <td>-</td>
+    <td>Gives a container tooltip a "title" in the lang file (EG "Chest Contents").</td>
+    <td>chest, storagevessel</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_casable" data-tt-parent="p_attributes_contain">displaycasable</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, allows a block to be placed in a display case.</td>
+    <td>crystal-small</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_eatenblock" data-tt-parent="p_attributes_contain">eatenBlock</div></td>
+    <td>Block Code</td>
+    <td>-</td>
+    <td>Used by meal blocks to determine what block to return to when the meal has been completely eaten.</td>
+    <td>bowl</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_emptyblock" data-tt-parent="p_attributes_contain">eatenBlock</div></td>
+    <td>Block Code</td>
+    <td>-</td>
+    <td>Used by meal container blocks to determine what block to return to when the meal has been emptied from it.</td>
+    <td>pot</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_fillheight" data-tt-parent="p_attributes_contain">fillHeight</div></td>
+    <td>Number</td>
+    <td>-</td>
+    <td>Determines how high to render molten metal in a tool mold.</td>
+    <td>toolmold</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_fillquads" data-tt-parent="p_attributes_contain">fillQuadsByLevel</div></td>
+    <td>Array of Coordinates</td>
+    <td>-</td>
+    <td>Can be used to specify quadrants to render within for tool molds that have higher levels (such as the helve hammer or anvil molds).</td>
+    <td>toolmold</td> 
+ </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_quad_info" data-tt-parent="p_alist_fillquads" data-invisible="true"></div></td>
+<td colspan="4">
+
+We can look at how this is done with the Anvil mold:
+
+<syntaxhighlight lang="json">
+"fillHeight": 10,
+"fillQuadsByLevel": [
+  { x1: 2, z1: 3, x2: 13, z2: 13 },
+  { x1: 2, z1: 3, x2: 13, z2: 13 },
+  { x1: 2, z1: 3, x2: 13, z2: 13 },
+				
+  { x1: 4, z1: 6, x2: 11, z2: 10 },
+  { x1: 4, z1: 6, x2: 11, z2: 10 },
+  { x1: 4, z1: 6, x2: 11, z2: 10 },
+  { x1: 4, z1: 6, x2: 11, z2: 10 },
+				
+  { x1: 4, z1: 5, x2: 14, z2: 11 },
+  { x1: 1, z1: 5, x2: 15, z2: 11 },
+  { x1: 1, z1: 5, x2: 15, z2: 11 },
+],
+</syntaxhighlight>
+
+As we can see, the anvil mold has 10 layers rather than one, and because it has different shapes for each layer we can redefine the space to render the molten metal per level by using two corners defined by x and z coordinates within the block. In the end, this gives a cleaner looking poured metal effect (even though it may be difficult to see what's going on in the mold).
+</tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_handlecook" data-tt-parent="p_attributes_contain">handleCookingContainerInteract</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, can be used to take food from a cooking container.</td>
+    <td>crock, pot</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_handleliquid" data-tt-parent="p_attributes_contain">handleLiquidContainerInteract</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, can be used to hold liquids.</td>
+    <td>crock, pot</td> 
+ </tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_infpprops" data-tt-parent="p_attributes_contain">inFirePitProps</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Gives an item additional rendering properties when placed in a fire pit.</td>
+   <td>crucible, pot</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_fptrans" data-tt-parent="p_alist_infpprops">transform</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>If the model type shows the item, it can be transformed using this property.</td>
+   <td>crucible, pot</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_fpmodel" data-tt-parent="p_alist_infpprops">useFirepitModel</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Tell the firepit which model to use when this item is placed into it.</td>
+   <td>crucible, pot</td>
+</tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_firepittrans_ex" data-tt-parent="p_alist_infpprops" data-invisible="true"></div></td>
+<td colspan="4">
+
+Here's an example of how the firepit transformation is used by the pot and crucible:
+
+<syntaxhighlight lang="json">
+inFirePitProps: {
+  transform: { 
+    translation: { x: 0, y: 0.125, z: 0 } 
+  },
+  useFirepitModel: "Wide"
+}
+</syntaxhighlight>
+
+If you're familiar with the other transformation code, this is nothing unusual and works on the same principles by changing the scale, position and rotation of the model with respect to the origin of rotation. 
+
+At the moment <code>wide</code> is the only model used with container items. The other option <code>spit</code> is used with cooking meat directly on the firepit.
+</tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_inputface" data-tt-parent="p_attributes_contain">input-face</div></td>
+    <td>Side ID</td>
+    <td>-</td>
+    <td>Used to determine what faces of the block can be used as an input for a hopper (set to "null" since it does not have an input face).</td>
+    <td>hopper</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_iclassname" data-tt-parent="p_attributes_contain">inventoryClassName</div></td>
+    <td>String</td>
+    <td>-</td>
+    <td>Used to name an inventory during the loading of inventories in the world. Use "chest" for any generic containers.</td>
+    <td>chest, storagevessel</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_flowrate" data-tt-parent="p_attributes_contain">item-flowrate</div></td>
+    <td>Number</td>
+    <td>-</td>
+    <td>Used by the chute block to determine how many items move through it per second.</td>
+    <td>chute</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_liquidcontainer" data-tt-parent="p_attributes_contain">liquidcontainer</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, allows the block to hold and take liquids.</td>
+    <td>bucket</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_maxstackcontain" data-tt-parent="p_attributes_contain">maxContainerSlotStackSize</div></td>
+    <td>Number</td>
+    <td>-</td>
+    <td>Limits the stacksize of items placed into the container.</td>
+    <td>pot</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_maxtemp" data-tt-parent="p_attributes_contain">maxHeatableTemp</div></td>
+    <td>Number</td>
+    <td>-</td>
+    <td>The highest temperature that the container can be heated.</td>
+    <td>pot, crucible</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_mealblock" data-tt-parent="p_attributes_contain">mealBlockCode</div></td>
+    <td>Block Code</td>
+    <td>-</td>
+    <td>Used by meal blocks to determine which variant is used when filled with a meal.</td>
+    <td>bowl</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_mealcontainer" data-tt-parent="p_attributes_contain">mealContainer</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>Allows the block to function as a meal container (can pull from meal blocks like crocks).</td>
+    <td>bowl</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_opensound" data-tt-parent="p_attributes_contain">openSound</div></td>
+    <td>Path to Sound</td>
+    <td>-</td>
+    <td>Determines what sound is played when a container is opened. Generally used in tandem with '''closeSound'''.</td>
+    <td>chest, storagevessel</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_outputface" data-tt-parent="p_attributes_contain">output-face</div></td>
+    <td>Direction ID</td>
+    <td>-</td>
+    <td>Used by the chute block to determine which face of the block is used as an output for transferring items.</td>
+    <td>chute</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_pandrops" data-tt-parent="p_attributes_contain">panningDrops</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>If a block can be used for panning (using the BlockPan class), these are its potential drops.</td>
+    <td>pan</td> 
+ </tr>
+ <tr>
+   <td scope="row"><div class="tt" data-tt-id="p_panning_info" data-tt-parent="p_alist_pandrops" data-invisible="true"></div></td>
+   <td colspan="4">
+You can add all sorts of items using the following format:
+     <syntaxhighlight lang="json">
+	{ type: "item", code: "nugget-nativecopper",  chance: { avg: 0.15, var: 0 }  },
+     </syntaxhighlight>
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_quantityslots" data-tt-parent="p_attributes_contain">quantitySlots</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The number of slots a generic container has.</td>
+    <td>chest, storagevessel</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_requiredunits" data-tt-parent="p_attributes_contain">requiredUnits</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The number of units required to fill a tool mold with molten metal.</td>
+    <td>toolmold</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_retrieveonly" data-tt-parent="p_attributes_contain">retrieveOnly</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, makes it so that a container can only be taken from and cannot be used to store new items.</td>
+    <td>lootvessel</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_servingcapacity" data-tt-parent="p_attributes_contain">servingCapacity</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The number of servings of a meal a block can hold.</td>
+    <td>crock, bowl</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_shelvable" data-tt-parent="p_attributes_contain">shelvable</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, allows the block to be placed on a shelf.</td>
+    <td>crystal-small, seashell</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_sitheight" data-tt-parent="p_attributes_contain">sitHeight</div></td>
+    <td>number (decimal)</td>
+    <td>-</td>
+    <td>Used by flower pots to determine how high the incorporated block should be rendered.</td>
+    <td>flowerpot, planter</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_spoilmultiplier" data-tt-parent="p_attributes_contain">spoilSpeedMulByFoodCat</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used to make food spoil slower or faster when stored in a container.</td>
+    <td>storagevessel</td> 
+ </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_spoilspeed_info" data-tt-parent="p_alist_spoilmultiplier" data-invisible="true"></div></td>
+<td colspan="4">
+The clay storage vessel is a good example of this:
+<syntaxhighlight lang="json">
+spoilSpeedMulByFoodCat: {
+  "normal": {
+    "vegetable": 0.75,
+    "grain": 0.5
+  }
+},
+</syntaxhighlight>
+</tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_storagetype" data-tt-parent="p_attributes_contain">storageType</div></td>
+    <td>Number (Storage Flag)</td>
+    <td>-</td>
+    <td>The storage flag of the container, which can limit what types of items or blocks can be stored within it.</td>
+    <td>storagevessel</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_storagetype" data-tt-parent="p_attributes_contain">textureMapping</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>A more complex method of texturing block shapes with multiple content combinations. Used primarily with the pot to texture the food contents.</td>
+    <td>pot</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_types" data-tt-parent="p_attributes_contain">types</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>A secondary method of variant categorization used by containers to help with assigning attributes.</td>
+    <td>chest</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_varaintbygroup" data-tt-parent="p_attributes_contain">variantByGroup</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used by generic containers to group types by a specific variant. "side" is used since it is a common variant of all the types.</td>
+    <td>chest</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_varaintbygroupinv" data-tt-parent="p_attributes_contain">variantByGroupInventory</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>A subtype inventory name that can be assigned to types (usually this is "null").</td>
+    <td>chest</td> 
+ </tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_waterprops" data-tt-parent="p_attributes_contain">waterTightContainerProps</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>This contains all the liquid properties of an block, generally determining how it is stored and used with a bucket. '''Keep in mind this is not generally used for blocks, as most liquids that use this property are items, even if they come from a source block'''.</td>
+   <td>water</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_liquidcontain" data-tt-parent="p_alist_waterprops">containable</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If true, the liquid can be placed into liquid containers, such as barrels and buckets.</td>
+   <td>water</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_iperlitre" data-tt-parent="p_alist_waterprops">itemsPerLitre</div></td>
+   <td>number (int)</td>
+   <td>-</td>
+   <td>The number of itemstack items required to make a litre of liquid. Generally this value is 1:1, but concentrated items like honey can be 4:1.</td>
+   <td>water</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_liqtex" data-tt-parent="p_alist_waterprops">texture</div></td>
+   <td>Path to Texture</td>
+   <td>-</td>
+   <td>A "block" texture given to a liquid when it's rendered in containers or other items.</td>
+   <td>waterportion, honeyportion</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spill" data-tt-parent="p_alist_waterprops">allowSpill</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If true, allows the player to use the Ctr + Right Click function to "spill" the liquid from a container. The whenSpilled property determines what happens if this is true.</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_tindex" data-tt-parent="p_alist_waterprops">tintIndex</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td>Tints the color of the item if it's ever drawn as a block: '''''0''''' for no tint, '''''1''''' for plant climate tint, '''''2''''' for water climate tint.</td>
+    <td>-</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_whenfill" data-tt-parent="p_alist_waterprops">whenFilled</div></td>
+   <td>Item or Block Code</td>
+   <td>-</td>
+   <td>Determines what is stored in a liquid container when interacted with.</td>
+   <td>water</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_whenspill" data-tt-parent="p_alist_waterprops">whenSpilled</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Determines what happens when the "spill" interaction is used. Only works if the allowSpill property is set to true.</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spillact" data-tt-parent="p_alist_whenspill">action</div></td>
+   <td>string</td>
+   <td>-</td>
+   <td>Code identifier that determines what happens when the liquid is spilled from a container.</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spillblock" data-tt-parent="p_alist_spillact">PlaceBlock</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Places a block at the spilled location.</td>
+   <td>waterportion</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spillitem" data-tt-parent="p_alist_spillact">DropContents</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Drops an item at the location. If the item is a liquid it will disappear immediately with a "splash" particle effect.</td>
+   <td>limeportion</td>
+</tr>
+
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spillstack" data-tt-parent="p_alist_whenspill">stack</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>The block or item dropped when spilled. if the "PlaceBlock" action is chosen a block is placed, if "DropContents" is used an item is generated.</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_sfilllevel" data-tt-parent="p_alist_whenspill">stackByFillLevel</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Allows for different blocks or items to be placed based on the level of the liquid in the container.</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_info" data-tt-parent="p_alist_waterprops" data-invisible="true"></div></td>
+<td colspan="4">
+
+We'll look at an example of how this property is utilized by water block:
+
+<syntaxhighlight lang="json">
+waterTightContainerProps: {
+  containable: true,
+  itemsPerLitre: 1,
+  whenFilled: { stack: { type: "item", code: "waterportion" } }
+}
+</syntaxhighlight>
+
+As we can see, most of the watertight properties are not used by the block, that's because most of them are used by the item equivalent "waterportion". 
+</tr>
+
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_render" data-tt-parent="root">(Rendering Attributes)</div></td>
+<td colspan="4">
+Attributes that define additional rendering information.
+</tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_tintinventory" data-tt-parent="p_attributes_render">ignoreTintInventory</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, does not apply texture tints to the block model as an inventory item.</td>
+    <td>soil</td> 
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_mechpower" data-tt-parent="p_attributes_render">mechancialPower</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>A special category of values reserved for mechanical power. Currently only "renderer" is used by the angled gears block to determine which combination of gears to render.</td>
+    <td>angledgears</td> 
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_pushvec" data-tt-parent="p_attributes_render">pushVector</div></td>
+    <td>vector coordinates</td>
+    <td>-</td>
+    <td>Allows the vector shape of a block to be altered for slopes.</td>
+    <td>lava, water</td> 
+  </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_misc" data-tt-parent="root">(Misc Attributes)</div></td>
+<td colspan="4">
+Miscellaneous, unsorted attributes.
+</tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_unstableplace" data-tt-parent="p_attributes_misc">allowUnstablePlacement</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If the block has the "unstable" behavior, this allows it to be generated in positions that it can fall from.</td>
+    <td>sand, gravel</td> 
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_bfeed" data-tt-parent="p_attributes_misc">beeFeed</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>Whether or not the block is a viable source of bee feeding (IE a flower).</td>
+    <td>all crops, bigberrybush, flower, smallberrybush</td> 
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_butterflyfeed" data-tt-parent="p_attributes_misc">butterflyFeed</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>Whether or not the block will attract butterflies.</td>
+    <td>all crops, bigberrybush, flower, smallberrybush</td> 
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_bradius" data-tt-parent="p_attributes_misc">blastRadius</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>Used by bombs to determine the radius of the blast.</td>
+    <td>oreblastingbomb</td> 
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_btype" data-tt-parent="p_attributes_misc">blastType</div></td>
+    <td>number, 0, 1 or 2</td>
+    <td>-</td>
+    <td>Used by bombs to determine what type of blocks are broken.</td>
+    <td>oreblastingbomb</td> 
+  </tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_btype_info" data-tt-parent="p_alist_btype" data-invisible="true"></div></td>
+   <td colspan="4">
+   ''0 = Destroys ores, 1 = Destroys stone, 2 = Damages only entities.''
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_canchisel" data-tt-parent="p_attributes_misc">canChisel</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, allows the block to be chiseled.</td>
+    <td>rock, all slabs</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_" data-tt-parent="p_attributes_misc">canFallSideways</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>If true, allows a block to move sideways when it falls.</td>
+    <td>gravel</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_fromcbox" data-tt-parent="p_attributes_misc">chiselShapeFromCollisionBox</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, uses the collision box as the starting point for chiseling.</td>
+    <td>most stairs, all slabs</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_convertfrom" data-tt-parent="p_attributes_misc">convertFrom</div></td>
+    <td>block</td>
+    <td>-</td>
+    <td>If a block converts to another block, this is the block that can be converted.</td>
+    <td>carcass</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_convertto" data-tt-parent="p_attributes_misc">convertTo</div></td>
+    <td>block</td>
+    <td>-</td>
+    <td>If a block converts to another block, this is the block that it will turn into.</td>
+    <td>carcass</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_delaysunlight" data-tt-parent="p_attributes_misc">delayGrowthBelowSunlight</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>Used by the farmland block to delay growth when sunlight is below the given value.</td>
+    <td>farmland</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_tooldrop" data-tt-parent="p_attributes_misc">drop</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used by the toolMold block to determine what item it drops, not to be confused with the '''drops''' property.</td>
+    <td>toolMold</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_fencecon" data-tt-parent="p_attributes_misc">fenceConnect</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>Can be used to prevent a solid block from connecting to fences.</td>
+    <td>-</td> 
+ </tr>
+ <tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_grinding" data-tt-parent="p_attributes_misc">grindingProps</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Gives the block a grinding recipe in a quern.</td>
+   <td>ore-ungraded</td>
+ </tr>
+ <tr>
+   <td scope="row"><div class="tt" data-tt-id="p_gprops_type" data-tt-parent="p_alist_grinding">type</div></td>
+   <td>object</td>
+   <td>-</td>
+   <td>Type of stack produced, either a <code>block</code> or <code>item</code>.</td>
+   <td>-</td>
+ </tr>
+ <tr>
+   <td scope="row"><div class="tt" data-tt-id="p_gprops_code" data-tt-parent="p_alist_grinding">code</div></td>
+   <td>string</td>
+   <td>-</td>
+   <td>Name of the item or block produced by the recipe.''</td>
+   <td>ore-ungraded</td>
+ </tr>
+ <tr>
+   <td scope="row"><div class="tt" data-tt-id="p_gprops_stacksize" data-tt-parent="p_alist_grinding">stacksize</div></td>
+   <td>number</td>
+   <td>-</td>
+   <td>The amount of the output produced after grinding.''</td>
+   <td>ore-ungraded</td>
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_growthblock" data-tt-parent="p_attributes_misc">growthBlockLayer</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Determines what layers of a block will grow grass, currently only uses "l1soilwithgrass", which grows grass on the first layer only.</td>
+    <td>soil</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_glightlevel" data-tt-parent="p_attributes_misc">growthLightLevel</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used by the soil block to determine what light level is required for it to grow grass on.</td>
+    <td>soil</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_gamehours" data-tt-parent="p_attributes_misc">inGameHours</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>If a block converts to another block, this is the amount of time required for it to convert.</td>
+    <td>carcass</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_injurerad" data-tt-parent="p_attributes_misc">injureRadius</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>Used by bombs to determine the radius that it will cause injury to entities.</td>
+    <td>oreblastingbomb</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_lossplevel" data-tt-parent="p_attributes_misc">lossPerLevel</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used in combination with '''delayGrowthBelowSunlight''' to determine how much growth progression is lost per light level.</td>
+    <td>farmland</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_mechpower" data-tt-parent="p_attributes_misc">mechanicalPower</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used by the angled gear block to determine how to render gears in the different orientations.</td>
+    <td>angledgears</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_downvariant" data-tt-parent="p_attributes_misc">noDownVariant</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>When giving a block variants based off the orientation library, this can be used to prevent a "down" variant from being used.</td>
+    <td>-</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_blockbelow" data-tt-parent="p_attributes_misc">placeBelowBlockCode</div></td>
+    <td>block</td>
+    <td>-</td>
+    <td>Used by the '''BlockSoilDeposit''' class to place specific blocks beneath it during world generation.</td>
+    <td>clay, peat</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_preventdecay" data-tt-parent="p_attributes_misc">preventsDecay</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, prevents nearby leaves from "decaying", IE disappearing.</td>
+    <td>log, soil</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_rotateint" data-tt-parent="p_attributes_misc">rotatableInterval</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Gives some blocks additional rotation properties when placed (currently "22.5degnot45deg" and "22.tdeg" are the only two options).</td>
+    <td>chest</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_sleepefficiency" data-tt-parent="p_attributes_misc">sleepEfficiency</div></td>
+    <td>number (decimal)</td>
+    <td>-</td>
+    <td>Determines how long a player can sleep in a bed, based off a ratio of 12 hours. (ratio = #maxhours/12).</td>
+    <td>-</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_grasspread" data-tt-parent="p_attributes_misc">spreadGrass</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>If true, can spread grass to other soil blocks.</td>
+    <td>-</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_stackable" data-tt-parent="p_attributes_misc">stackable</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>Used by berry bushes to determine whether they can be stacked atop each other.</td>
+    <td>-</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_growchance" data-tt-parent="p_attributes_misc">tallGrassGrowChance</div></td>
+    <td>number (decimal)</td>
+    <td>-</td>
+    <td>Used by the soil block to determine how often it will grow tall grass on top of it.</td>
+    <td>clay, peat, soil</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_temp" data-tt-parent="p_attributes_misc">temperature</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used by liquids to determine the temperature of the core block.</td>
+    <td>lava</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_temploss" data-tt-parent="p_attributes_misc">tempLossPerMeter</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>How much temperature is lost for a liquid as it moves away from a source block.</td>
+    <td>lava</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_tickgrowth" data-tt-parent="p_attributes_misc">tickGrowthProbability</div></td>
+    <td>number (decimal)</td>
+    <td>-</td>
+    <td>Used by crops to determine how often it will randomly progress its growth stage per tick.</td>
+    <td>all crops</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_tooltrans" data-tt-parent="p_attributes_misc">toolTransforms</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used to set default transformation on the toolrack, though all tools generally use their own.</td>
+    <td>toolrack</td> 
+ </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_weedblock" data-tt-parent="p_attributes_misc">weedBlockCodes</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Used by the farmland block to determine what "weeds" can grow on it.</td>
+    <td>farmland</td> 
+ </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_weedblock_info" data-tt-parent="p_alist_weedblock" data-invisible="true"></div></td>
+    <td colspan="4">
+We can see here that this property allows tallgrass and horsetails to grow on farmland with varying degrees of likelihood:
+    <syntaxhighlight lang="json">
+	weedBlockCodes: [
+		{ code: "tallgrass-veryshort", chance: 1 },
+		{ code: "tallgrass-short", chance: 1 },
+		{ code: "tallgrass-mediumshort", chance: 1 },
+		{ code: "tallgrass-medium", chance: 1 },
+		{ code: "flower-horsetail", chance: 0.2 },
+	]
+    </syntaxhighlight>
+  </tr>
+  <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Rendering</b></td>
+  </tr>
+
+
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures" data-tt-parent="root">textures</div></td>
+    <td>key: string, value: object</td>
+    <td></td>
+    <td>The texture definitions for the block as seen in the world, when dropped on the ground or held in the hand. Within a mod, to refer to a texture from the base game, prefix the path with "game:" (i.e. base: "game:path/to/texture") </td>
+    <td>all blocks</td>
+  </tr>
+  <tr>
+    <td scope="row" valign="top"><div class="tt" data-tt-id="p_textures_base" data-tt-parent="p_textures">base</div><br><br><div class="tt" data-tt-id="p_textures_overlays" data-tt-parent="p_textures">overlays</div><br><br><div class="tt" data-tt-id="p_textures_base" data-tt-parent="p_textures">alternates</div></td>
+    <td colspan="4">{{:json:block:texture}}</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_texturesinventory" data-tt-parent="root">texturesinventory</div></td>
+    <td>key: string, value: object</td>
+    <td></td>
+    <td>The texture definitions for the block as seen in the player inventory. Overrides the textures.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shape" data-tt-parent="root">shape</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>For the json drawtype, the shape definition of the block as shown in the world, dropped on the ground or held in hand.</td>
+    <td>Barrel, firepit</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_base" data-tt-parent="p_shape">base</div></td>
+    <td></td>
+    <td></td>
+    <td>The path to the shape json file, the base dir is ''assets/shapes/''.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_rotateX" data-tt-parent="p_shape">rotatex</div></td>
+    <td>float</td>
+    <td>0</td>
+    <td>Only 90 degree rotations are possible.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_rotateY" data-tt-parent="p_shape">rotatey</div></td>
+    <td>float</td>
+    <td>0</td>
+    <td>Only 90 degree rotations are possible.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_rotateZ" data-tt-parent="p_shape">rotatez</div></td>
+    <td>float</td>
+    <td>0</td>
+    <td>Only 90 degree rotations are possible.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_offsetX" data-tt-parent="p_shape">offsetx</div></td>
+    <td>float</td>
+    <td>0</td>
+    <td>Offsets the shape in the X axis.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_offsetY" data-tt-parent="p_shape">offsety</div></td>
+    <td>float</td>
+    <td>0</td>
+    <td>Offsets the shape in the Y axis.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_offsetZ" data-tt-parent="p_shape">offsetz</div></td>
+    <td>float</td>
+    <td>0</td>
+    <td>Offsets the shape in the Z axis.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shapeinventory" data-tt-parent="root">shapeinventory</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>For the json drawtype, the shape definition of the block as shown in the players inventory.</td>
+    <td>-</td>
+  </tr>
+   <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_drawtype" data-tt-parent="root">drawtype</div></td>
+    <td>string</td>
+    <td>&quot;cube&quot;</td>
+    <td>Determines how the block is tesselated, select JSON for being able to use custom JSON Models. The other values are hardcoded methods of tesselating the block.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blockLayer_1" data-tt-parent="p_drawtype">blockLayer_1</div></td>
+    <td></td>
+    <td>0</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blockLayer_2" data-tt-parent="p_drawtype">blockLayer_2</div></td>
+    <td></td>
+    <td>1</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blockLayer_3" data-tt-parent="p_drawtype">blockLayer_3</div></td>
+    <td></td>
+    <td>2</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blockLayer_4" data-tt-parent="p_drawtype">blockLayer_4</div></td>
+    <td></td>
+    <td>3</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blockLayer_5" data-tt-parent="p_drawtype">blockLayer_5</div></td>
+    <td></td>
+    <td>4</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blockLayer_6" data-tt-parent="p_drawtype">blockLayer_6</div></td>
+    <td></td>
+    <td>5</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blockLayer_7" data-tt-parent="p_drawtype">blockLayer_7</div></td>
+    <td></td>
+    <td>6</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_json" data-tt-parent="p_drawtype">json</div></td>
+    <td></td>
+    <td>7</td>
+    <td>Will draw a json model.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_empty" data-tt-parent="p_drawtype">empty</div></td>
+    <td></td>
+    <td>8</td>
+    <td>Nothing will be drawn.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_cube" data-tt-parent="p_drawtype">cube</div></td>
+    <td></td>
+    <td>9</td>
+    <td>Draws an ordinary cube.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_cross" data-tt-parent="p_drawtype">cross</div></td>
+    <td></td>
+    <td>10</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_transparent" data-tt-parent="p_drawtype">transparent</div></td>
+    <td></td>
+    <td>11</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_liquid" data-tt-parent="p_drawtype">liquid</div></td>
+    <td></td>
+    <td>12</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_crossandsnowlayer" data-tt-parent="p_drawtype">crossandsnowlayer</div></td>
+    <td></td>
+    <td>13</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_renderpass" data-tt-parent="root">renderpass</div></td>
+    <td>string</td>
+    <td>&quot;opaque&quot;</td>
+    <td>Determines how the block will be drawn.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_opaque" data-tt-parent="p_renderpass">opaque</div></td>
+    <td></td>
+    <td>0</td>
+    <td>Used for solid blocks with no half transparency.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_opaquenocull" data-tt-parent="p_renderpass">opaquenocull</div></td>
+    <td></td>
+    <td>1</td>
+    <td>Used for non-solid single faced blocks, such as tall grass.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_transparent" data-tt-parent="p_renderpass">transparent</div></td>
+    <td></td>
+    <td>2</td>
+    <td>Use for solid halftransparent blocks, such as glass</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_liquid" data-tt-parent="p_renderpass">liquid</div></td>
+    <td></td>
+    <td>3</td>
+    <td>Used for liquids, produces waves.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_topsoil" data-tt-parent="p_renderpass">topsoil</div></td>
+    <td></td>
+    <td>4</td>
+    <td>Used for grass covered blocks. Allows for a smooth transition from grass to soil, while still allowing climate tinting of grass.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_ambientocclusion" data-tt-parent="root">ambientocclusion</div></td>
+    <td>boolean</td>
+    <td>true</td>
+    <td>If ambient occlusion will be applied to the block.</td>
+    <td>-</td>
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tintindex" data-tt-parent="root">tintindex</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td>'''''0''''' for no tint, '''''1''''' for plant climate tint, '''''2''''' for water climate tint.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_renderflags" data-tt-parent="root">renderflags</div></td>
+    <td>0 ... 255</td>
+    <td>0</td>
+    <td>8 bits that are sent to the graphics card for each vertex of the blocks shape. The lower 3 bits are currently used for altering the vertexes z-depth to fix a bunch of z-fighting issues.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_facecullmode" data-tt-parent="root">facecullmode</div></td>
+    <td>string</td>
+    <td>&quot;default&quot;</td>
+    <td>Determines which sides of the blocks should be rendered.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_facecullmode_default" data-tt-parent="p_facecullmode">default</div></td>
+    <td></td>
+    <td>0</td>
+    <td>Culls faces if they are opaque faces adjacent to opaque faces.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_facecullmode_default" data-tt-parent="p_facecullmode">nevercull</div></td>
+    <td></td>
+    <td>1</td>
+    <td>Never culls any faces.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_facecullmode_default" data-tt-parent="p_facecullmode">merge</div></td>
+    <td></td>
+    <td>2</td>
+    <td>Culls all faces that are adjacent to opaque faces and faces adjacent to blocks of the same id (Example usage: Ice blocks).</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_facecullmode_default" data-tt-parent="p_facecullmode">collapse</div></td>
+    <td></td>
+    <td>3</td>
+    <td>Culls all faces that are adjacent to opaque faces and the bottom, east or south faces adjacent to blocks of the same id. This causes to still leave one single face in between instead of 2, eliminating any z-fighting.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_facecullmode_default" data-tt-parent="p_facecullmode">mergematerial</div></td>
+    <td></td>
+    <td>4</td>
+    <td>Same as Merge but checks for equal material (Example usage: Plain glass and all colored glass blocks).</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_facecullmode_default" data-tt-parent="p_facecullmode">collapsematerial</div></td>
+    <td></td>
+    <td>5</td>
+    <td>Same as Collapse but checks for equal material (Example usage: All leaves blocks).</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_facecullmode_default" data-tt-parent="p_facecullmode">liquid</div></td>
+    <td></td>
+    <td>6</td>
+    <td>Same as CollapseMaterial but also culls faces towards opaque blocks.</td>
+    <td>-</td> 
+ </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sideopaque" data-tt-parent="root">sideopaque</div></td>
+    <td>key: string, value: boolean</td>
+    <td>-</td>
+    <td>Determines if given block face is fully opaque. If yes, the opposite face of the adjacent block will not be drawn for efficiency reasons.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sideopauqe_info" data-tt-parent="p_sideopaque" data-invisible="true"></div></td>
+    <td colspan="4">
+Sides include: ''all; horizontals, verticals; east, west, up, down, north, south''. 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sideao" data-tt-parent="root">sideao</div></td>
+    <td>key: string, value: boolean</td>
+    <td>-</td>
+    <td>If AmbientOcclusion will be applied for each side.</td>
+    <td>-</td>
+  </tr>
+   <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_ao_info" data-tt-parent="p_sideao" data-invisible="true"></div></td>
+    <td colspan="4">
+Sides include: ''all; horizontals, verticals; east, west, up, down, north, south''. 
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sideemitao" data-tt-parent="root">sideEmitAo</div></td>
+    <td>key: string, value: boolean</td>
+    <td>-</td>
+    <td>Defines which of the 6 block neighbours should receive AO if this block is in front of them.</td>
+    <td>-</td>
+  </tr>
+   <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sideemitao_info" data-tt-parent="p_sideemitao" data-invisible="true"></div></td>
+    <td colspan="4">
+Sides include: ''all; horizontals, verticals; east, west, up, down, north, south''. 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sidesolid" data-tt-parent="root">sidesolid</div></td>
+    <td>key: string, value: boolean</td>
+    <td>-</td>
+    <td>Determines if given block side is solid. If true, other blocks like torches can be attached to it.</td>
+<td>all stairs</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sidesolid_info" data-tt-parent="p_sidesolid" data-invisible="true"></div></td>
+    <td colspan="4">
+Sides include: ''all; horizontals, verticals; east, west, up, down, north, south''. 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_randomdrawoffset" data-tt-parent="root">randomdrawoffset</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true then the block will be randomly offseted by 1/3 of a block when placed.</td>
+    <td>flower</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_randomrotations" data-tt-parent="root">randomizeRotations</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true then the block will be randomly rotated when placed. Note: Many random rotated blocks in one chunk will slow down block placement updates. You can increase efficieny by defining alternate shapes with random rotations instead.</td>
+    <td>flower</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_lighthsv" data-tt-parent="root">lighthsv</div></td>
+    <td>byte array with 3 elements. See http://tyron.at/vs/vslightwheel.html for valid values</td>
+    <td>-</td>
+    <td>For light emitting blocks: hue, saturation and brightness value.</td>
+    <td>torch, oillamp, lantern</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_lightabsorption" data-tt-parent="root">lightabsorption</div></td>
+    <td>0 ... 255</td>
+    <td>99</td>
+    <td>For light blocking blocks. Any value above 32 will completely block all light.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_guitransform" data-tt-parent="root">guitransform</div></td>
+    <td>object</td>
+    <td>block default</td>
+    <td>Used for scaling, rotation or offseting the block when rendered in guis.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_fphandtransform" data-tt-parent="root">fphandtransform</div></td>
+    <td>object</td>
+    <td>block default</td>
+    <td>Used for scaling, rotation or offseting the block when rendered in the first person mode hand.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tphandtransform" data-tt-parent="root">tphandtransform</div></td>
+    <td>object</td>
+    <td>block default</td>
+    <td>Used for scaling, rotation or offseting the block when rendered in the third person mode hand.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_groundtransform" data-tt-parent="root">groundtransform</div></td>
+    <td>object</td>
+    <td>block default</td>
+    <td>Used for scaling, rotation or offseting the rendered as a dropped item on the ground.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_randomizeaxes" data-tt-parent="root">randomizeaxes</div></td>
+    <td>string</td>
+    <td>&quot;xyz&quot;</td>
+    <td>Random texture selection - whether or not to use the Y axis during randomization (for multiblock plants).</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_randomizeaxes_xyz" data-tt-parent="p_randomizeaxes">xyz</div></td>
+    <td></td>
+    <td>0</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_randomizeaxes_xz" data-tt-parent="p_randomizeaxes">xz</div></td>
+    <td></td>
+    <td>1</td>
+    <td></td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_vertexflags" data-tt-parent="root">vertexFlags</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Applies special effects to a block, including motion shaders and other fancy renderings.</td>
+    <td>crops, leaves, snow, tallgrass, waterlily</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_glowlevel" data-tt-parent="p_vertexflags">glowLevel</div></td>
+    <td>0 ... 255</td>
+    <td>0</td>
+    <td>Causes the block to visually glow if Bloom is enabled. Basic glow level for all the blocks model elements.</td>
+    <td>glacerice, lava</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_glowlevel_info" data-tt-parent="p_glowlevel" data-invisible="true"></div></td>
+    <td colspan="4">
+<table class="wikitable">
+  <tr style="background-color: rgba(0,0,0,0.2);">
+    <th style="background-color: rgba(0,0,0,0.2);">blocks</th>
+    <th style="background-color: rgba(0,0,0,0.2);">value</th>
+  </tr>
+  <tr>
+    <td>''Glacierice''</td>
+	<td>'''8'''</td>
+  </tr>
+  <tr>
+    <td>''Paperlantern''</td>
+	<td>'''32'''</td>
+  </tr>
+  <tr>
+    <td>''Ember''</td>
+	<td>'''48'''</td>
+  </tr>
+  <tr>
+    <td>''Fire'', ''Firepit'', ''Oillamp'', ''Torch''</td>
+	<td>'''64'''</td>
+  </tr>
+  <tr>
+    <td>''Lava''</td>
+	<td>'''128'''</td>
+  </tr>
+</table>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_grasswind" data-tt-parent="p_vertexflags">grassWindwave</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true, applies the grass wind wave effect to block.</td>
+    <td>tallgrass, flower, fern</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_leaveswind" data-tt-parent="p_vertexflags">leavesWindwave</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true, applies the rustling leaves effect on a block.</td>
+    <td>leaves, leavesbranchy</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_lowcontrast" data-tt-parent="p_vertexflags">lowContrast</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true, applies a low contrast shader to a block.</td>
+    <td>snow</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_vfreflective" data-tt-parent="p_vertexflags">reflective</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true, applies a reflective shader effect to a block.</td>
+    <td>snow</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_waterwave" data-tt-parent="p_vertexflags">waterWave</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true, applies the water wave effect to block.</td>
+    <td>waterlily</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_waterwave" data-tt-parent="p_vertexflags">waterWave</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If true, applies the water wave effect to block.</td>
+    <td>waterlily</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_zoffset" data-tt-parent="p_vertexflags">zOffset</div></td>
+    <td>boolean</td>
+    <td>number</td>
+    <td>-</td>
+    <td>Used to prevent rendering conflicts when blocks are drawn at a distance (IE z-fighting).</td>
+  </tr>
+</table>
+
+
+
+{{Navbox/modding|Vintage Story}}

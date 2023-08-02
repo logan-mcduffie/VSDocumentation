@@ -1,0 +1,38 @@
+<languages/>
+<translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+__FORCETOC__
+
+<!--T:2-->
+The VS Model Creator is a tool to create custom shapes for blocks, items, and entities. You can download the newest version [https://github.com/tyronx/vsmodelcreator/releases here].
+
+<!--T:8-->
+[[File:BunnyRunning.gif|500px]]
+
+== Guides == <!--T:3-->
+
+<!--T:4-->
+* [[VS_Model_Creator_Tutorials#Modeling_Basics|Modeling Basics]]
+* [[VS_Model_Creator_Tutorials#Model_Duplication|Model Duplication]]
+* [[VS_Model_Creator_Tutorials#Texturing|Texturing]]
+* [[VS_Model_Creator_Tutorials#Parenting|Parenting]]
+* [[Animation Basics]]
+* [[Animation Intermediate]]
+
+== Useful tips & tricks == <!--T:5-->
+
+<!--T:6-->
+* Hold Shift on the Size/Position/Origin or UV Arrows to increase it's value only by 0.1 or Ctrl for 0.5 instead of 1
+* Hold Ctrl on the Position Arrows to also move the Origin Point
+* In the Size/Position/Origin Text fields you can use your mousewheel to modify the value increments of 1
+** You can also hold down Shift to do increments of 0.1 
+** Or hold ctrl on the position fields to also move the origin
+* Hold Ctrl and click on a box in the middle window. It will select that box
+** Keep holding Ctrl to move the box around
+** Holding Ctrl with the right mouse button held down allows you to modify it's size, insted of the position
+
+
+<!--T:7-->
+{{Navbox/modding|Vintage Story}}
+</translate>

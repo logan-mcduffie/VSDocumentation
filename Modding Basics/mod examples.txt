@@ -1,0 +1,177 @@
+<languages/><translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+
+<!--T:2-->
+__TOC__
+
+<!--T:3-->
+A large amount of game content is freely modifiable through editing text files. If you feel like tinkering around, just open your assets folder. To locate it under windows, hit Winkey+R in Windows then paste in this line %appdata%/Vintagestory/assets and hit enter.
+
+<!--T:4-->
+{{Protip
+|Starting from Version 1.6 you should enable the error reporter by running the chat command /errorreporter 1 when you modify json files. With this, if you made any mistakes while changing the asset files, the game will display a dialog showing you all the errors it found.
+
+<!--T:5-->
+In earlier versions of the game you need to manually check out the log files in %appdata%/VintageStoryData/Logs/server-main.txt and client-main.txt
+}}
+
+== Keep your contents upon death == <!--T:6-->
+
+<!--T:7-->
+Open the file <code>assets/game/entities/humanoid/player.json</code>, find the line that begins with <code>server: {</code>, below that insert <code>attributes: { keepContents: true },</code>
+
+<!--T:8-->
+This should prevent the player from dropping its inventory upon death.
+
+== Changing sleep duration in beds == <!--T:9-->
+
+<!--T:10-->
+Beds in the Vanilla game are pretty limited, as they let you only sleep 3-5.5 hours every night. More often than not players prefer to skip the whole night. To achieve that open the file <code>assets/survival/blocktypes/wood/bed.json</code>
+
+<!--T:11-->
+Line 8-11 should contain these lines:
+<syntaxhighlight lang="json">
+	"sleepEfficiencyByType": {
+		"bed-wood-*": 0.70833333,
+		"bed-hay-*": 0.58333333,
+		"bed-woodaged-*": 0.79166666
+	},
+</syntaxhighlight>
+
+<!--T:12-->
+The <code>sleepEfficiency</code> attribute is specific to the bed. In this case a value of 1 means the player can sleep half the day. The hay bed has a value of 0.58333333, which means the player can sleep for 12 * 0.58333333 = ~7 in-game hours. Change the value to anything between 0...1 and start the game or leave and re-enter your singleplayer world. Next time you sleep in the bed you will be skipping that amount of time.
+
+== Making wolves less dangerous == <!--T:13-->
+
+<!--T:14-->
+Our favorite arch enemy the wolf. If you don't like the silent horror of the winterlands, we can tame him with a few tweaks ;-)
+Open the file <code>assets/survival/entities/land/wolf-male.json</code>
+
+
+<!--T:15-->
+Line 108-123 should contain this:
+<syntaxhighlight lang="json">
+{
+	"code": "meleeattack",
+	"entityCodes": ["player", "chicken-rooster", "chicken-hen", "chicken-baby", "hare-*"],
+	"priority": 2,
+	"damage": 8,
+	"damageTier": 2,
+	"damageType": "SlashingAttack",
+	"slot": 1,
+	"mincooldown": 1500, 
+	"maxcooldown": 1500, 
+	"attackDurationMs": 800,
+	"damagePlayerAtMs": 500,
+	"animation": "Attack",
+	"animationSpeed": 2.5,
+	"sound": "creature/wolf/attack"
+},
+</syntaxhighlight>
+
+<!--T:16-->
+This is the configuration for the wolves ai task to induce damage to very close by enemies. By default the wolf damages you by 8 health points, which means any unprotected player dies in 3 attacks. If you were to change it to 5, the wolf has to attack you up to 4 times before a fully healed player dies. 
+
+
+<!--T:17-->
+Right below is the enemy seeking task
+<syntaxhighlight lang="json">
+{
+	"code": "seekentity",
+	"entityCodes": ["player", "chicken-rooster", "chicken-hen", "chicken-baby", "hare-*"],
+	"priority": 1.5,
+	"movespeed": 0.045,
+	"seekingRange": 15,
+	
+	"belowTempSeekingRange": 25,
+	"belowTempThreshold": -5,
+	
+	"animation": "Run",
+	"leapAtTarget": true,
+	"leapAnimation": null,
+	"animationSpeed": 2.2,
+	"leapChance": 0.01,
+	"sound": "creature/wolf/growl",
+	"whenNotInEmotionState": "saturated"
+},
+</syntaxhighlight>
+
+<!--T:18-->
+You can perhaps read out that the wolf has a seeking range of 15 blocks. This means if the wolf finds a player within a radius of 15 blocks, it will start walking towards that player. Changing that to something lower, like 5 blocks, means you can get much closer to a wolf before he begins to chase you.
+
+<!--T:19-->
+Be sure to also apply the changes to the female wolf in <code>wolf-female.json</code>!
+
+== Playing around with world generation == <!--T:20-->
+
+<!--T:21-->
+Inside the assets folder, navigate to <code>assets/survival/worldgen/</code>. Copy aside the landforms.json so you have a backup, then open the landforms.json. Remove everything in this file and paste in the following text:
+<syntaxhighlight lang="json">
+{
+	"code": "landforms",
+	"variants": 
+	[
+		{
+			"code":  "humongous mountain",
+			"comment": "humongous mountains with caverns in them",
+			"hexcolor": "#5BC184",
+			"weight": 1.5,
+			"useClimateMap": false,
+			"terrainOctaves":          [0, 0, 0, 1,   1, 1, 1, 0.6, 0.15],
+			"terrainOctaveThresholds": [0, 0, 0, 0.5, 0, 0,   0,   0, 0],
+			"terrainYKeyPositions":    [0.000, 0.330, 0.370, 0.420, 0.430, 0.500, 0.600, 0.700, 1.000],
+			"terrainYKeyThresholds":   [1.000, 1.000, 0.870, 0.840, 0.700, 0.940, 1.000, 1.000, 0.000]
+		},
+	]
+}
+</syntaxhighlight>
+
+<!--T:22-->
+Now next time you create a new survival world, the entire world is made of humongous mountains. Congratulations, you can now officially call yourself a modder! 
+
+<!--T:23-->
+Very shortly explained, this file defines the list of land forms that may appear in the world. Each section enclosed in { ... } is one landform. If you feel like, you can play around with the values for terrainYKeyPositions and terrainYKeyThresholds and see what happens (they have to be values between 0 and 1). These numbers basically determine the shape of the landform at certain elevations.
+
+<!--T:24-->
+More info on on that is available on the [[WorldGen API|World Generation]] page.
+
+== Playing around with blocks == <!--T:25-->
+
+<!--T:26-->
+You can tweak, add, or remove almost any block you want, including their shape. Inside the assets folder:
+* The blocks themselves are all in the subfolder blocktypes
+* The block textures in textures/blocks
+* The shapes of the blocks are in blockshapes/ -- these you can open up with our custom model creator
+
+
+<!--T:27-->
+For example, let's make the fire pit emit a red light and huge particles:
+<ul>
+<li>Open up blocktypes/wood/generic/firepit.json. There you can see the following line:<br>
+"firepit-lit": [7, 7, 17],
+</li>
+<li>
+These are the Hue, Saturation and Brightness values according to the [http://tyron.at/vs/vslightwheel.html VS Light Wheel] (hover over any pixel to see it's HSV Value). The brightness is how far the light will spread. I'll take [0, 7, 20]:<br>
+"firepit-lit": [0, 7, 20],
+</li>
+
+<!--T:28-->
+<li>On line 36 you should see this:<br>
+size: { avg: 0.25, var: 0 },
+</li>
+<li>This determines the size of the cubic glowing particles the fire pit emits, let's up the size 8 times and add some randomness to it:<br>
+size: { avg: 2, var: 0.5 },
+</li>
+
+<!--T:29-->
+Save the file and restart the your singleplayer world, place your lit fire pit and you should see this:
+<br>
+[[File:Moddedfirepit.png|300px]]
+
+
+
+<!--T:30-->
+{{Navbox/modding|Vintage Story}}
+
+</translate>

@@ -1,0 +1,172 @@
+__FORCETOC__
+{{GameVersion|1.15}}
+
+It's highly recommended to read [[Basic Block]] first. Additionally this tutorial requires a development environment. If you don't have one already you should read the tutorial [[Setting up your Development Environment]].
+
+= Trampoline =
+
+In this tutorial will we create something more advanced. A block with functionality ... a trampoline!
+
+== Block Assets ==
+
+The first thing we are going to need are the assets of the block. Those are pretty straight forward. 
+
+The only new property is the <code>class</code>:
+<syntaxhighlight lang="json">
+	class: "trampoline",
+</syntaxhighlight>
+
+We will create this class, to give the block the desired functionality, so make sure if you pick a different name it matches the one below.
+You can download the assets of the mod [https://wiki.vintagestory.at/images/b/b9/Trampoline_-_No_CS_FILE.zip here].
+All you need to do is to place this zip file in your <code>assets</code> directory in your development project.
+
+== The Block Class ==
+
+Now we need to register our class and therefore we need to create a new <code>*.cs</code> file in our project. I'm gonna name it <code>Trampoline.cs</code>.
+
+=== The Mod System ===
+
+In order to create a mod your class needs to extend <code>ModSystem</code>. This will allow use to register all kinds of stuff, but for now we will stick to our block class example.
+
+<syntaxhighlight lang="c#">
+public class TrampolineMod : ModSystem
+{
+    
+}
+</syntaxhighlight>
+
+Now you need to override the <code>Start(ICoreAPI)</code> method and register the class. If you have picked a different class name you have to use that one instead of trampoline.
+
+<syntaxhighlight lang="c#">
+public class TrampolineMod : ModSystem
+{
+    public override void Start(ICoreAPI api)
+    {
+        base.Start(api);
+        api.RegisterBlockClass("trampoline", typeof(TrampolineBlock));
+    }
+}
+</syntaxhighlight>
+
+This should be marked as a syntax error because there is no <code>TrampolineBlock</code> class yet.
+
+=== The Block Class ===
+
+Let's create our block class itself which of course has to extend <code>Block</code>:
+
+<syntaxhighlight lang="c#">
+public class TrampolineBlock : Block
+{
+
+}
+</syntaxhighlight>
+
+This should solve all syntax errors.
+
+So how do we implement a bouncy block? It's pretty helpful to take a look at the [https://apidocs.vintagestory.at/api/Vintagestory.API.Common.Block.html api documentation] to find a proper way to implement it.
+
+The method <code>void onEntityCollide(IWorldAccessor world, Entity entity, BlockPos pos, BlockFacing facing, bool isImpact)</code> seems to be a good way to implement a bouncy functionality.
+
+'''When should an entity bounce?'''
+# The entity should bounce in the moment it lands on top of the block and not if it is standing on it already. Therefore <code>isImpact</code> has to be <code>true</code>
+# If the entity is colliding vertically. The sides of the block shouldn't push an entity away. So the <code>axis</code> of the <code>facing</code> has to be <code>Y</code>.
+
+'''How can we make the entity bounce?'''
+In order to make an entity bounce, we need to change its direction. Therefore we can simply revert its motion. The faster the entity will be when during the collision the further it will be pushed away. But simply reverting the motion wouldn't be ideal. The entity would never lose its motion and bounce endless. So let's go for something smaller and make the entity lose 20% of its motion each bounce:
+<syntaxhighlight lang="c#">
+entity.Pos.Motion.Y *= -0.8;
+</syntaxhighlight>
+
+----
+
+If we put everything together it should look like this:
+
+<syntaxhighlight lang="c#">
+public class TrampolineBlock : Block
+{
+    public override void OnEntityCollide(IWorldAccessor world, Entity entity, BlockPos pos, BlockFacing facing, Vec3d collideSpeed, bool isImpact)
+    {
+        if (isImpact && facing.Axis == EnumAxis.Y)
+        {
+            world.PlaySoundAt(tickSound, entity.Pos.X, entity.Pos.Y, entity.Pos.Z);
+            entity.Pos.Motion.Y *= -0.8;
+        }
+    }
+}
+</syntaxhighlight>
+
+Although this code works already, some sound effects would be rather nice. We can implement it by adding a sound link field to our block, which can use to play the <code>game:tick</code> sound.
+
+<syntaxhighlight lang="c#">
+public AssetLocation tickSound = new AssetLocation("game", "tick");
+</syntaxhighlight>
+
+This <code>tickSound</code> will played every time an entity bounces:
+
+<syntaxhighlight lang="c#">
+world.PlaySoundAt(tickSound, entity.Pos.X, entity.Pos.Y, entity.Pos.Z);
+</syntaxhighlight>
+
+----
+
+If you have done everything right, your file should look similar to this:
+<syntaxhighlight lang="c#">
+using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.MathTools;
+
+namespace VSExampleMods
+{
+    public class TrampolineMod : ModSystem
+    {
+
+        public override void Start(ICoreAPI api)
+        {
+            base.Start(api);
+            api.RegisterBlockClass("trampoline", typeof(TrampolineBlock));
+        }
+    }
+
+    public class TrampolineBlock : Block
+    {
+        public AssetLocation tickSound = new AssetLocation("game", "tick");
+
+        public override void OnEntityCollide(IWorldAccessor world, Entity entity, BlockPos pos, BlockFacing facing, Vec3d collideSpeed, bool isImpact)
+        {
+            if (isImpact && facing.Axis == EnumAxis.Y)
+            {
+                world.PlaySoundAt(tickSound, entity.Pos.X, entity.Pos.Y, entity.Pos.Z);
+                entity.Pos.Motion.Y *= -0.8;
+            }
+        }
+    }
+}
+</syntaxhighlight>
+
+Of course you can download the file directly [https://wiki.vintagestory.at/images/8/8a/Trampoline.cs Trampoline.cs].
+
+== Testing ==
+
+Finally we can run our first test. Looks pretty good, right?
+
+<youtube>Kg8J_rNOweU</youtube>
+
+'''Hint''': Use the client command <code>.tfedit</code> if you want to adjust the block position, rotation and scale in Hands, in GUI, when dropped on the ground or in third person mode.
+
+== Distribution ==
+
+In order to finish everything, open the modtools and type in <code>pack <your mod id></code>. Now you can take the zip file and share it with other people. It will work in the same way as ordinary mods, you can install it by copying it into the <code>mods</code> folder.
+
+= Mod Download =
+
+Here is my version: 
+* for VS v1.9: [https://wiki.vintagestory.at/images/2/24/Trampoline_vs1.9_v1.0.0.zip Trampoline_vs1.9_v1.0.0.zip]
+* for VS v1.5: [https://wiki.vintagestory.at/images/c/ce/Trampoline.zip Trampoline.zip]
+
+= Moving Forward =
+
+Now that you've successfully made an advanced block you can go even further by learning how to utilize '''[[Modding:Block Entity| Block Entities]]''' and how to create your own '''[[Modding:Adding Block Behavior | Block Behaviors]]'''. Both of these tutorials will teach you how to add even more mechanics to your custom blocks.
+
+Or, you can try out making an '''[[Modding:Advanced Items | Advanced Item]]''' if you haven't already. 
+
+{{Navbox/modding|Vintage Story}}

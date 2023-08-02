@@ -1,0 +1,52 @@
+<languages/><translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+
+<!--T:2-->
+Vintage story has an extensive modding system built into the game, allowing any user to make their own changes and additions as they see fit.
+
+<!--T:3-->
+For an overview of the game's modding system and philosophy, refer to the [https://www.vintagestory.at/features/modding.html/ Modding] page on the Vintage Story website.
+
+<!--T:4-->
+Before you get started, it's important to understand what you would like to accomplish so you can know what to expect. 
+
+<!--T:5-->
+__TOC__
+
+== What Mods can I make? == <!--T:6-->
+
+<!--T:7-->
+The current modding system for Vintage Story is incredibly flexible and quite easy to use even if you don't know how to program. You can add fully functional '''blocks''', '''items''' and even '''entities''' into the game without ever opening an [https://en.wikipedia.org/wiki/Integrated_development_environment IDE]. Although it is recommended you learn how to use one if you plan on modding a lot in the future, as they are very convenient. 
+
+<!--T:8-->
+This is because nearly every feature of the game relies on the usage of '''JSONs''', which are text documents that utilize a flexible, easy to read format. You can open these files with any text editor, and with just a little bit of practice you can learn how to format them to avoid errors. The best way to learn this is to study the existing JSONs that are visible to anybody who has the game installed. To do so you'll need to locate the Vintage Story Assets folder, which you can learn about at the '''[[Modding:The Asset System | Asset System]]''' page. <br> In addition, here is a [https://www.youtube.com/watch?v=iiADhChRriM 12 minute video] that will teach you why json is used, and the basic syntax, making it easier to understand the rest of the documentation.
+
+<!--T:9-->
+If you're looking to add more complex systems to Vintage story you can accomplish this as well, but you likely won't be able to do this with JSONs alone. Vintage Story is written in C#, and it is highly suggested you learn the basics of programming and of C# in general before moving onto more complex mods that can't be accomplished with just JSONs.
+
+== Types of Mods == <!--T:10-->
+
+<!--T:11-->
+In general there are 3 main types of mods one can create for Vintage Story, with each having different levels of complexity:
+
+<!--T:12-->
+* [[Modding:Theme Pack | Theme Packs]]: These are mods that only affect visuals and don't add more content or change features significantly.
+* [[Modding:Content Mods | Content Mods]]: These are mods that add additional content (i.e. blocks, items, mobs) to the game but don't utilize C# code and are mostly limited to JSONs.
+* [[Modding:Code Mods | Code Mods]]: These are mods that add more complex features and systems that require the use of C# code to accomplish.
+
+== Moving Forward == <!--T:13-->
+
+<!--T:14-->
+If you're just starting out it is certainly best to begin with a content mod, as most code mods simply extend the features of blocks, items and entities made from a content mod anyway. Once you've mastered content mods you can move onto coding if you want to add some really special things to your Vintage Story experience.
+
+<!--T:15-->
+More advanced programmers may be tempted to jump to code mods immediately, but it is still highly suggested you familiarize yourself with content mods first since you'll almost certainly be using them in tandem with any C# code you write. 
+
+<!--T:16-->
+The first thing you can do while starting your first content mod is to familiarize yourself with the '''[[Modding:The Asset System | Asset System]]'''. This is where most of the magic in Vintage Story is accomplished, and you'll be using these resources constantly while modding. 
+
+<!--T:17-->
+{{Navbox/modding|Vintage Story}}
+
+</translate>

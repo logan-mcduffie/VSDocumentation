@@ -1,0 +1,29 @@
+<languages/><translate>
+<!--T:1-->
+Vintage Story is primarily written in C# with OpenGL as the graphics backend. Learning OpenGL is only necessary if you want to do special rendering tricks, and learning C# is necessary if you want to go beyond assed modding.
+
+<!--T:2-->
+Here are a few learning resources that we can recommend:
+
+=== For C# === <!--T:3-->
+
+<!--T:4-->
+https://www.w3schools.com/cs/index.php (Interactive non-video course, does not require account)<br>
+https://www.youtube.com/user/IAmTimCorey (Beginner - Intermediate)<br>
+https://www.youtube.com/c/RawCoding (Intermediate - Advanced)<br>
+https://www.youtube.com/c/Elfocrash (Advanced - Expert)<br>
+
+=== For OpenGL, and Shaders === <!--T:5-->
+
+<!--T:6-->
+Playlist by ThinMatrix: https://www.youtube.com/watch?v=VS8wlS9hF8E&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP<br>
+Playlist by TheCherno: https://www.youtube.com/watch?v=W3gAzLwfIP0&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2<br>
+
+<!--T:7-->
+https://www.youtube.com/watch?v=kfM-yu0iQBk&list=PLImQaTpSAdsCnJon-Eir92SZMl7tPBS4Z<br><br>
+
+=== Maths for Game Devs === <!--T:8-->
+
+<!--T:9-->
+https://www.youtube.com/watch?v=MOYiVLEnhrw&list=PLImQaTpSAdsD88wprTConznD1OY1EfK_V<br>
+</translate>

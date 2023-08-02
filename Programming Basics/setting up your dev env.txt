@@ -1,0 +1,329 @@
+<languages/><translate>
+<!--T:1-->
+{{GameVersion|1.16.4}}
+
+__FORCETOC__
+== Software == <!--T:2-->
+
+<!--T:3-->
+When you are ready to begin coding mods for Vintage Story, you probably would want to set up a development environment that simplifies the process of coding and testing your creations. There are several applications that aid you in the development of mods. Here are some suggestions:
+
+<!--T:4-->
+* [https://www.visualstudio.com/en/vs/community/ Visual Studio Community] is a free and very powerful development environment and covered in below guide. This is also the tool the Vintage Story Team uses to build the game. It also has a [https://www.visualstudio.com/vs/mac/ MacOS Version].
+
+<!--T:88-->
+* [https://www.jetbrains.com/rider/ Jetbrains Rider] is a freemium and modern development environment with seamless support for Visual Studio projects, keybindings and layouts. It is an enterprise product and some features are locked behind a license (code duplication checking, web dev tools), but the features that you need for VS mod development are all free. The indexing / go to reference features and built-in decompiling features are very powerful, as you are able to click on a method Vintage Story uses and it'll show you the code behind it. Do note that it currently has one bug + workaround documented [https://github.com/anegostudios/vsmodexamples/issues/11 here].
+
+<!--T:5-->
+* [https://code.visualstudio.com/ Visual Studio Code] is very a lightweight version of Visual Studio. Our precious community member [https://twitter.com/koppeh?lang=en copygirl] is using this tool and also [https://github.com/copygirl/howto-example-mod wrote a set up guide on github]
+
+<!--T:6-->
+* [https://www.monodevelop.com/ MonoDevelop] is another IDE that is more lightweight than Visual Studio Community.
+
+<!--T:7-->
+* [https://notepad-plus-plus.org/ Notepad++] your very basic text editing tool with some extra features. You can code mods in any text editor, really. It does however lack instant context sensitive feedback while programming, which is very helpful. If you choose this way, you can use the game itself to trial and error mods by reloading them while the game is running.
+
+== Install Development Tool == <!--T:8-->
+
+<!--T:89-->
+VintageStory is developed in C#. Choose one of the above IDEs or other alternatives. We suggest using '''Visual Studio Community''' for Windows. For Linux you may want to use '''Visual Studio Code''', '''Rider''' or '''MonoDevelop'''.
+
+<!--T:90-->
+After you download an IDE, you can now either get the [https://github.com/anegostudios/vsmodtemplate mod template] project or manually set up a mod project. The mod template offers a convenience tool to set up multiple mod projects and to quickly pack up and have a ready-to-ship mod.
+
+=== Installation Guide on Windows / macOS with Visual Studio === <!--T:91-->
+
+<!--T:92-->
+{| class="wikitable"
+|-
+! scope="col"| OS
+! scope="col"| Repo
+! scope="col"| Command
+|-
+| Windows
+| [https://visualstudio.microsoft.com/downloads/ download exe]
+| Run downloaded file
+|-
+| macOS
+| [https://visualstudio.microsoft.com/downloads/ download dmg]
+| Run downloaded file
+|}
+
+=== Installation Guide on Linux / macOS with MonoDevelop === <!--T:10-->
+
+<!--T:93-->
+You can use the MonoDevelop IDE to make VS mods on Linux. The download instructions are below, choose your OS and follow the link to add the repo, then run the install command.
+
+<!--T:94-->
+{| class="wikitable"
+|-
+! scope="col"| OS
+! scope="col"| Repo
+! scope="col"| Command
+|-
+| Debian 8-10
+| [https://www.monodevelop.com/download/#fndtn-download-lin-debian repo]
+| <code>sudo apt-get install monodevelop</code>
+|-
+| Ubuntu 14.04-20.04
+| [https://www.monodevelop.com/download/#fndtn-download-lin-ubuntu repo]
+| <code>sudo apt-get install monodevelop</code>
+|-
+| CentOS / RedHat
+| [https://www.monodevelop.com/download/#fndtn-download-lin-centos repo]
+| <code>yum install monodevelop</code>
+|-
+| Using Flatpak
+| [http://flatpak.org/getting.html Download Flatpak]
+| <code>flatpak install --user --from https://download.mono-project.com/repo/monodevelop.flatpakref</code>
+|-
+| macOS
+| [https://www.monodevelop.com/developers/building-monodevelop/ build guide]
+| Use Visual Studio or build from source
+|-
+| Other
+| [https://github.com/mono/monodevelop compile from source]
+| Follow the instructions to compile from source
+|}
+
+=== Installation Guide on Linux / macOS with Visual Studio Code === <!--T:95--> 
+
+<!--T:96-->
+You can use Visual Studio Code to make VS mods on Linux. The download instructions are below, choose your OS and follow the link to download it.
+
+<!--T:97-->
+{| class="wikitable"
+|-
+! scope="col"| OS
+! scope="col"| Download
+! scope="col"| Command
+|-
+| Debian 8-10
+| [https://code.visualstudio.com/download download deb]
+| <code>sudo dpkg -i /path/to/vscode/file.deb && sudo apt-get install -f</code>
+|-
+| Ubuntu 18.04-20.04
+| [https://code.visualstudio.com/download download deb]
+| <code>sudo apt install /path/to/vscode/file.deb</code>
+|-
+| CentOS / RedHat / Fedora / SUSE
+| [https://code.visualstudio.com/download download rpm]
+| <code>rpm -ih /path/to/vscode/file.rpm</code>
+|-
+| Arch
+| [https://aur.archlinux.org/packages/visual-studio-code-bin package]
+| <code>yay -S visual-studio-code-bin</code>
+|-
+| Using Snap
+| [https://snapcraft.io/docs/installing-snapd Download <code>snapd</code>]
+| <code>sudo snap install code --classic</code>
+|-
+| macOS
+| [https://code.visualstudio.com/download download zip]
+| Run downloaded file
+|-
+| Other
+| [https://github.com/microsoft/vscode compile from source]
+| Follow the instructions to compile from source
+|}
+
+=== Installation Guide on Windows / Linux / macOS with JetBrains Rider === <!--T:98--> 
+
+<!--T:99-->
+You can use Jetbrains Rider to make VS mods on Linux. The download instructions are below, choose your OS and follow the link to download it.
+
+<!--T:100-->
+{| class="wikitable"
+|-
+! scope="col"| OS
+! scope="col"| Download
+! scope="col"| Command
+|-
+| Windows
+| [https://www.jetbrains.com/rider/download/#section=windows download exe]
+| Run downloaded file
+|-
+| Arch
+| [https://aur.archlinux.org/packages/rider package]
+| <code>yay -S rider mono mono-msbuild</code>
+|-
+| Using Toolbox
+| [https://www.jetbrains.com/help/idea/installation-guide.html#toolbox Download Toolbox]
+| Follow the given instructions for your OS
+|-
+| Using Snap
+| [https://snapcraft.io/docs/installing-snapd Download <code>snapd</code>]
+| <code>sudo snap install rider --classic</code>
+|-
+| macOS
+| [https://www.jetbrains.com/rider/download/#section=mac download dmg]
+| Run downloaded file
+|-
+| Other
+| [https://www.jetbrains.com/rider/download/#section=linux download <code>.tar.gz</code>]
+| <code>sudo tar -xzf ideaIU.tar.gz -C /opt && cd /opt/idea-dir-edit-me && sudo ./idea.sh</code>
+|}
+
+== Mod templates == <!--T:18-->
+
+<!--T:19-->
+* [https://github.com/anegostudios/vsmodtemplate/releases/latest '''The official Mod template for Visual Studio'''] which is covered in this article.
+* [https://github.com/copygirl/howto-example-mod copygirl's VSCode setup]
+
+== Setup using the official Mod template == <!--T:20-->
+
+<!--T:21-->
+To get started download the VSModTemplate solution from [https://github.com/anegostudios/vsmodtemplate/releases/latest GitHub]. Now you simply need to extract the zip archive to your desired destination.
+
+<!--T:22-->
+[[File:VSMods9.png]]
+
+<!--T:23-->
+Navigate to <code>vsmodtemplate-x.y.z</code> and double click <code>VSMods.sln</code> (only works if Visual Studio is installed). Alternatively you can also start Visual Studio hit <code>File -> Open -> Project/Solution...</code>, navigate to the extracted folder and select <code>VSMods.sln</code>.
+
+<!--T:24-->
+But before you can start to work, you have to set up the ModTools first.
+
+=== Run ModTools === <!--T:25-->
+
+<!--T:26-->
+The ModTools allow you to do various tasks rather easily by typing in a command. Each platform requires a different way to start it.
+Please note, the mod tools have only been tested with Visual Studio and MonoDevelop, but they are not required to mod the game, it merely simplifies some of the tasks.
+
+==== Windows ==== <!--T:27-->
+
+<!--T:28-->
+Double-click <code>vsmodtools.exe</code>.
+
+==== Linux ==== <!--T:29-->
+
+<!--T:30-->
+Open a terminal and navigate to this folder and enter <code>mono vsmodtools.exe</code>.
+
+==== Mac OS ==== <!--T:31-->
+
+<!--T:32-->
+Double-click <code>modtools.command</code>.
+
+<!--T:33-->
+[[File:ModTools.png]]
+
+=== Setup === <!--T:34-->
+
+<!--T:35-->
+{{Syntax|setup [optional path]}}
+
+<!--T:36-->
+Before doing anything else you have to setup your workspace. Just type in <code>setup</code> and it will automatically try to locate your Vintage Story installation directory. If it cannot find it, you will be asked to type in the full path. Once you have entered your path, it will update your project files so you can start to work with it. Now open the project again and run your first test by clicking <code>Start</code> [[File:VSMods10.png]]. If everything has been set up correctly, Vintage Story should start.
+
+=== Project Setup (ZIP) === <!--T:37-->
+
+<!--T:38-->
+The source mod system lets you build zip mods that can ship source code besides their assets. The source code is compiled during run-time by the modloader engine. This has the great advantage of being open and easy to modify on the run, but also comes with one major disadvantage, which is that the inbuilt source code compiler can only compile code up until C# 6.0, so newer language features are not supported. If this is a showstopper for you, we advise you to build a compiled mod.
+
+==== Add Mod ==== <!--T:39-->
+
+<!--T:40-->
+{{Syntax|add <modid>}}
+
+<!--T:41-->
+Adds a new mod project to your workspace, also generates an <code>assets</code>, a <code>src</code> folder and a <code>modinfo.json</code> file. The mod will be added to your visual studio solution and will be loaded by Vintage Story. Make sure to fill in all additional information in <code>modinfo.json</code>.
+
+==== Delete Mod ==== <!--T:42-->
+
+<!--T:43-->
+{{Syntax|delete <modid>}}
+
+<!--T:44-->
+Before executing, make sure your project is closed, otherwise you might run into some difficulties. Running this command will delete the given mod completely (irreversible).
+
+==== Pack Mod ==== <!--T:45-->
+{{Syntax|pack <modid>}}
+
+<!--T:46-->
+Creates a mod zip file and places it in <code>/releases/<modid>/<modid>_v<modversion>.zip</code>. This file is ready for use and can be shared with other people.
+
+<!--T:47-->
+{{Syntax|pack-all}}
+
+<!--T:48-->
+Packs all mods in your workspace at once.
+
+=== Project Setup (Compiled Zip) === <!--T:49-->
+
+<!--T:50-->
+Both dll and zip mods have their advantages and disadvantages, so why not combine them together? This project setup is very similar to zip. Instead of adding the source code to the zip file, it uses the compiled dll. This allows you to have all the dll benefits while still having the zip mod asset structure.
+
+==== Add Mod ==== <!--T:51-->
+
+<!--T:52-->
+{{Syntax|add <modid> compiled}}
+
+<!--T:53-->
+Adds a compiled zip mod template to your workspace. The difference is that it uses a compiled dll instead of the actual source code. All other commands are equal to the zip ones.
+
+==== Set Mod ==== <!--T:54-->
+
+<!--T:55-->
+{{Syntax|set <modid> <source&#124;compiled>}}
+
+<!--T:56-->
+Sets the given zip mod either to source or compiled. This can be useful if you want to change the type of your mod later on.
+
+=== Project Setup (DLL) === <!--T:57-->
+
+<!--T:58-->
+Dll mods are way more powerful than source mods, but they have two major downsides. Firstly, they are not able to carry assets which will be loaded by the game, secondly because they are so powerful they can be dangerous. Besides that dll mods can (unlike the others) have cross mod references, provide APIs and use C# 7. We recommend this type of mod for more experienced mod developers.
+
+==== Add Mod ==== <!--T:59-->
+
+<!--T:60-->
+{{Syntax|add-dll <modid>}}
+
+<!--T:61-->
+Adds a new mod project to your workspace. A generated <code>AssemblyInfo.cs</code> file will be in your properties folder, it contains the mod information (name, author, version, description etc.) so make sure to change them before you spread the mod to other people. The mod will be added to your visual studio solution and will be loaded by VintageStory.
+
+==== Delete Mod ==== <!--T:62-->
+
+<!--T:63-->
+{{Syntax|delete <modid>}}
+
+<!--T:64-->
+Before executing, make sure your project is closed, otherwise you might run into some difficulties. Running this command will delete the given mod completely (irreversible).
+
+==== Release Mod ==== <!--T:65-->
+
+<!--T:66-->
+Once you launch VintageStory in your workspace, the DLL mod will be compiled. You can find it in your <code>mods</code> folder, with the give name: <code><modid>.dll</code>. If you want to upload this mod or share it with your friends this is the file you need to use.
+
+== Manual setup == <!--T:67-->
+
+<!--T:68-->
+* Create a new project
+* Add at least a library reference to the <code>VintageStoryApi.dll</code> (on Windows it's located in the installation directory)
+* Open the project properties. Under debug select "Start external program" select the <code>VintageStory.exe</code>. Also adjust the working directory to where the executable is located.
+* If you compile to a .dll file, set up a ModInfo attribute in your AssemblyInfo.cs ([https://github.com/anegostudios/vsmodtemplate/blob/master/Properties/AssemblyInfo.cs example])
+** Add the following command line arguments: <code>-openWorld="modsamplestest" -pcreativebuilding --addModPath="C:\path\to\your\bin\folder" --addOrigin="C:\path\to\your\assets\folder\if\you\have\any"</code>
+* If want to ship a source mod or mod with assets, set up a <code>modinfo.json</code> ([https://github.com/copygirl/CarryCapacity/blob/master/resources/modinfo.json example]). Make sure your folders are set up in a way that the modPath contains the modinfo.json and a folder named "src" containing your source files. Optionally it can also contain an assets folder for your assets. 
+** Add the following command line arguments: <code>-openWorld="modsamplestest" -pcreativebuilding --addModPath="C:\path\to\your\modPath"</code>
+* I recommend adding the [https://github.com/anegostudios/vsmodexamples/blob/master/Mods/RedirectLogs/src/RedirectLogs.cs RedirectLogs.cs] file to your project, so that you can see the log output in your visual studio output window. Be sure not to ship your mod with it though.
+* Run the project and hope for the best :D
+* To ship a mod have a look at [[Mod Packaging]]
+
+<!--T:69-->
+If you are having troubles, you might be able to learn from the [https://github.com/anegostudios/vsmodexamples vsmodexamples project]
+
+= Moving Forward = <!--T:70-->
+
+<!--T:71-->
+If you've successfully managed to setup your development environment and can run Vintage Story through the '''VSMods''' project in your IDE then it's time to get started on your first code mod. At this point there are many options you can choose from as code mods can alter almost any aspect of the game. However, the best place to start is likely one again with Blocks and Items (since you should be familiar with making them using JSONS by this point).
+
+<!--T:72-->
+Head over to the '''[[Modding:Advanced Blocks | Advanced Blocks]]''' page to make your first advanced code block.
+
+<!--T:73-->
+Or head over to the '''[[Modding:Advanced Items | Advanced Items]]''' page to make your first advanced code item.
+
+<!--T:74-->
+{{Navbox/modding|Vintage Story}}
+</translate>

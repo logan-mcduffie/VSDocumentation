@@ -1,0 +1,341 @@
+<languages/>
+<translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+__FORCETOC__
+
+<!--T:2-->
+Please read the tutorial [[Getting Started with Advanced Modding#Domains|Getting Started]] first, if you haven't done it already. This tutorial should introduce you into the basic of adding a block to the game using JSON files. If you want to add a block with functionality you should check out the tutorial for [[Advanced Blocks]]. There is a full list of all properties which can be defined inside the json file [[Block Json Properties|here]].
+
+= A Simple Block = <!--T:3-->
+
+<!--T:4-->
+To get started let's create something simple. In our example we will add an ordinary gold block to the game (will be for decorative use only). So let's call this mod '''MyGoldBlock'''.
+
+== Workspace == <!--T:5-->
+
+<!--T:6-->
+First of all it is useful to create a new folder to keep everything nice and clean. Inside this '''workspace''' we will create the mod itself, and later on put it into a zip file, so we can test it and distribute it to other people.
+
+== The Texture == <!--T:7-->
+
+<!--T:8-->
+We will use this texture for our block: [[File:Gold block.png]]. <br>
+(To create your own textures, you can use programs like [https://www.dotpdn.com/downloads/pdn.html/ PaintDotNet(free)], [https://www.piskelapp.com/ Piskel(free)], or [https://github.com/aseprite/aseprite/ Aseprite(free open source, or pay for precompiled)])
+
+<!--T:9-->
+Now we need to put the texture at the right place so we can use it later on. Therefore you have to rename the texture to <code>mygoldtexture.png</code> and put it inside <code>assets/mygoldblock/textures/block/</code> in your workspace (you have to create those folders first). <code>mygoldblock</code> will be our domain.
+
+== The Block File == <!--T:10-->
+
+<!--T:11-->
+The next thing we are going to need is a json file which will determine the properties of the block. For now we will keep it simple and will work with simple properties only. If you want to do some more advanced stuff you can take a look at the [[Block Json Properties|Block Properties Overview]].
+
+<!--T:12-->
+Now you need to create a new json file in your editor (we recommend to use an editor with syntax highlighting, such as [https://notepad-plus-plus.org/ Notepad++] or [https://www.sublimetext.com/ Sublime Text]. If you are going to have many json files or some C#, then [https://code.visualstudio.com/ Visual Studio Code] is also a good pick).
+
+<!--T:13-->
+<syntaxhighlight lang="json">
+{
+	"code": "mygoldblock",
+	"creativeinventory": { "general": ["*"] },
+	"blockmaterial": "Stone",
+	"drawtype": "Cube",
+	"textures": {
+		"all": { "base": "block/mygoldtexture" }
+	},
+	"resistance": 3.5,
+	"sounds": {
+		"place": "game:block/anvil",
+		"walk": "game:walk/stone"
+	}
+}
+</syntaxhighlight>
+
+<!--T:14-->
+Short explanation of each line:
+
+<!--T:15-->
+* '''code''': A unique identifier for your block.
+* '''creativeinventory''': The creative inventory tabs the block should be shown in (currently only 1 tab available)
+* '''shape''': Which model the block should use
+* '''drawtype''': Determines the drawing system, e.g. use 'cube' for normal full cubes or 'json' for custom created shapes.
+* '''textures''': What textures to apply. For simple blocks you can define one single texture for 'all' faces or define one for every facing ('north', 'east', 'west', 'south', 'up', 'down')
+* '''resistance''': How many seconds of real life time it takes to break the block without tools
+* '''sounds''': The sounds to be played when placing/breaking or walking on the block. The prefix <code>game</code> has to be added, since our block has the domain <code>mygoldblock</code>. Otherwise it would try to find those sounds inside our domain.
+
+<!--T:16-->
+Now save the file in your workspace inside <code>assets/mygoldblock/blocktypes/</code> and name it <code>mygoldblock.json</code>.
+
+== Naming the Block == <!--T:17-->
+
+<!--T:18-->
+To give the block a proper name, we need to create another json file and save it with the following path: <code>assets/mygoldblock/lang/en.json</code>
+
+<!--T:19-->
+<syntaxhighlight lang="json">
+{
+	"block-mygoldblock": "Block of Gold"
+}
+</syntaxhighlight>
+
+== Testing/ Distribution == <!--T:20-->
+
+<!--T:21-->
+The last thing we need to do is to create a zip file of the assets folder inside our workspace. Either you use an external program (such as WinRAR or 7Zip) or you right-click the <code>assets</code> folder and hit '''Send To''' -> '''Compressed (zipped) folder'''. Eventually you can rename the zip file to <code>MyGoldBlockMod.zip</code>. The zip file can be either used for testing purposes or you can send it to other people so they can use it as well.
+
+<!--T:22-->
+Furthermore you need to add a <code>modinfo.json</code> file, check out [[Game_Content_Mod|this tutorial]].
+
+<!--T:23-->
+To install the mod, navigate to the [[Vintagestory folder]] and place it inside the mods folder.
+
+<!--T:24-->
+[https://wiki.vintagestory.at/images/4/4c/MyGoldBlockMod.zip MyGoldBlockMod.zip]
+
+<!--T:25-->
+[[File:2017-01-10 12-33-45.png|700px]].
+
+<!--T:26-->
+'''Hint''': Use the client command <code>.tfedit</code> if you want to adjust the block position, rotation and scale in Hands, in GUI, when dropped on the ground or in third person mode.
+
+= Advanced Properties = <!--T:27-->
+
+<!--T:28-->
+Now we do some more advanced stuff with our lovely gold block. We will add random textures, different variants and custom shapes. So let's get started.
+
+== Random Textures == <!--T:29-->
+
+<!--T:30-->
+So first of all we need some more textures. I have created some variants of the gold block [[File:Gold block.png]] [[File:mygoldtexture1.png]] [[File:mygoldtexture2.png]] [[File:mygoldtexture3.png]].
+To keep the name of the textures simple I added a number to each texture name (<code>mygoldtexture.png</code>,<code>mygoldtexture1.png</code>,<code>mygoldtexture2.png</code>,<code>mygoldtexture3.png</code>)
+
+<!--T:31-->
+Now we need to add those new textures to the json file.
+<syntaxhighlight lang="json">
+	"textures": {
+		"all": { 
+			"base": "block/mygoldtexture",
+			"alternates": [{"base": "block/mygoldtexture1" }, {"base": "block/mygoldtexture2" }, {"base": "block/mygoldtexture3" }],
+		},
+	},
+</syntaxhighlight>
+
+<!--T:32-->
+Eventually save it and run Vintagestory again. Now you should see a result like this:
+
+<!--T:33-->
+[[File:2017-01-10 14-05-03.png|700px]]
+
+<!--T:34-->
+Of course you can add more texture if you would like to.
+
+== Variants == <!--T:35-->
+
+<!--T:36-->
+Gold is the best, but iron is awesome too ... so what shall we do? Let's add another variant of this block, because we all love iron.
+
+<!--T:37-->
+You could duplicate the blocktype file and rename silver to gold in all the places, or you can simply add another variant to the existing blocktype.
+
+=== Variantgroup: Type === <!--T:38-->
+
+<!--T:39-->
+So first of all we need some new textures again: [[File:Myirontexture.png]] [[File:Myirontexture1.png]] [[File:Myirontexture2.png]] [[File:Myirontexture3.png]]
+
+<!--T:40-->
+Now we need to change a few things in our json file. We can add all kinds of different groups, but for now we keep it simple. We are adding group called <code>type</code>, with the states <code>gold</code> and <code>iron</code>. You can use any group code you want.
+<syntaxhighlight lang="json">
+	"variantgroups": [
+		{ "code": "type", "states": ["gold", "iron"] }
+	],
+</syntaxhighlight>
+
+<!--T:41-->
+The next thing we need to do is set textures by type. So we remove our <code>texture</code> property and replace it with a new property <code>texturesbytype</code>, which will allow us to set different textures for each type.
+
+
+<!--T:42-->
+<syntaxhighlight lang="json">
+	"texturesbytype": {
+		"*-gold": {
+			"all": { 
+				"base": "block/mygoldtexture",
+				"alternates": [{"base": "block/mygoldtexture1" }, {"base": "block/mygoldtexture2" }, {"base": "block/mygoldtexture3" }],
+			},
+		},
+		"*-iron": {
+			"all": { 
+				"base": "block/myirontexture",
+				"alternates": [{"base": "block/myirontexture1" }, {"base": "block/myirontexture2" }, {"base": "block/myirontexture3" }],
+			},
+		}
+	},
+</syntaxhighlight>
+
+<!--T:43-->
+Every group will be added after each other to the blocks code <code>myblockname-mygroup-mysecondgroup</code>. In our example we can save ourselves writing a few extra letters by using the wild card <code>*</code>.
+
+<!--T:44-->
+You can also use a more compact definition. Due to way we named our textures we can use the placeholder {type} to determine the texture name, so instead of handling every case individually we can write it like this:
+
+<!--T:45-->
+<syntaxhighlight lang="json">
+	"textures": {
+		"all": { 
+			"base": "block/my{type}texture",
+			"alternates": [{"base": "block/my{type}texture1" }, {"base": "block/my{type}texture2" }, {"base": "block/my{type}texture3" }],
+		},
+	},
+</syntaxhighlight>
+
+<!--T:46-->
+The full blocktype definition could then look like this: 
+<syntaxhighlight lang="json">
+{
+	"code": "myshinyblock",
+	"creativeinventory": { "general": ["*"] },
+	"variantgroups": [
+		{ "code": "type", "states": ["gold", "iron"] }
+	],
+	"blockmaterial": "Stone",
+	"drawtype": "cube",
+	"textures": {
+		"all": { 
+			"base": "block/my{type}texture",
+			"alternates": [{"base": "block/my{type}texture1" }, {"base": "block/my{type}texture2" }, {"base": "block/my{type}texture3" }],
+		},
+	},
+	"resistance": 3.5,
+	"sounds": {
+		"place": "game:block/anvil",
+		"walk": "game:walk/stone"
+	}
+}
+</syntaxhighlight>
+
+<!--T:47-->
+[[File:2017-01-10 14-36-58.png|700px]]
+
+=== Variantgroup: Condition === <!--T:48-->
+
+<!--T:49-->
+Let's at another group to our block, which will determine the condition of this block. There will be two states <code>good</code> and <code>used</code>. We can add this group by adding another property inside <code>variantgroups[]</code>.
+
+<!--T:50-->
+<syntaxhighlight lang="json">
+	"variantgroups": [
+		{ "code": "type", "states": ["gold", "iron"] },
+		{ "code": "condition", "states": ["good", "used"]}
+	],
+</syntaxhighlight>
+
+<!--T:51-->
+To finish implementing this second group we need to take care of every case. We want the <code>good</code> blocks to only use the base texture and the <code>used</code> blocks to also use their random textures:
+
+<!--T:52-->
+<syntaxhighlight lang="json">
+	"texturesbytype": {
+		"*-good": {
+			"all": { 
+				"base": "block/my{type}texture",
+			},
+		},
+		"*-used": {
+			"all": { 
+				"base": "block/my{type}texture",
+				"alternates": [{"base": "block/my{type}texture1" }, {"base": "block/my{type}texture2" }, {"base": "block/my{type}texture3" }],
+			},
+		},
+	},
+</syntaxhighlight>
+
+<!--T:53-->
+The blocks in a good condition or on the left side, while the used ones are on the right:
+
+<!--T:54-->
+[[File:2017-01-10 15-02-38.png|700px]]
+
+== Custom Shapes == <!--T:55-->
+
+<!--T:56-->
+In order to use a custom shape we need to create one first. The engine only supports the model/shape format that's created by the [[VS Model Creator]].
+
+<!--T:57-->
+Once you have created your own shape you need to export it as a json file, create a new folder <code>assets/myshinyblock/shapes/block/</code> and save the file in there. In our example we will use this model [https://wiki.vintagestory.at/images/3/38/Myshinymodel.json Myshinymodel.json] and move it to <code>assets/myshinyblock/shapes/block/myshinymodel.json</code>.
+Now we need to specify the model inside our block type json file.
+
+<!--T:58-->
+Therefore we will change the drawtype from <code>cube</code> to <code>json</code>:
+<syntaxhighlight lang="json">
+	"drawtype": "json",
+</syntaxhighlight>
+
+<!--T:59-->
+and the shape to <code>myshinymodel</code>
+<syntaxhighlight lang="json">
+	"shape": { base: "block/myshinymodel" },
+</syntaxhighlight>
+
+<!--T:60-->
+Although this would be enough theoretically, we also should determine this block as being non-solid, to prevent graphical glitches.
+<syntaxhighlight lang="json">
+	"sidesolid": {
+		"all": "false"
+	},
+	"sideopaque": {
+		"all": "false"
+	},
+</syntaxhighlight>
+
+<!--T:61-->
+So let's run the game. This is how it should look like:
+
+<!--T:62-->
+[[File:2017-01-12 14-06-27.png|700px]]
+
+== Variants of Custom Shapes == <!--T:63-->
+
+<!--T:64-->
+I created another model for the blocks in good condition ([https://wiki.vintagestory.at/images/f/fa/Myshinymodel1.json myshinymodel1.json]), because they should look more awesome, than the ones in used conditions. Therefore we need to copy the json file to <code>assets/myshinyblock/shapes/block/</code> as well.
+
+<!--T:65-->
+In order to specify the shape by type we need to remove the property <code>shape</code> and replace it with <code>shapebytype</code>:
+<syntaxhighlight lang="json">
+	"shapebytype": {
+		"*-good": {
+			"base": "block/myshinymodel1",
+		},
+		"*-used": {
+			"base": "block/myshinymodel",
+		},
+	},
+</syntaxhighlight>
+
+<!--T:66-->
+[[File:2017-01-12 14-51-45.png|700px]]
+
+= Mod Download = <!--T:67-->
+You can find the complete mod here for reference:
+
+<!--T:68-->
+[https://wiki.vintagestory.at/images/4/42/MyShinyBlockMod.zip MyShinyBlockMod]
+
+= Moving Forward = <!--T:69-->
+
+<!--T:70-->
+The example shown here, while seemingly complex, only scratches the surface of what blocktypes are capable of in Vintage Story. It's highly suggested that you experiment with or at least familiarize yourself with all the known block properties before moving onto code mods. The best way to do this is to peruse the '''[[Modding:Block Json Properties | Block Properties]]''' page, which contains an ongoing list of all the usable JSON block properties currently incorporated into the game. Most properties in the list also have referenced files you can search for in the Vintage Story Assets folder. If you don't know where this is, you can find tutorials for each operating system at the [[Modding:The Asset System | Asset System]] page. 
+
+<!--T:71-->
+If you haven't yet, it's suggested you also check out the '''[[Modding:Basic Item | Basic Item]]''' and '''[[Modding:Basic Entity | Basic Entity]]''' pages to learn how simple JSON items and entities are added to the game. 
+
+<!--T:72-->
+However, if you're feeling like making the jump to code mods then you'll want to start by setting up your '''[[Modding: Setting up your Development Environment | Development Environment]]'''.
+
+= Tutorial Video: How make mod without programming (in Russian) = <!--T:73-->
+Thanks to ZigTheHedge for great detailed video
+<br><youtube>BAr7etxj-1o</youtube> <youtube>fnFFh_enXiA</youtube>
+
+<!--T:74-->
+{{Navbox/modding|Vintage Story}}
+</translate>

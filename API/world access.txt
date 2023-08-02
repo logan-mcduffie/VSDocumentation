@@ -1,0 +1,175 @@
+{{GameVersion|1.15}}
+<languages/>
+<translate>
+== Get and Set Blocks through the API == <!--T:3-->
+
+<!--T:4-->
+Let's Take our basic mod init code for a server mod
+
+<!--T:5-->
+<syntaxhighlight lang="c#">
+    public class SampleMod : ModSystem
+    {
+        ICoreServerAPI api;
+
+        <!--T:6-->
+public override bool ShouldLoad(EnumAppSide side)
+        {
+            return side == EnumAppSide.Server;
+        }
+
+
+        <!--T:7-->
+public override void StartServerSide(ICoreServerAPI api)
+        {
+            this.api = api;
+        }
+    }
+</syntaxhighlight>
+
+<!--T:8-->
+With this you can already start placing or reading blocks using the api object. Please note that mods are loaded before the world is loaded, so you cannot immediately access the world. Depending on what you want to achieve, you have to register to the appropriate event. For some examples in order to do something...
+* after the world has loaded you could register to the RunGame phase: <code>api.Event.ServerRunPhase(EnumServerRunPhase.RunGame, OnRunGame);</code>
+* during world generation we'd have to register to the [[WorldGen API|appropriate world gen events]].
+* when the player runs a custom command we need to register one: <code>api.RegisterCommand("test", "a test command", "", OnCommand);</code>
+* when a player joins the game: <code>api.Event.PlayerJoin += OnPlayerJoin;</code>
+
+<!--T:9-->
+Let's register to the player join event. 
+
+<!--T:10-->
+<syntaxhighlight lang="c#">
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            this.api = api;
+            api.Event.PlayerJoin += OnPlayerJoin;
+        }
+
+        <!--T:11-->
+private void OnPlayerJoin(IServerPlayer byPlayer)
+        {
+            
+        }
+</syntaxhighlight>
+
+<!--T:12-->
+Let's do 2 simple things whenever a player joins:
+* Always place some fire clay bricks just below his feet
+* Count the amount log blocks around the player in a 3 block radius
+
+<!--T:13-->
+Now, blocks are always uniquely identified by a number of characters called the block code. If you want to find out a blocks code, a simple way of doing it is to start the game, enable the debug info mode via the command <code>.edi</code> and look at a block in the creative inventory:
+
+<!--T:14-->
+[[File:Blockcode.png]]
+
+<!--T:15-->
+So the code of a fire brick block is game:claybricks-fire. The first part before the colon is the domain, for the default domain 'game' we can usually ignore it.
+
+<!--T:16-->
+We now have to retrieve it's number identifier for this particular world in order to get or set it. We do this as followed:
+
+<!--T:17-->
+<syntaxhighlight lang="c#">
+        private void OnPlayerJoin(IServerPlayer byPlayer)
+        {
+            Block firebrickblock = api.World.GetBlock(new AssetLocation("claybricks-fire"));
+            ushort blockId = firebrickblock.BlockId;
+        }
+</syntaxhighlight>
+
+<!--T:18-->
+Now all we have to do is set the block right below the players position through the IBlockAccessor interface.
+
+<!--T:19-->
+<syntaxhighlight lang="c#">
+            BlockPos plrpos = byPlayer.Entity.Pos.AsBlockPos;
+            api.World.BlockAccessor.SetBlock(blockId, plrpos.DownCopy());
+</syntaxhighlight>
+
+<!--T:20-->
+We're using <code>plrpos.DownCopy()</code> to keep the original player position for later use and to move the position down by 1 for placing the block below the player.
+
+<!--T:21-->
+And finally let's count the number of log blocks around the player and inform him via chat message. 
+
+<!--T:22-->
+<syntaxhighlight lang="c#">
+            // Check a 7x7x7 area for logs
+            int quantityLogs = 0;
+            for (int x = -3; x <= 3; x++)
+            {
+                for (int y = -3; y <= 3; y++)
+                {
+                    for (int z = -3; z <= 3; z++)
+                    {
+                        Block block = api.World.BlockAccessor.GetBlock(plrpos.X + x, plrpos.Y + y, plrpos.Z + z);
+
+                        <!--T:23-->
+if (block.Code.Path.Contains("log"))
+                        {
+                            quantityLogs++;
+                        }                        
+                    }
+                }
+            }
+
+            <!--T:24-->
+byPlayer.SendMessage(GlobalConstants.GeneralChatGroup, "You have " + quantityLogs + " logs nearby you", EnumChatType.Notification);
+</syntaxhighlight>
+
+
+<!--T:25-->
+Alternatively we could also use a shorthand method to have more elegant code.
+
+<!--T:26-->
+<syntaxhighlight lang="c#">
+            int quantityLogs = 0;
+            api.World.BlockAccessor.WalkBlocks(
+                plrpos.AddCopy(-3, -3, -3), 
+                plrpos.AddCopy(3, 3, 3), 
+                (block, pos) => quantityLogs += block.Code.Path.Contains("log") ? 1 : 0
+            );
+
+            <!--T:27-->
+byPlayer.SendMessage(GlobalConstants.GeneralChatGroup, "You have " + quantityLogs + " logs nearby you", EnumChatType.Notification);
+</syntaxhighlight>
+
+<!--T:28-->
+And the complete code and final result:
+
+<!--T:29-->
+<syntaxhighlight lang="c#">
+        private void OnPlayerJoin(IServerPlayer byPlayer)
+        {
+            BlockPos plrpos = byPlayer.Entity.Pos.AsBlockPos;
+
+            <!--T:30-->
+Block firebrickblock = api.World.GetBlock(new AssetLocation("claybricks-fire"));
+            ushort blockId = firebrickblock.BlockId;
+            api.World.BlockAccessor.SetBlock(blockId, plrpos.DownCopy());
+
+            <!--T:31-->
+// Check a 7x7x7 area for logs
+            int quantityLogs = 0;
+            api.World.BlockAccessor.WalkBlocks(
+                plrpos.AddCopy(-3, -3, -3), 
+                plrpos.AddCopy(3, 3, 3), 
+                (block, pos) => quantityLogs += block.Code.Path.Contains("log") ? 1 : 0
+            );
+
+            <!--T:32-->
+byPlayer.SendMessage(GlobalConstants.GeneralChatGroup, "You have " + quantityLogs + " logs nearby you", EnumChatType.Notification);
+        }
+</syntaxhighlight>
+
+<!--T:33-->
+[[File:SetblockTut.png|500px]]
+
+ 
+<!--T:34-->
+I hope this taught you the basics of accessing the world. More ways to access blocks and entities will be added here in the future.
+</translate>
+
+
+{{Navbox/modding|Vintage Story}}

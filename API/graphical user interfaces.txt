@@ -1,0 +1,218 @@
+{{GameVersion|1.15}}
+<languages/><translate>
+<!--T:1-->
+Creating good graphical user interfaces is a challenging task - sometimes even the largest of companies mess it up.
+
+<!--T:2-->
+In Vintage Story you currently need to formulate your GUIs in code, which requires acute spacial thinking. Hopefully someday we'll have a point&click GUI designer that takes off a lot of work. Until then, here are some of the essentials.
+
+<!--T:3-->
+'''Protip:'''
+ Use the debug keybind to "Cycle Dialog Outline Modes" when building a GUI. It will draw outlines around your GUI element bounds, making it much easier to understand how your code is translated into the visual GUI.
+
+== Starting out == <!--T:4-->
+You should encapsulate every GUI Dialog into its own class, albeit a dialog may consist of multiple windows - the vanilla character dialog for example has two - one for the players wearables and one for the player stats. There's a couple of base classes to make your life a bit easier.
+
+===Block Entity GUI=== <!--T:5-->
+
+<!--T:6-->
+To create a GUI that's bound to a block entity, inherit from <code>GuiDialogBlockEntity</code>. In your block entity code you can then create and open that gui e.g. upon player interaction (example: [https://github.com/anegostudios/vssurvivalmod/blob/648193749d2ea5b8c155d27db0c7f6dc1050f9cd/BlockEntity/BEQuern.cs#L602 Quern Block Entity], [https://github.com/anegostudios/vssurvivalmod/blob/master/Gui/GuiDialogBlockEntityQuern.cs Quern Block Dialog])
+
+===HUD=== <!--T:7-->
+
+<!--T:8-->
+To create a GUI element which is not interactable, inherit from <code>HudElement</code>.
+
+===General Purpose GUI=== <!--T:9-->
+
+<!--T:10-->
+For any other uses, inerhit from the general purpose class <code>GuiDialog</code>, from which HudElement and GuiDialogBlockEntity also inherit from. You can override <code>ToggleKeyCombinationCode</code> to something like "yourAweseomeHotkeyCode" and use <code>capi.Input.RegisterHotKey</code> + <code>capi.Input.SetHotKeyHandler</code> to have your own keyboard key mapped to opening/closing your GUI (example: [https://github.com/anegostudios/vsessentialsmod/blob/master/Systems/WorldMap/WorldMapManager.cs#L105 World Map])
+
+== GUI Basics == <!--T:11-->
+
+<!--T:12-->
+In general, you can pretty much build your own GUI system if you want to, by just overriding <code>OnRenderGUI</code> and render whatever you like. There's a multitude of overridable methods to handle mouse and keyboard inputs as well, see also the [https://github.com/anegostudios/vsapi/blob/master/Client/UI/Dialog/GuiDialog.cs GuiDialog] class on Github
+
+<!--T:13-->
+If you want to use the vanilla GUI system, it's concept is merely a flat or hierarchical list of GUI elements placed at certain positions. The position is determined by an instance of <code>ElementBounds</code>. Let's have a closer look at it's properties:
+
+=== ElementBounds=== <!--T:14-->
+
+<!--T:15-->
+* <code>FixedX</code>/<code>FixedY</code>: The absolute position where the element should be placed
+* <code>FixedWidth</code>/<code>FixedHeight</code>: The absolute width and height of the element
+* <code>FixedPaddingX</code>/<code>FixedPaddingY</code>: The absolute inner padding of the element
+* <code>FixedMarginX</code>/<code>FixedMarginY</code>: The absolute outer padding of the element
+* <code>ParentBounds</code>: The parent boundaries, in which this element resides in
+* <code>ChildBounds</code>: The child boundaries this element contains
+* <code>Alignment</code>: The alignment of the element. If set to <code>None</code> the FixedX/Y Position is used. For any other value the FixedX/Y values are ignored. For example when you used <code>RightTop</code> the element will always be at the right top most corner of its parent bounds. If you use <code>RightFixed</code> the element will be right aligned, but its Y-Position is determined by <code>FixedY</code>
+* <code>HorizontalSizing</code>/<code>VerticalSizing</code>: The sizing method to be used, can be either <code>Fixed</code> (default), <code>Percentual</code> or <code>FitToChildren</code>
+
+===GuiComposer=== <!--T:16-->
+
+<!--T:17-->
+This is the component that builds and manages your GUI elements for you. You can create a composer via the client api: <code>capi.Gui.CreateCompo(dialogName, bounds)</code>. You have to supply it with a unique identifier and the overall dialog bounds. Once you have a GUIComposer instance you can chain-add elements. Here's a small example:
+</translate>
+<syntaxhighlight lang="c#">
+private void SetupDialog()
+{
+    // Auto-sized dialog at the center of the screen
+    ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
+
+    // Just a simple 300x300 pixel box
+    ElementBounds textBounds = ElementBounds.Fixed(0, 0, 300, 300);
+        
+    SingleComposer = capi.Gui.CreateCompo("myAwesomeDialog", dialogBounds)
+        .AddStaticText("This is a piece of text at the center of your screen - Enjoy!", CairoFont.WhiteDetailText(), textBounds)
+        .Compose()
+    ;
+}
+</syntaxhighlight>
+
+Some explanations:
+* <code>ElementStdBounds</code>: Contains a bunch of often used element bounds configurations. See also [https://github.com/anegostudios/vsapi/blob/master/Client/UI/ElementStdBounds.cs ElementStdBounds] on Github.
+* <code>ElementBounds.Fixed(0, 0, 300, 300)</code>: Create a new bounds instance with fixedX/Y at 0/0 and a fixed widt/height of 300/300 pixels.
+* <code>CairoFont.WhiteDetailText()</code>: Create a new font configuration based on a often used size and color, in this case white with font size 14
+* <code>SingleComposer</code>: This property is defined in the <code>GuiDialog</code> class. Its a getter/setter to the <code>Composers</code> dictionary. It contains all the "windows" of this dialog which are then rendered / handled by this GuiDialog instance
+
+==Fancying it up==
+This is of course the absolute minimum example that will only show some text. Let's add a title bar and a dialog background:
+
+<syntaxhighlight lang="c#">
+private void SetupDialog()
+{
+    // Auto-sized dialog at the center of the screen
+    ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
+
+    // Just a simple 300x100 pixel box with 40 pixels top spacing for the title bar
+    ElementBounds textBounds = ElementBounds.Fixed(0, 40, 300, 100);
+
+    // Background boundaries. Again, just make it fit it's child elements, then add the text as a child element
+    ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
+    bgBounds.BothSizing = ElementSizing.FitToChildren;
+    bgBounds.WithChildren(textBounds);
+
+    SingleComposer = capi.Gui.CreateCompo("myAwesomeDialog", dialogBounds)
+        .AddShadedDialogBG(bgBounds)
+        .AddDialogTitleBar("Heck yeah!", OnTitleBarCloseClicked)
+        .AddStaticText("This is a piece of text at the center of your screen - Enjoy!", CairoFont.WhiteDetailText(), textBounds)
+        .Compose()
+    ;
+}
+
+private void OnTitleBarCloseClicked()
+{
+    TryClose();
+}
+</syntaxhighlight>
+
+This covers some of the most basic parts. There is a grand amount of various pre-built UI elements that each come with their own argument list that are in dire need of Documentation. Here's an overview of some of the more commonly used ones
+
+====Dialog / Graphics====
+* <code>.AddShadedDialogBG</code>: Draws a pretty background and dialog border
+* <code>.AddDialogTitleBar</code>: Draws a title bar with a close button and a button to move around the dialog
+* <code>.AddInset</code>: Adds a darkened section with a inset border around it
+
+====Text====
+* <code>.AddStaticText</code>: Add a static snippet of text
+* <code>.AddDynamicText</code>: Add a snippet of text that can be set to other texts without the need to redraw the whole dialog
+* <code>.AddRichtext</code>: Same as <code>.AddDynamicText</code> but allows use of [[VTML]] - a minimalist version of HTML code
+* <code>.AddHoverText</code>: When the mouse cursor moves over the element boundaries, will show supplied text as a tooltip
+
+====UI Control/Input====
+* <code>.AddButton</code>: Adds a clickable button
+* <code>.AddDropDown</code>: Adds a drop down element
+* <code>.AddHorizontalTabs</code>: Adds horizontally aligned tabs, like the ingame chat window has
+* <code>.AddVerticalScrollbar</code>: Adds a vertical scrollbar
+* <code>.AddTextInput</code>: Adds an single line editable text field
+* <code>.AddNumberInput</code>: Adds an editable text field built for entering numbers
+* <code>.AddTextArea</code>: Adds multiple line editable text field
+
+====Tables/Grids/Inventory====
+
+* <code>.AddItemSlotGrid</code>: Create a grid displaying the contents of supplied inventory (example: [https://github.com/anegostudios/vsessentialsmod/blob/master/Gui/GuiDialogCarcassContents.cs GuiDialogCarcassContents])
+* <code>.AddSkillItemGrid</code>: Create a grid of custom elements (example: [https://github.com/anegostudios/vssurvivalmod/blob/master/Gui/GuiDialogBlockEntityRecipeSelector.cs GuiDialogBlockEntityRecipeSelector])
+
+====Other====
+* <code>.AddIf</code>/<code>.EndIf</code>: Can be used to conditionally add certain elements (but you can also just split up your creation code for more fine grained control)
+* <code>.BeginClip</code>/<code>.EndClip</code>: Used in combination with a scrollbar to cut away oversized content, such as in the creative inventory
+* <code>.AddStaticCustomDraw</code>: Lets you define your own drawing code to be added to the GUI
+
+== Examples ==
+
+A simple standard dialog, triggered by the keyboard key 'U'
+
+<syntaxhighlight lang="c#">
+public class GuiDialogAnnoyingText : GuiDialog
+{
+    public override string ToggleKeyCombinationCode => "annoyingtextgui";
+
+    public GuiDialogAnnoyingText(ICoreClientAPI capi) : base(capi)
+    {
+        SetupDialog();
+    }
+
+    private void SetupDialog()
+    {
+        // Auto-sized dialog at the center of the screen
+        ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
+
+        // Just a simple 300x300 pixel box
+        ElementBounds textBounds = ElementBounds.Fixed(0, 40, 300, 100);
+
+        // Background boundaries. Again, just make it fit it's child elements, then add the text as a child element
+        ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
+        bgBounds.BothSizing = ElementSizing.FitToChildren;
+        bgBounds.WithChildren(textBounds);
+
+        // Lastly, create the dialog
+        SingleComposer = capi.Gui.CreateCompo("myAwesomeDialog", dialogBounds)
+            .AddShadedDialogBG(bgBounds)
+            .AddDialogTitleBar("Heck yeah!", OnTitleBarCloseClicked)
+            .AddStaticText("This is a piece of text at the center of your screen - Enjoy!", CairoFont.WhiteDetailText(), textBounds)
+            .Compose()
+        ;
+    }
+
+    private void OnTitleBarCloseClicked()
+    {
+        TryClose();
+    }
+}
+
+public class AnnoyingTextSystem : ModSystem
+{
+    ICoreClientAPI capi;
+    GuiDialog dialog;
+
+    public override bool ShouldLoad(EnumAppSide forSide)
+    {
+        return forSide == EnumAppSide.Client;
+    }
+        
+    public override void StartClientSide(ICoreClientAPI api)
+    {
+        base.StartClientSide(api);
+
+        dialog = new GuiDialogAnnoyingText(api);
+
+        capi = api;
+        capi.Input.RegisterHotKey("annoyingtextgui", "Annoys you with annoyingly centered text", GlKeys.U, HotkeyType.GUIOrOtherControls);
+        capi.Input.SetHotKeyHandler("annoyingtextgui", ToggleGui);
+    }
+
+    private bool ToggleGui(KeyCombination comb)
+    {
+        if (dialog.IsOpened()) dialog.TryClose();
+        else dialog.TryOpen();
+
+        return true;
+    }
+}
+</syntaxhighlight>
+
+
+=== TBD ===
+More to come here in the future.
+
+{{Navbox/modding|Vintage Story}}

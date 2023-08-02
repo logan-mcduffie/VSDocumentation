@@ -1,0 +1,395 @@
+__FORCETOC__
+
+{{GameVersion|uknown}}
+<languages/><translate>
+<!--T:1-->
+We highly recommend to read the tutorial [[Getting Started with Advanced Modding#Domains|Getting Started]] first. This tutorial will cover the basics of adding an entity to the game using JSON files. There is a full list of all properties which can be defined inside the json file [[Entity Json Properties|here]].
+
+= Little Figure = <!--T:2-->
+
+<!--T:3-->
+The idea is create a little passive figure, made out of wood. The modid of our mod will be <code>figure</code>.
+
+== EntityType == <!--T:4-->
+
+=== Common === <!--T:5-->
+
+<!--T:6-->
+So first of all we have to create the entity type file <code>assets/figure/entities/land/littlefigure.json</code>. Now we go through all the properties:
+
+<!--T:7-->
+<code>code</code>: The unique identifier for your entity. A prefix of your mod id will be added automatically. Our case its <code>figure:littlefigure</code>.
+
+<!--T:8-->
+<code>class</code>: The class of the entity, it can be used to program special features for it. We don't need it at the moment, so we set it to <code>EntityAgent</code>.
+
+<!--T:9-->
+<code>hitboxSize</code>: The size of the hitbox.
+
+<!--T:10-->
+<syntaxhighlight lang="json">
+  "hitboxSize": {
+    "x": 0.4,
+    "y": 0.5
+  },
+</syntaxhighlight>
+
+<!--T:11-->
+<code>deadHitboxSize</code>: The size of the hitbox when the entity has died.
+<syntaxhighlight lang="json">
+  "deadHitboxSize": {
+    "x": 0.4,
+    "y": 0.5
+  },
+</syntaxhighlight>
+
+<!--T:12-->
+<code>eyeHeight</code>: The height of the eyes, which is <code>0.4</code> for the little figure.
+
+<!--T:13-->
+<code>drops</code>: A list of items to be dropped (can also include chances). We leave it empty for now: <code>[]</code>.
+
+<!--T:14-->
+<code>sounds</code>: Set the sounds for the entity
+<syntaxhighlight lang="json">
+    "hurt": "creature/figure-hurt",
+    "death": "creature/figure-death",
+    "idle": "creature/figure-idle"
+</syntaxhighlight>
+
+=== Client === <!--T:15-->
+
+<!--T:16-->
+The client type has different properties for client and server. This will cover the client side (rendering, shape, texture)
+
+<!--T:17-->
+(please note that // comments are actually not a valid json syntax, so if you want to use this json code in your projects, you'd have to remove these first)
+</translate>
+<syntaxhighlight lang="c#">
+  "client": {
+    "renderer": "Shape", // How the entity will be rendered, "Shape" is the right one in almost all cases.
+    "shape": { "base": "entity/land/littlefigure" }, // a path to our shape
+    "texture": { "base": "game:block/wood/planks/birch1" }, // the figure should have the texture of birch wood. Therefore the prefix "game" is needed
+    "behaviors": [
+      { "code": "repulseagents" },
+      {
+        "code": "controlledphysics", // Adds physics to the entity
+        "stepHeight": 0.2
+      },
+      {
+        "code": "floatupwhenstuck", // Fixes corpse get stuck in ground
+        "onlyWhenDead": true
+      },
+      { "code": "interpolateposition" } // Smooths out movement of entity
+    ],
+    "animations": [ // Animations which have to be implemented by the shape as well
+      {
+        "code": "hurt",
+        "animation": "hurt",
+        "animationSpeed": 2.2,
+        "weight": 10,
+        "blendMode": "AddAverage"
+      },
+      {
+        "code": "die",
+        "animation": "die",
+        "animationSpeed": 1.25,
+        "weight": 10,
+        "blendMode": "AddAverage"
+      }
+    ]
+  },
+</syntaxhighlight>
+
+=== Server ===
+
+The server side handles the "brain" of the entity.
+
+<syntaxhighlight lang="c#">
+  "server": {
+    "behaviors": [
+      { "code": "repulseagents" },
+      {
+        "code": "controlledphysics", // Adds physic interaction
+        "stepHeight": 0.2
+      },
+      {
+        "code": "health", // Adds a health bar to the entity
+        "currenthealth": 4,
+        "maxhealth": 4
+      },
+      {
+        "code": "deaddecay", // Makes the dead entity stay for one hour
+        "hoursToDecay": 1
+      },
+      {
+        "code": "floatupwhenstuck", // Fixes corpse get stuck in ground
+        "onlyWhenDead": true
+      },
+      {
+        "code": "despawn", // Makes the entity despawn if there is no player within 48 blocks
+        "minPlayerDistance": 48,
+        "minSeconds": 5
+      },
+      {
+        "code": "emotionstates", // Adds different emotion states
+        "states": [
+          {
+            "code": "fleeondamage", // After the entity is hit it will try to flee for 10 seconds
+            "duration": 10,
+            "chance": 0.2,
+            "slot": 0,
+            "priority": 1,
+            "accumType": "max"
+          }
+        ]
+      },
+      {
+        "code": "taskai", // Handles what the entity does, a task will be processed one at a time
+        "aitasks": [
+          {
+            "code": "idle", // the figure will stand still and think
+            "priority": 1.2,
+            "priorityForCancel": 1.35,
+            "minduration": 4000,
+            "maxduration": 6000,
+            "chance": 0.001,
+            "initialMinCoolDown": 2000,
+            "initialMaxCoolDown": 150000,
+            "mincooldown": 300000,
+            "maxcooldown": 10000000,
+            "animation": "think",
+            "animationSpeed": 1.25
+          },
+          {
+            "code": "wander", // The entity will walk around
+            "priority": 1.0,
+            "movespeed": 0.008,
+            "animationSpeed": 1.6,
+            "animation": "run",
+            "preferredLightLevel": 15
+          },
+          {
+            "code": "lookaround", // The entity will look around
+            "priority": 0.5
+          }
+        ]
+      }
+    ]
+  },
+</syntaxhighlight>
+
+=== Result ===
+
+If we put everything together it should look like this:
+
+<syntaxhighlight lang="c#">
+{
+  "code": "littlefigure",
+  "class": "EntityAgent",
+  "hitboxSize": {
+    "x": 0.4,
+    "y": 0.5
+  },
+  "deadHitboxSize": {
+    "x": 0.4,
+    "y": 0.5
+  },
+  "eyeHeight": 0.4,
+  "drops": [],
+  "client": {
+    "renderer": "Shape",
+    "shape": { "base": "entity/land/littlefigure" },
+    "texture": { "base": "game:block/wood/planks/birch1" },
+    "behaviors": [
+      { "code": "repulseagents" },
+      {
+        "code": "controlledphysics",
+        "stepHeight": 0.2
+      },
+      {
+        "code": "floatupwhenstuck",
+        "onlyWhenDead": true
+      },
+      { "code": "interpolateposition" }
+    ],
+    "animations": [
+      {
+        "code": "hurt",
+        "animation": "hurt",
+        "animationSpeed": 2.2,
+        "weight": 10,
+        "blendMode": "AddAverage"
+      },
+      {
+        "code": "die",
+        "animation": "die",
+        "animationSpeed": 1.25,
+        "weight": 10,
+        "blendMode": "AddAverage"
+      }
+    ]
+  },
+  "server": {
+    "behaviors": [
+      { "code": "repulseagents" },
+      {
+        "code": "controlledphysics",
+        "stepHeight": 0.2
+      },
+      {
+        "code": "health",
+        "currenthealth": 4,
+        "maxhealth": 4
+      },
+      {
+        "code": "deaddecay",
+        "hoursToDecay": 1
+      },
+      {
+        "code": "floatupwhenstuck",
+        "onlyWhenDead": true
+      },
+      {
+        "code": "despawn",
+        "minPlayerDistance": 48,
+        "minSeconds": 5
+      },
+      {
+        "code": "emotionstates",
+        "states": [
+          {
+            "code": "fleeondamage",
+            "duration": 10,
+            "chance": 0.2,
+            "slot": 0,
+            "priority": 1,
+            "accumType": "max"
+          }
+        ]
+      },
+      {
+        "code": "taskai",
+        "aitasks": [
+          {
+            "code": "idle",
+            "priority": 1.2,
+            "priorityForCancel": 1.35,
+            "minduration": 4000,
+            "maxduration": 6000,
+            "chance": 0.001,
+            "initialMinCoolDown": 2000,
+            "initialMaxCoolDown": 150000,
+            "mincooldown": 300000,
+            "maxcooldown": 10000000,
+            "animation": "think",
+            "animationSpeed": 1.25
+          },
+          {
+            "code": "wander",
+            "priority": 1.0,
+            "movespeed": 0.008,
+            "animationSpeed": 1.6,
+            "animation": "run",
+            "preferredLightLevel": 15
+          },
+          {
+            "code": "lookaround",
+            "priority": 0.5
+          }
+        ]
+      }
+    ]
+  },
+  "sounds": {
+    "hurt": "creature/figure-hurt",
+    "death": "creature/figure-death",
+    "idle": "creature/figure-idle"
+  }
+}
+</syntaxhighlight>
+
+== Shape ==
+
+If you want to know how to create the shape for the entity I suggest you checkout [[VS Model Creator]].
+
+== Item ==
+
+In order to spawn the entity we can create an item to do so:
+
+<syntaxhighlight lang="c#">
+{
+  "code": "creature",
+  "class": "ItemCreature",
+  "maxstacksize": 64,
+  "variantgroups": [
+    {
+      "code": "type",
+      "states": [ "littlefigure" ]
+    }
+  ],
+  "shape": {
+    "base": "figure:entity/land/littlefigure"
+  },
+  "texture": { "base": "game:block/wood/planks/birch1" },
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "creatures": [ "*" ]
+  },
+  "materialDensity": 600,
+  "guiTransform": {
+    "rotation": {
+      "x": 0,
+      "y": -90,
+      "z": -180
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.15,
+      "z": 0.5
+    },
+    "scale": 6
+  },
+  "fpHandTransform": {
+    "rotation": {
+      "x": 0,
+      "y": -90,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.15,
+      "z": 0.5
+    },
+    "scale": 6
+  },
+  "groundTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0.15,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": -90,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.15,
+      "z": 0.5
+    },
+    "scale": 6
+  }
+}
+</syntaxhighlight>
+
+== Testing/ Distribution ==
+
+<youtube>Ci9CB0fnK7U</youtube>
+
+Download [https://wiki.vintagestory.at/images/d/d8/Figure_v1.0.0.zip Figure v1.0.0] for VintageStory 1.8
+
+
+{{Navbox/modding|Vintage Story}}

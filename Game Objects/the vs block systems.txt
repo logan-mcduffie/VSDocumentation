@@ -1,0 +1,28 @@
+To offer a large variety of looks and behaviors, while at the same time allow writing of clean code, the VS engine offers varied structures on how to organize block related code. Let's look through them on by one.
+
+Both, the BlockBehavior and BlockEntityBehavior classes are helpful in implementing [https://en.wikipedia.org/wiki/Don%27t_repeat_yourself DRY] and [https://en.wikipedia.org/wiki/Separation_of_concerns SoC] coding principles.
+
+== The Block Class ==
+
+Allows you to define stateless looks and behaviors. If you inherit from this class you can define the custom looks and behaviors, which applies to every such block placed in the world. See also [[Modding:Advanced_Blocks|Block Class]] page.
+
+'''Example''': Wooden doors - the player can right click it to change its state to another block - its opened or closed variant. 
+
+== The BlockBehavior Class ==
+
+Allows nearly the same functionality of the Block class, but is very useful in avoiding code duplication. See also [[Modding:Adding_Block_Behavior|Block Behavior Class]] page.
+
+'''Example''': The HorizontalOrientable class for blocks that have a North/East/South/West orientation, for example the Skep. It makes sure that when the player places the block, it is oriented correctly. And when broken, it only drops one orientation of the block so that they stay stackable. The Skep block in this case required custom code for other things, so there is a BlockSkep class. Without block behaviors, we would have needed to copy&paste the placement/breaking behaviors into the block class.
+
+== The BlockEntity Class ==
+
+Allows you to define stateful looks and behaviors. If you inherit from this class you can change looks and behaviors on a block-by-block basis. See also [[Modding:Block_Entity|Block Entity class]] page.
+
+'''Example 1''': Chests. For chests you need to be able store different data for each placed chest in the world. A block entity allows you to do just that.<br>
+'''Example 2''': Locust nests. A locust needs needs to be able to spawn locusts on a fixed timer when a player comes close. Fixed timers like these are easy to make with block entities.
+
+== The BlockEntityBehavior Class ==
+
+Allows nearly the same functionality of the Block entity class, but again, useful for avoiding code duplication. Though admittedly, the uses cases for this structure is quite niche.
+
+'''Example''': BEBehaviorBurning. It is a vanilla block entity class that implements fire. When you ignite grass with a torch in hands, this behavior is used. This behavior is then also applied to pit kilns so that a burning kiln also spreads fire - albeit only once ignited.

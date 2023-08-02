@@ -1,0 +1,1664 @@
+__NOTOC__
+<languages/><translate>
+== Overview == <!--T:1-->
+A complete list of all available properties
+
+<!--T:2-->
+Definitions:
+
+<!--T:3-->
+'''Key''' - The name of the property, which should be used as it appears in the column.
+
+<!--T:4-->
+'''Value''' - A component of a property.
+
+<!--T:5-->
+'''Array''' - A list of objects or values that can be referenced in code.
+
+<!--T:6-->
+'''String''' - A sequence of characters that can be used as an identifier in code. Essentially a word that can be referenced and assigned to something. Generally does not use numbers.
+
+<!--T:7-->
+'''Boolean''' - A true or false value, essentially "on" or "off". 
+
+<!--T:8-->
+'''Int''' - An integer, or whole number. Cannot use decimal values. 
+
+<!--T:9-->
+'''Float''' - A decimal, specifically one that does not exceed more than 1 significant digit
+
+<!--T:10-->
+'''Object''' - This is a bit more complex, but essentially objects are the items, blocks and entities that can be interacted with. In most cases, when an "object" type appears it means you must use a specific item variant code, which follows the "itemcode-variant_1-variant_2-variant_n" style of naming. 
+
+</translate>
+
+<table id="treeviewtable" class="table table-bordered tt-table" style='table-layout: fixed'>
+  <tr style='background-color: rgba(0,0,0,0.2);'>
+    <th width='300' align='left'>Property</th>
+    <th width='100' align='left'>Type</th>
+    <th width='120' align='left'>Default</th>
+    <th width='200' align='left'>Usage</th>
+    <th align='left'>Reference</th>
+  </tr>
+  <tr>
+    <td><div class="tt" data-tt-id="root">json</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Core (no byType available)</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_code" data-tt-parent="root">code</div></td>
+    <td>string</td>
+    <td>required</td>
+    <td>A unique identifier for the item.</td>
+    <td>All Items</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_code_info" data-tt-parent="p_code" data-invisible="true"></div></td>
+    <td colspan="4">
+A '''domain prefix''' will be added dynamically depending on the location of the file. Every mod and VintageStory itself have a unique prefix.
+
+For example the code '''<code>stone</code>''' turns into '''<code>game:stone</code>'''. To refer to items outside your mod (IE with item patches) you would use the following format:  '''<code>yourmod:youritem</code>'''
+
+The code identifier has to be unique inside its domain. In theory there could be equal identifiers with different domain prefixes.
+Find out more about [[Basic Modding#Domains|Domains]].
+    </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_enabled" data-tt-parent="root">enabled</div></td>
+    <td>boolean</td>
+    <td>true</td>
+    <td>If the item will be loaded or not. Can be used to temporarily remove the item.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_variantgroups" data-tt-parent="root">variantgroups</div></td>
+    <td>array of objects</td>
+    <td>-</td>
+    <td>Allows you define multiple variants of the same item.</td>
+    <td>armor, ore-graded, plank, </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_variantgroups_info" data-tt-parent="p_variantgroups" data-invisible="true"></div></td>
+    <td colspan="4">
+The variantgroups property allows you to define multiple variants of this item. All of them will have their unique pattern, which will be added to the item code.
+
+An easy example would be a bowl, which can either be raw or burned:
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ code:"type", states: ["raw", "burned"] },
+	],
+</syntaxhighlight>
+
+Meaning there will be two variants <code>bowl-raw</code> and <code>bowl-burned</code>.
+
+----
+
+It's also possible to define multiple groups. 
+
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ code:"state", states: ["closed", "opened"] },
+		{ code:"contents", states: ["empty", "cabbage"] },
+	],
+</syntaxhighlight>
+
+As a result you will have 2x2 groups, which will be added one after each other: <code>barrel-closed-empty</code>, <code>barrel-closed-cabbage</code>, <code>barrel-opened-empty</code> and <code>barrel-opened-cabbage</code>.
+
+----
+
+Additionally it is possible to refer to external lists (used for blocks) that are found in the worldproperties folder, such as <code>block/rock</code>, which contains all states of all rock types. This used for <code>gravel</code>, <code>sand</code> and <code>rock</code>. It's a good way to keep everything organized:
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ loadFromProperties: "block/rock" },
+	],
+</syntaxhighlight>
+
+Here is a full list of all groups and their variants (you can also find them in the <code>assets/worldproperties</code> folder):
+{{:json:block:worldvariantgroups}}
+	
+----
+
+Furthermore there are other ways of combining groups together. So far we covered the default combination mode, which is <code>multiplicative</code> (the total count of variants is the product of all states). There are two other methods, Additive and SelectiveMultiply. 
+
+Let's take a look at the <code>additive</code> combination mode used in the flowerpot block:
+
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ code: "type", states: ["raw"] },
+		{ code: "empty", states: ["empty"], combine: "additive" },
+		{ code: "flower", loadFromProperties: "block/flower", combine: "additive" },
+		{ code: "mushroom", loadFromProperties: "block/mushroom", combine: "additive" },
+		{ code: "sapling", loadFromProperties: "block/wood", combine: "additive" },
+	],
+</syntaxhighlight>
+
+The variants are <code>flowerpot-raw</code>, <code>flowerpot-empty</code>, <code>flowerpot-{all flowers}</code>, <code>flowerpot-{all mushrooms}</code> and <code>flowerpot-{all saplings}</code>.
+
+<code>Additive</code> mode could also be called separate, since it defines a variant separate from all the other groups:
+
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ code: "something", states: ["same", "different"] },
+		{ code: "type", states: ["raw", "baked"] },
+		{ code: "empty", states: ["red", "green"], "combine": "additive" },
+	],
+</syntaxhighlight>
+
+In this case, the result would be <code>same-raw</code>, <code>same-baked</code>, <code>different-raw</code>, <code>different-baked</code>, <code>red</code> and <code>green</code>
+
+The third combination mode <code>"SelectiveMultiply"</code> which allows you to specify which variant groups you want to combine multiplicatively with. There are many examples of this in the clothing item JSONS, as shown below with the lowerbody asset:
+
+<syntaxhighlight lang="json">
+    code: "clothes",	
+    variantgroups: [
+	{ code: "category",  states: ["lowerbody"] },
+	{ code: "lowerbody", combine: "SelectiveMultiply", onVariant: "category", states: [
+"aristocrat-leggings", "dirty-linen-trousers", "fine-trousers", "jailor-pants", "lackey-breeches", "merchant-pants", "messenger-trousers", "minstrel-pants", "noble-pants", "prince-breeches", "raindeer-trousers", "raw-hide-trousers", "shepherd-pants", "squire-pants", "steppe-shepherds-trousers", "tattered-peasent-gown", "torn-riding-pants", "warm-woolen-pants", "woolen-leggings", "workmans-gown" 
+         ] },
+	],
+</syntaxhighlight>
+
+The function <code>onVariant</code> specifies which variant group to selectively combine with, ignoring all other variants without it (in case some are combined additively). 
+
+Using this will result items called <code>clothes-lowerbody-aristocrat-leggings</code>, <code>clothes-lowerbody-dirty-linen-trousers</code>, etc.
+
+    </td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_byType" data-tt-parent="root">(any) bytype</div></td>
+    <td>key: string; value: object</td>
+    <td>-</td>
+    <td>You can create properties for certain variants of the item.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_byType_info" data-tt-parent="p_byType" data-invisible="true"></div></td>
+    <td colspan="3">
+In order to define properties for specific variants you can add '''byType''' to the property name. This allows you to define it depending on the type and always follows the same syntax:
+<syntaxhighlight lang="json">
+	(property)ByType: {
+		"selector": property,
+		"selector2": property2,
+		...
+	}
+</syntaxhighlight>
+
+If the selector matches the name of the variant the given property will be used. Keep in mind that only the first matching one will be used (everything below will be ignored).
+
+A slab for example has two variants ('''up''', '''down'''), which have different collision boxes:
+<syntaxhighlight lang="json">
+	collisionboxByType: {
+		"*-down": { x1: 0, y1: 0, z1: 0,   x2: 1, y2: 0.5, z2: 1 },
+		"*-up": { x1: 0, y1: 0.5, z1: 0,   x2: 1, y2: 1, z2: 1 }
+	},
+</syntaxhighlight>
+
+The char '''<code>*</code>''' stands for anything. In this case it ignores the code of the item.
+
+Furthermore this opens up even more possbilities for more advanced selectors like this one for doors:
+<code>*-north-*-opened-left</code>. This will ignore the second variantgroup. Additionally ByType can also be used for child properties:
+<syntaxhighlight lang="json">
+	collisionboxnbox: { 
+		x1: 0, y1: 0, z1: 0.875, x2: 1, y2: 1, z2: 1,
+		rotateYByType: {
+			"*-north-*-opened-left": 90,
+			"*-north-*-closed-left": 0,
+			"*-west-*-opened-left": 180,
+			"*-west-*-closed-left": 90,
+
+			"*-east-*-opened-left": 0,
+			"*-east-*-closed-left": 270,
+			"*-south-*-opened-left": 270,
+			"*-south-*-closed-left": 180,
+
+			"*-north-*-opened-right": 270,
+			"*-north-*-closed-right": 0,
+			"*-west-*-opened-right": 0,
+			"*-west-*-closed-right": 90,
+
+			"*-east-*-opened-right": 180,
+			"*-east-*-closed-right": 270,
+			"*-south-*-opened-right": 90,
+			"*-south-*-closed-right": 180
+		}
+	},
+</syntaxhighlight>
+
+Since Vintagestory v1.8 it is also possible to use the variantgroup as a placeholder:
+<syntaxhighlight lang="json">
+	variantgroups: [
+		{ code: "metal", states: ["copper", "tinbronze", "bismuthbronze", "blackbronze", "gold", "silver", "iron" ] },
+	],
+	textures: {
+		"metal": { base: "block/metal/ingot/{metal}" },
+		"wood": { base: "item/tool/material/wood" } 
+	},
+</syntaxhighlight>
+</td>
+  </tr>
+  <tr>
+   <td scope="row"><div class="tt" data-tt-id="p_enabled" data-tt-parent="root">allowedVariants</div></td>
+   <td>array of objects</td>
+   <td>-</td>
+   <td>Used to trim unnecessary items generated by combined variants. </td>
+   <td>crystalizedore-graded, ore-graded, ore-ungraded</td>
+</tr> 
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_enabled" data-tt-parent="root">skipVariants</div></td>
+   <td>array of object</td>
+   <td>-</td>
+   <td>Similar to allowedVariants, but instead skips the creation of listed variants rather than assigning which are allowed. </td>
+   <td>armor</td>
+</tr>
+  <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Specific</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_class" data-tt-parent="root">class</div></td>
+    <td>string</td>
+    <td>&quot;item&quot;</td>
+    <td>The class an item should use if it has additional C# functionalities that can't be accomplished with JSONS.</td>
+    <td>axe-metal, hoe, spear</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_class_info" data-tt-parent="p_class" data-invisible="true"></div></td>
+    <td colspan="3">
+It can be used to open guis or adding other extra functionality to the item. A complete tutorial of how to add your own class to the game can be found [[Advanced Items|here]].
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_durability" data-tt-parent="root">durability</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td>The maximum uses of the item. Items that reach 0 uses disappear. NOTE: The actual current durability of the item is stored as a treeAttribute, this is only a max value. </td>
+    <td>pickaxe</td>    
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_damagedby" data-tt-parent="root">damagedby</div></td>
+    <td>array of string</td>
+    <td>-</td>
+    <td>From which damage sources does the item takes durability damage.</td>
+    <td>pickaxe</td>  
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_damagedby_blockbreaking" data-tt-parent="p_damagedby">blockbreaking</div></td>
+    <td></td>
+    <td>0</td>
+    <td>Mining a block.</td>
+    <td>pickaxe</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_damagedby_attacking" data-tt-parent="p_damagedby">attacking</div></td>
+    <td></td>
+    <td>1</td>
+    <td>Hitting an entity.</td>
+    <td>sword</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_damagedby_fire" data-tt-parent="p_damagedby">fire</div></td>
+    <td></td>
+    <td>2</td>
+    <td>Currently not used.</td>
+    <td>-</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool" data-tt-parent="root">tool</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Classifies the item as the given tool, which gives it the ability to harvest resources from certain blocks.</td>
+    <td>axe-metal, pickaxe, knife, scythe, shovel</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_knife" data-tt-parent="p_tool">Knife</div></td>
+    <td></td>
+    <td>0</td>
+    <td>Can harvest items from grass.</td>
+    <td>knife, scythe</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_pickaxe" data-tt-parent="p_tool">Pickaxe</div></td>
+    <td></td>
+    <td>1</td>
+    <td>Can mine rock and other stone materials</td>
+    <td>pickaxe</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_axe" data-tt-parent="p_tool">Axe</div></td>
+    <td></td>
+    <td>2</td>
+    <td>Can chop down trees and other wood materials.</td>
+    <td>axe-metal, axe-stone</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_sword" data-tt-parent="p_tool">Sword</div></td>
+    <td></td>
+    <td>3</td>
+    <td>No special abilities yet.</td>
+    <td>sword</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_shovel" data-tt-parent="p_tool">Shovel</div></td>
+    <td></td>
+    <td>4</td>
+    <td>Can dig soil, gravel and sand quickly.</td>
+    <td>shovel</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_hammer" data-tt-parent="p_tool">Hammer</div></td>
+    <td></td>
+    <td>5</td>
+    <td>No special abilities yet.</td>
+    <td>hammer</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_mallet" data-tt-parent="p_tool">Mallet</div></td>
+    <td></td>
+    <td>6</td>
+    <td>No special abilities yet.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_spear" data-tt-parent="p_tool">Spear</div></td>
+    <td></td>
+    <td>7</td>
+    <td>No special abilities yet.</td>
+    <td>spear</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_bow" data-tt-parent="p_tool">Bow</div></td>
+    <td></td>
+    <td>8</td>
+    <td>No special abilities yet.</td>
+    <td>bow</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_sickle" data-tt-parent="p_tool">Sickle</div></td>
+    <td></td>
+    <td>9</td>
+    <td>No special abilities yet.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_hoe" data-tt-parent="p_tool">Hoe</div></td>
+    <td></td>
+    <td>10</td>
+    <td>No special abilities yet.</td>
+    <td>hoe</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tool_saw" data-tt-parent="p_tool">Saw</div></td>
+    <td></td>
+    <td>11</td>
+    <td>No special abilities yet.</td>
+    <td>saw</td>
+  </tr>
+  <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Attributes</b></td>
+  </tr>
+ <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attributes_list" data-tt-parent="root">attributes</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Custom Attributes associated with this item.</td>
+    <td>armor, ingot</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attributes_info" data-tt-parent="p_attributes_list" data-invisible="true"></div></td>
+    <td colspan="4">
+Attributes constitute a large number of custom properties that an item can have, many of which are specific to unique items that rely on a C# class for additional functionality. If you wish to add your own JSON attributes to an item generally you must also have a class to utilize them.
+
+Values placed here are final and cannot be modified. For example, if you made a new type of weapon, say a mace that had additional weapon properties you could define them here:
+
+<syntaxhighlight lang="json">
+    attributes: {
+		"armorDamage": 10,
+		"stunChance": 0.1,
+	},
+</syntaxhighlight>
+
+Here we have made two new attributes called "armorDamage" and "stunChance" and have given them their own static values to be used in code. As is, these cannot do anything without the usage of C# code in a class. Regardless, we can see that this is a convenient way to create extra properties that can be manipulated using variant combinations if desired. 
+  </tr>
+
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_contain" data-tt-parent="root">(Container Attributes)</div></td>
+<td colspan="4">
+Attributes that change how items interact with containers.
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_barrelmove" data-tt-parent="p_attributes_contain">barrelMovetoLiquidSlot</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If set to true, converts an item placed into a barrel to a "liquid" state that can be used for barrel recipes (EX: how salt is used to cure meat).</td>
+   <td>salt</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_crockable" data-tt-parent="p_attributes_contain">crockable</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If set to true, can be placed into a crock from another container (Keep in mind that doing so also turns the item into a meal, which cannot be undone).</td>
+   <td>pickledvegetable</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_displaycasable" data-tt-parent="p_attributes_contain">displaycaseable</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If set to true, allows an item to be placed into a display case.</td>
+   <td>ingot, ore-graded, ore-ungraded, stone</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_forgable" data-tt-parent="p_attributes_contain">forgable</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>A bit of a misnomer, this indicates that an item can be placed into and heated in a forge, not that it can or can't be forged on an anvil.</td>
+   <td>ironbloom</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_containtext" data-tt-parent="p_attributes_contain">inContainerTexture</div></td>
+   <td>Path to texture</td>
+   <td>-</td>
+   <td>Pathway to the texture shown when an item is placed into a barrel. This can include a liquid or solids.</td>
+   <td>waterportion, salt</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_infpprops" data-tt-parent="p_attributes_contain">inFirePitProps</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Gives an item additional rendering properties when placed in a fire pit.</td>
+   <td>redmeat, poultry</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_fptrans" data-tt-parent="p_alist_infpprops">transform</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>If the model type shows the item, it can be transformed using this property.</td>
+   <td>redmeat, poultry</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_fpmodel" data-tt-parent="p_alist_infpprops">useFirepitModel</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Tell the firepit which model to use when this item is placed into it.</td>
+   <td>redmeat, poultry</td>
+</tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_firepittrans_ex" data-tt-parent="p_alist_infpprops" data-invisible="true"></div></td>
+<td colspan="4">
+
+Here's an example of how the firepit transformation is used by the different meat items:
+
+<syntaxhighlight lang="json">
+inFirePitProps: {
+  transform: {
+    scale: 0.85,
+    origin: { x: 0.5, y: 0.0625, z: 0.5 },
+    translation: { x: -0.03125, y: 0.0625, z: 0.046875 },
+    rotation: { x: 0, y: 0, z: 90 }
+  },
+  useFirepitModel: "Spit"
+},
+</syntaxhighlight>
+
+If you're familiar with the other transformation code, this is nothing unusual and works on the same principles by changing the scale, position and rotation of the model with respect to the origin of rotation. 
+
+At the moment <code>spit</code> is the only model used with single food items. The other option <code>wide</code> is used with the cooking pot.
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_shelvable" data-tt-parent="p_attributes_contain">shelvable</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If true, allows the item to be placed on shelves.</td>
+   <td>redmeat, stone</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_rackable" data-tt-parent="p_attributes_contain">rackable</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If true, allows the item to be placed on a tool rack. To look right the item also requires additional transformations using the toolrackTransform property (see rendering section).</td>
+   <td>pickaxe, scythe, sword</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_waterprops" data-tt-parent="p_attributes_contain">waterTightContainerProps</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>This contains all the liquid properties of an item, generally determining how it is stored and used with a bucket.</td>
+   <td>waterportion, limewaterportion</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_liquidcontain" data-tt-parent="p_alist_waterprops">containable</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If true, the liquid can be placed into liquid containers, such as barrels and buckets.</td>
+   <td>waterportion, limewaterportion</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_iperlitre" data-tt-parent="p_alist_waterprops">itemsPerLitre</div></td>
+   <td>number (int)</td>
+   <td>-</td>
+   <td>The number of itemstack items required to make a litre of liquid. Generally this value is 1:1, but concentrated items like honey can be 4:1.</td>
+   <td>waterportion, honeyportion</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_liqtex" data-tt-parent="p_alist_waterprops">texture</div></td>
+   <td>Path to Texture</td>
+   <td>-</td>
+   <td>A "block" texture given to a liquid when it's rendered in containers or other items.</td>
+   <td>waterportion, honeyportion</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spill" data-tt-parent="p_alist_waterprops">allowSpill</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If true, allows the player to use the Ctr + Right Click function to "spill" the liquid from a container. The whenSpilled property determines what happens if this is true.</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_tindex" data-tt-parent="p_alist_waterprops">tintIndex</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td>Tints the color of the item if it's ever drawn as a block: '''''0''''' for no tint, '''''1''''' for plant climate tint, '''''2''''' for water climate tint.</td>
+    <td>-</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_whenspill" data-tt-parent="p_alist_waterprops">whenSpilled</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Determines what happens when the "spill" interaction is used. Only works if the allowSpill property is set to true.</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spillact" data-tt-parent="p_alist_whenspill">action</div></td>
+   <td>string</td>
+   <td>-</td>
+   <td>Code identifier that determines what happens when the liquid is spilled from a container.</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spillblock" data-tt-parent="p_alist_spillact">PlaceBlock</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Places a block at the spilled location.</td>
+   <td>waterportion</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spillitem" data-tt-parent="p_alist_spillact">DropContents</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Drops an item at the location. If the item is a liquid it will disappear immediately with a "splash" particle effect.</td>
+   <td>limeportion</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_spillstack" data-tt-parent="p_alist_whenspill">stack</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>The block or item dropped when spilled. if the "PlaceBlock" action is chosen a block is placed, if "DropContents" is used an item is generated.</td>
+   <td>waterportion, limewater</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_sfilllevel" data-tt-parent="p_alist_whenspill">stackByFillLevel</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Allows for different blocks or items to be placed based on the level of the liquid in the container.</td>
+   <td>waterportion, limewater</td>
+</tr>
+
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_info" data-tt-parent="p_alist_waterprops" data-invisible="true"></div></td>
+<td colspan="4">
+
+We'll look at an example of how this property is utilized by water item:
+
+<syntaxhighlight lang="json">
+waterTightContainerProps: {
+  containable: true,
+  itemsPerLitre: 1,
+  texture: { base: "block/liquid/waterportion" },
+  tintIndex: 2,
+  whenSpilled: { 
+    action: "PlaceBlock",
+    stack: { type: "block", code: "water-still-3" },
+    stackByFillLevel: { 
+      "10": { type: "block", code: "water-still-7" } 
+    }
+  }
+}
+</syntaxhighlight>
+
+Most is self explanatory, but we can see that it has a some unique features, such as allowing a player to generate a water block when the "fill level" of the container used to spill the fluid. We can also see that the texture for it has a tintIndex of 2, which heightens the blue coloration of the water texture while in a bucket.
+</tr>
+
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_equip" data-tt-parent="root">(Equipment Attributes)</div></td>
+<td colspan="4">
+Attributes primarily used with equipment and armor.
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_atshape" data-tt-parent="p_attributes_equip">attachShape</div></td>
+   <td>Path to Shape</td>
+   <td>-</td>
+   <td>Assigns a shape to a bag to be shown on the player when worn in a bag slot.</td>
+   <td>backpack</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_backpack" data-tt-parent="p_attributes_equip">backpack</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Gives an item bag properties, allowing it to be placed in the bag slot to increase inventory space.</td>
+   <td>backpack</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_bpquantity" data-tt-parent="p_alist_backpack">quantitySlots</div></td>
+   <td>number</td>
+   <td>-</td>
+   <td>How many additional slots the bag provides.</td>
+   <td>backpack</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_bpsflags" data-tt-parent="p_alist_backpack">storageFlags</div></td>
+   <td>number (storage flag ID)</td>
+   <td>-</td>
+   <td>Limits what type of item can be placed into the bag by assigning it a storage flag. (Need a list of storage flags)</td>
+   <td>miningbag</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_slotcolor" data-tt-parent="p_alist_backpack">slotBgColor</div></td>
+   <td>Color value (HEX)</td>
+   <td>-</td>
+   <td>Changes the background color of the additional slots provided by the bag. Requires a HEX color code, which you can find with any generic color picker</td>
+   <td>miningbag</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_clothescategory" data-tt-parent="p_attributes_equip">clothescategory</div></td>
+   <td>string</td>
+   <td>-</td>
+   <td>Assigns a wearable item to a specific inventory slot. There are 15 slots in total, including 3 armor slots and 12 decorative clothing slots.</td>
+   <td>armor, upperbody, lowerbody</td>
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_alist_ccategorylist" data-tt-parent="p_alist_clothescategory" data-invisible="true"></div></td>
+    <td colspan="4">
+Armor slots: ''armorhead, armorbody, armorlegs''.
+
+Clothing slots: ''head, face, neck emblem, upperbodyover, upperbody, shoulder, arm, hand, lowerbody, waist, foot''.
+	</td>
+  </tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_defprotloss" data-tt-parent="p_attributes_equip">defaultProtLoss</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Defines the default protection loss for incoming damage that is of a higher tier than the armor. Requires the usage of perTierRelativeProtectionLoss and perTierFlatDamageReductionLoss properties.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_diselement" data-tt-parent="p_attributes_equip">disableElements</div></td>
+   <td>Shape Element</td>
+   <td>-</td>
+   <td>Allows shape elements to be disabled to make better looking armor, for example removing the Seraph's ponytail with helmets.</td>
+   <td>armor (plate helmet)</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_footstep" data-tt-parent="p_attributes_equip">footStepSound</div></td>
+   <td>path to ogg file</td>
+   <td>-</td>
+   <td>What sound to play while the player is wearing this item.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_charcreate" data-tt-parent="p_attributes_equip">inCharactercreationDialog</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If set to true, will allow the player to select the wearable item during the character creation sequence.</td>
+   <td>Lowerbody, Upperbody</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_protmodlist" data-tt-parent="p_attributes_equip">protectionModifiers</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Assigns protection values to an armor piece.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_plist_tier" data-tt-parent="p_alist_protmodlist">protectionTier</div></td>
+   <td>number</td>
+   <td>-</td>
+   <td>The value contested against the tier of incoming damage. If the damage tier is higher the effectiveness of the armor is reduced, potentially to zero if the difference is high enough.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_plist_high" data-tt-parent="p_alist_protmodlist">highDamageTierResistant</div></td>
+   <td>boolean</td>
+   <td>false</td>
+   <td>If set to true this armor will reduce the protection loss of higher damage tiers by half when looping through the protection loss sequence of the damage calculation.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_plist_flat" data-tt-parent="p_alist_protmodlist">flatDamageReduction</div></td>
+   <td>number, decimal</td>
+   <td>-</td>
+   <td>This is the amount of damage that is initially subtracted before relative protection is applied.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_plist_relative" data-tt-parent="p_alist_protmodlist">relativeProtection</div></td>
+   <td>number, decimal</td>
+   <td>-</td>
+   <td>After the damage is subtracted by the flat reduction the remaining damage is reduced by a percent amount equal to this value.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_damredtiered" data-tt-parent="p_alist_protmodlist">perTierFlatDamageReductionLoss</div></td>
+   <td>array of numbers</td>
+   <td>-</td>
+   <td>Determines how much flat damage reduction is lost by a damage tier higher than the armor tier. Each relative difference can be customized individually.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_drelativetiered" data-tt-parent="p_alist_protmodlist">perTierRelativeProtectionLoss</div></td>
+   <td>array of numbers</td>
+   <td>-</td>
+   <td>Determines how much relative protection is lost by a damage tier higher than the armor tier. The first value is used for high damage resistant armor, the second is for all other armors.</td>
+   <td>armor</td>
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_pertier_info" data-tt-parent="p_alist_protmodlist" data-invisible="true"></div></td>
+    <td colspan="4">
+
+The system for how these values are used is a bit complex, but here's essentially how it works:
+
+The tier of incoming damage is not just a contest of values, but is actually looped through multiple times depending on the tier value to reduce the effectiveness of an armor. For example, tier 4 damage will loop four times and reduces the armor effectiveness each loop, while tier 1 damage will loop only once. 
+
+The looped value starts as 1 and as the value increases up to the damage tier it is compared to the tier of the armor. If this increasing value is greater than the armor tier the second second value is used in the perTier function, otherwise the first value is used. Additionally, if the armor has the highDamageTierResistant property set to true then every loop which is higher than the armor will have it's armor reduction halved. 
+
+Lets look at an example of this using an armor with the following stats:
+
+<syntaxhighlight lang="json">
+protectionModifiers {
+  protectionTier: 2,
+  flatDamageReduction: 1.0,
+  relativeProtection: 0.80,
+  perTierFlatDamageReductionLoss: [0.03, 0.15],
+  perTierRelativeProtectionLoss: [0.1, 0.2],
+  highDamageTierResistant = true
+},
+</syntaxhighlight>
+
+Now lets loop through the protection values and see what the overall loss is. The damage tier is 4, so we start with 1 and end with 4:
+
+'''Round 1''': Damage tier = 1, armor tier = 2
+- Damage tier is below the armor tier in the loop, so we use the first values (0.03 and 0.1)
+
+'''Round 2''': Damage Tier = 2, armor tier = 2
+- Damage tier is still not higher in the loop, so once again we use the first values (0.03 and 0.1)
+
+'''Round 3''': Damage Tier = 3, armor tier = 2
+- At last the damage tier is higher than the armor tier in the loop so we use the second values (0.15 and 0.2), but we also have the <code>highDamageTierResistant</code> property, so both these values are halved, resulting in (0.075 and 0.1)
+
+'''Round 4''': Damage tier = 4, armor tier = 2
+- Same as before, resulting in (0.075 and 0.1).
+
+Finally, we add up the results of each to determine the total loss of protection: (0.21 and 0.4), which causes a 21% loss to our damage reduction and 0.4 loss to our flat damage reduction. This leaves our original protection values at 59% and 0.6, a significant loss in armor performance! 
+
+If the damage was of a lower tier, such as 1, only the first round would be used, which would result in a much lower protection loss of 3% and 0.1 damage in total. 
+
+  </td>
+</tr>
+
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_astats" data-tt-parent="p_attributes_equip">statModifiers</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Gives an armor piece a modifier to certain stats. Generally these values are debuffs, but if the values were reversed they could be used as buffs for magical armor.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_stat_heal" data-tt-parent="p_alist_astats">healingeffectiveness</div></td>
+   <td>number, decimal</td>
+   <td>-</td>
+   <td>Player healing rate (percent) modification.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_stat_hunger" data-tt-parent="p_alist_astats">hungerrate</div></td>
+   <td>number, decimal</td>
+   <td>-</td>
+   <td>Player hunger rate (percent) modification.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_stat_racc" data-tt-parent="p_alist_astats">rangedWeaponsAcc</div></td>
+   <td>number, decimal</td>
+   <td>-</td>
+   <td>Player ranged weapon accuracy (percent) modification.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_stat_rspd" data-tt-parent="p_alist_astats">rangedWeaponsSpeed</div></td>
+   <td>number, decimal</td>
+   <td>-</td>
+   <td>Player ranged weapon draw speed (percent) modification.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_stat_wspd" data-tt-parent="p_alist_astats">walkSpeed</div></td>
+   <td>number, decimal</td>
+   <td>-</td>
+   <td>Player movement speed (percent) modification.</td>
+   <td>armor</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_wearattach" data-tt-parent="p_attributes_equip">wearableAttachment</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>Designates the item as a wearable object.</td>
+   <td>armor</td>
+</tr>
+
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_handbook" data-tt-parent="root">(Handbook Attributes)</div></td>
+<td colspan="4">
+Attributes that give an item additional handbook details.
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_hlist_exclude" data-tt-parent="p_attributes_handbook">exclude</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>If true, removes the item from the handbook. Can be used with the "ByType" functionality to remove large amounts of variants.</td>
+   <td>burnedbrick</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_hlist_excludelist" data-tt-parent="p_attributes_handbook">excludeFromList</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>(Needs more info).</td>
+   <td>-</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_hlist_include" data-tt-parent="p_attributes_handbook">include</div></td>
+   <td>boolean</td>
+   <td>-</td>
+   <td>Allows the toggling of the handbook entry.</td>
+   <td>burnedbrick</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_hlist_sections" data-tt-parent="p_attributes_handbook">extraSections</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Adds a section to the handbook for this item. The title and text properties are actually code identifiers that must be filled out in the lang file of a mod, just as one would for an item or block name.</td>
+   <td></td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_hlist_text" data-tt-parent="p_hlist_sections">text</div></td>
+   <td>string (text id)</td>
+   <td>-</td>
+   <td>The textbox name that will show up in the lang file.</td>
+   <td></td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_hlist_title" data-tt-parent="p_hlist_sections">title</div></td>
+   <td>string (title id)</td>
+   <td>-</td>
+   <td>The title name that will show up in the lang file.</td>
+   <td></td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_hlist_groupby" data-tt-parent="p_attributes_handbook">groupBy</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Groups variants into a single handbook page, rather than making multiples.</td>
+   <td>-</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_hlist_groupname" data-tt-parent="p_attributes_handbook">groupedName</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Gives a name to the group of variants within the handbook (must be filled out in the lang file).</td>
+   <td>-</td>
+</tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_info" data-tt-parent="p_attributes_handbook" data-invisible="true"></div></td>
+<td colspan="4">
+
+The plumb and square is a good example of how a handbook section is added to the game:
+
+<syntaxhighlight lang="json">
+handbook: {
+  include: true,
+  extraSections: [
+    { title: "plumbandsquare-handbook-help-title", text: "plumbandsquare-handbook-help-text" }
+  ]
+}
+</syntaxhighlight>
+</tr>
+
+
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_misc" data-tt-parent="root">(Misc Attributes)</div></td>
+<td colspan="4">
+Uncategorized attributes used in various items.
+</tr>
+  <tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_breakchance" data-tt-parent="p_attributes_misc">breakChanceOnImpact</div></td>
+   <td>value, decimal</td>
+   <td>-</td>
+   <td>Determines how often a projectile will break when shot.
+
+Flint arrow = 0.5 (50%, iron arrow = 0.20 (20%).</td>
+   <td>arrow</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_cprefix" data-tt-parent="p_attributes_misc">codePrefixes</div></td>
+   <td>array</td>
+   <td>-</td>
+   <td>Creates a list of block prefixes a tool can interact with using special features (such as how a scythe cuts large swathes of grass).</td>
+   <td>scythe</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_currency" data-tt-parent="p_attributes_misc">currency</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Allows an item to be traded as a universal currency.</td>
+   <td>gear (rusty)</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_cvalue" data-tt-parent="p_alist_currency">value</div></td>
+   <td>value</td>
+   <td>-</td>
+   <td>Assigns a value to the currency, a rusty gear is valued at 1.</td>
+   <td>gear (rusty)</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_damage" data-tt-parent="p_attributes_misc">damage</div></td>
+   <td>value</td>
+   <td>-</td>
+   <td>The ranged damage of a thrown weapon (such as a spear).</td>
+   <td>spear</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_dissolve" data-tt-parent="p_attributes_misc">dissolveInWater</div></td>
+   <td>boolean</td>
+   <td>false</td>
+   <td>If true, will make an item disappear when dropped into a water block.</td>
+   <td>flour, lime, salt</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_fpcon" data-tt-parent="p_attributes_misc">firepitConstructable</div></td>
+   <td>boolean</td>
+   <td>false</td>
+   <td>If true, allows an item to be used to construct a firepit.</td>
+   <td>firewood, bamboostakes</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_fprops" data-tt-parent="p_attributes_misc">fertilizerProps</div></td>
+   <td>n: value, p: value, k: value</td>
+   <td>-</td>
+   <td>Sets the item as a fertilizer and assigns it nitrogen(N), phosphorous(P) and potassium(K) values.</td>
+   <td>bonemeal, potash</td>
+</tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_fert_info" data-tt-parent="p_alist_fprops" data-invisible="true"></div></td>
+<td colspan="4">
+
+As an example, we can make a "universal fertilizer" that contributes a decent amount to each element:
+
+<syntaxhighlight lang="json">
+	fertilizerProps: {n: 20, p: 20, k: 20}, 
+</syntaxhighlight>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_grinding" data-tt-parent="p_attributes_misc">grindingProps</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Gives the item a grinding recipe in a quern.</td>
+   <td>ore-ungraded</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_gprops_type" data-tt-parent="p_alist_grinding">type</div></td>
+   <td>object</td>
+   <td>-</td>
+   <td>Type of stack produced, either a <code>block</code> or <code>item</code>.</td>
+   <td>ore-ungraded</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_gprops_code" data-tt-parent="p_alist_grinding">code</div></td>
+   <td>string</td>
+   <td>-</td>
+   <td>Name of the item or block produced by the recipe.''</td>
+   <td>ore-ungraded</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_gprops_stacksize" data-tt-parent="p_alist_grinding">stacksize</div></td>
+   <td>number</td>
+   <td>-</td>
+   <td>The amount of the output produced after grinding.''</td>
+   <td>ore-ungraded</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_health" data-tt-parent="p_attributes_misc">health</div></td>
+   <td>health: value</td>
+   <td>-</td>
+   <td>If the item is a poultice, this is the amount it will heal (requires ItemPoultice class).</td>
+   <td>poultice</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_playdisc" data-tt-parent="p_attributes_misc">isPlayableDisc</div></td>
+   <td>boolean</td>
+   <td>false</td>
+   <td>If true, will be playable on the echo chamber block. Requires a track to be set using the <code>musicTrack</code> property.</td>
+   <td>resonancearchive</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_knappable" data-tt-parent="p_attributes_misc">knappable</div></td>
+   <td>boolean</td>
+   <td>false</td>
+   <td>Allows an item to be "knapped" into primitive toolheads.</td>
+   <td>flint, stone</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_microchisel" data-tt-parent="p_attributes_misc">microBlockChiseling</div></td>
+   <td>boolean</td>
+   <td>false</td>
+   <td>If true, will allow the item to be used for microblock chiseling.
+
+NOTE: Microblock chiseling must also be active in the world settings.
+</td>
+   <td>chisel</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_munits" data-tt-parent="p_attributes_misc">metalUnits</div></td>
+   <td>number</td>
+   <td>-</td>
+   <td>Assigns the units of metal the item contributes when it is smelted.
+
+NOTE: An item must be smeltable for this property to be of any use, make sure to check the combustableProps section for more info.
+</td>
+   <td>resonancearchive</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_mtrack" data-tt-parent="p_attributes_misc">musicTrack</div></td>
+   <td>path to ogg file</td>
+   <td>-</td>
+   <td>Assigns a path to the ogg file of the music track associated with an item that can be played on the echo chamber block. Will only function if the <code>isPlayableDisc</code> property is set to true.</td>
+   <td>resonancearchive</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_npropmeal" data-tt-parent="p_attributes_misc">nutritionPropsWhenInMeal</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Changes the nutrition of a food item when it is cooked into a meal, otherwise the default nutrition property is used.</td>
+   <td>egg, vegetable</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_npropsmeal_satiety" data-tt-parent="p_alist_npropmeal">satiety</div></td>
+   <td>number</td>
+   <td>-</td>
+   <td>Numerical value of saturation added.</td>
+   <td>egg, vegetable</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_npropsmeal_cat" data-tt-parent="p_alist_npropmeal">foodcategory</div></td>
+   <td>string</td>
+   <td>-</td>
+   <td>Category it adds to in the meal: ''Dairy(unused), Fruit, Grain, Protein and Vegetable''</td>
+   <td>egg, vegetable</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_pigment" data-tt-parent="p_attributes_misc">pigment</div></td>
+   <td>-</td>
+   <td>-</td>
+   <td>Allows an item to be used as a pigment for coloring.</td>
+   <td>resonancearchive</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_pigment_name" data-tt-parent="p_alist_pigment">name</div></td>
+   <td>string</td>
+   <td>-</td>
+   <td>Assigns a name to the color of the pigment.</td>
+   <td>charcoal</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_pigment_rgb" data-tt-parent="p_alist_pigment">color</div></td>
+   <td> red:value, green: value, blue: value</td>
+   <td>-</td>
+   <td>The RGB values of the pigment, which can be found using any generic color picker.</td>
+   <td>charcoal</td>
+</tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_pigment_example" data-tt-parent="p_alist_pigment" data-invisible="true"></div></td>
+<td colspan="4">
+
+As an example, let's say you wanted to make a valuable purple pigment from the shell of a rare rock snail:
+
+<syntaxhighlight lang="json">
+	"pigment": {
+           "name": "Tyrian Purple",
+           "color": {
+             "red": 102,
+             "green": 2,
+             "blue": 60
+            }
+          },
+</syntaxhighlight>
+
+Here we can see that the pigment will be named "Tyrian Purple", and is made with the three RGB values (found from a Wikipedia article in this case). 
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_reinforcestr" data-tt-parent="p_attributes_misc">reinforcementStrength</div></td>
+   <td>number</td>
+   <td>-</td>
+   <td>Allows an item to be used by the plumb and square tool to reinforce a block. A higher value indicates more times a block must be broken before it's removed.
+
+Example: Igneous stones = 50, Iron Ingot = 400</td>
+   <td>stone, ingot</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_sentity" data-tt-parent="p_attributes_misc">spearEntityCode</div></td>
+   <td>Entity</td>
+   <td>-</td>
+   <td>Assigns an spear entity to be made when a spear is thrown.</td>
+   <td>spear</td>
+</tr>
+<tr>
+   <td scope="row"><div class="tt" data-tt-id="p_alist_worktemp" data-tt-parent="p_attributes_misc">workableTemperature</div></td>
+   <td>number</td>
+   <td>-</td>
+   <td>The temperature required for an item (an ingot) to be worked on an anvil. A value of 0 means it can be worked cold without heating.</td>
+   <td>ingot</td>
+</tr>
+
+  <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Common</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_storageflags" data-tt-parent="root">storageFlags</div></td>
+    <td>number (storage flag ID)</td>
+    <td>-</td>
+    <td>Determines the kinds of storage types the item can be put into. These values also determine what type of items can fit into specialized inventory bags.</td>
+    <td>arrow, armor, upperbody, ore-graded</td>
+  </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_storageflag_info" data-tt-parent="p_storageflags" data-invisible="true"></div></td>
+<td colspan="4">
+The following are the current existing storage flags (some are unused or reserved)
+1 - general
+2 - backpack
+4 - mining
+8 - jewelcrafting
+16 - alchemy
+32 - agriculture
+64 - currency
+128 - clothes
+256 - offhand
+512 - arrows/ammo
+1024, 2048, ... (doubling) - Reserved for mods
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_creativeinventory" data-tt-parent="root">creativeinventory</div></td>
+    <td>key: string, value: string[]</td>
+    <td>-</td>
+    <td>In which creative inventory tabs the item should be visible in.</td>
+    <td>Any Item</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_creativeinventory_info" data-tt-parent="p_creativeinventory" data-invisible="true"></div></td>
+    <td colspan="4">
+There are several to which you can add content from your mod. Note that general should always be included, since it should contain everything.
+
+*general
+*terrain
+*flora
+*construction
+*decorative
+*items
+
+'''Rock''' adds all of it's variations to general, terrain and construction:
+<syntaxhighlight lang="json">
+	creativeinventory: { "general": ["*"], "terrain": ["*"], "construction": ["*"] },
+</syntaxhighlight>
+
+'''<code>*</code>''' represents the variants which will be added. You can specify multiple and separate them with a comma. It follows the same way as the '''byType''' property.
+
+However, sometimes you may only want to show a single variant of your block or item (such as one that has multiple directional variants). In this case, you can set a specific variant to show up, once again using similar syntax to the variant code.
+
+For example, a '''Torch''' only adds the variation '''<code>up</code>''', since the block uses a class to determine which direction it will be placed in regardless of the variant used:
+<syntaxhighlight lang="json">
+	creativeinventory: { "general": ["*-up"], "decorative": ["*-up"] },
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_maxstacksize" data-tt-parent="root">maxstacksize</div></td>
+    <td>integer</td>
+    <td>64</td>
+    <td>Determines the maximum amount you can stack the item in one slot.</td>
+    <td> hide, nugget</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attackpower" data-tt-parent="root">attackpower</div></td>
+    <td>decimal number</td>
+    <td>0.5</td>
+    <td>The damage the item deals when hitting an entity.</td>
+    <td>sword, spear</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_attackrange" data-tt-parent="root">attackrange</div></td>
+    <td>decimal number</td>
+    <td>1.5</td>
+    <td>The maximum distance you can hit an entity with the item.</td>
+    <td>sword, spear</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_materialdensity" data-tt-parent="root">materialdensity</div></td>
+    <td>integer</td>
+    <td>9999</td>
+    <td>Determines on whether an object floats on liquids or not.</td>
+    <td>ingot</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_materialdensity_info" data-tt-parent="p_materialdensity" data-invisible="true"></div></td>
+    <td colspan="4">
+Water has a density of 1000, meaning everything below or equal will float on water. The same goes for lava which has a density of 5000.
+
+Vintage story uses real world densities for each material (where 1000 = 1 g/cm^3). To give an idea of the current range of densities, gold has a density of 19300, iron's is 7870, and a feather is 20. 
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_liquidselectable" data-tt-parent="root">liquidselectable</div></td>
+    <td>boolean</td>
+    <td>false</td>
+    <td>If the item can select a liquid while holding it in hand.</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_liquidselectable_info" data-tt-parent="p_liquidselectable" data-invisible="true"></div></td>
+    <td colspan="4">
+Used for buckets in order to fill it with water and to place waterlily on top of water.
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_miningspeed" data-tt-parent="root">miningspeed</div></td>
+    <td>key: string, value: decimal number</td>
+    <td>-</td>
+    <td>The mining speed for each block material.</td>
+    <td>pickaxe, shovel</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_miningspeed_info" data-tt-parent="p_miningspeed" data-invisible="true"></div></td>
+    <td colspan="4">
+Materials types are hard-coded into blocks, and include the following types:
+
+''soil, gravel, sand, wood, leaves, stone, liquid, snow, ice, metal, mantle, plant, glass, ceramic, cloth, lava, brick, fire, other''
+
+An item is not limited to a single material that it can mine, so if you wanted to make a tool (such as a mattock) that could mine many materials you could do the following:
+
+<syntaxhighlight lang="json">
+	miningspeed: {
+          "dirt": 5,
+          "gravel": 4,
+          "ice": 7,
+          "metal": 3,
+          "sand": 4,
+          "snow": 3,
+          "stone": 6,
+        }
+</syntaxhighlight>
+	</td>
+  </tr>
+    <td scope="row"><div class="tt" data-tt-id="p_miningtier" data-tt-parent="root">miningtier</div></td>
+    <td>integer</td>
+    <td>0</td>
+    <td>Determines which tier of blocks the item can break. If the block tier is above the one defined here nothing will be dropped from it when broken. Also determines the damage tier of a weapon, which is contested against armor tiers.</td>
+    <td>pickaxe, sword</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_combustibleprops" data-tt-parent="root">combustibleprops</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>Information about the items burnable states.</td>
+    <td>redmeat, plank, ore-ungraded</td>  
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_burntemperature" data-tt-parent="p_combustibleprops">burntemperature</div></td>
+    <td>integer</td>
+    <td>-</td>
+    <td>The temperature at which it burns in degrees celsius.</td>
+    <td>redmeat, plank, ore-ungraded</td>   
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_burnduration" data-tt-parent="p_combustibleprops">burnduration</div></td>
+    <td>decimal number</td>
+    <td>-</td>
+    <td>For how long it burns in seconds.</td>
+    <td>plank, ore-ungraded</td>  
+ </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_heatresistance" data-tt-parent="p_combustibleprops">heatresistance</div></td>
+    <td>integer</td>
+    <td>500</td>
+    <td>How many degrees celsius it can resists before it ignites (not implemented yet).</td>
+    <td>redmeat, plank, ore-ungraded</td>   
+ </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_meltingpoint" data-tt-parent="p_combustibleprops">meltingpoint</div></td>
+    <td>integer</td>
+    <td>-</td>
+    <td>How many degrees celsius it takes to smelt/transform this into another. Only used when put in a stove and Melted is set.</td>
+    <td>redmeat, plank, ore-ungraded</td>   
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_meltingduration" data-tt-parent="p_combustibleprops">meltingduration</div></td>
+    <td>decimal number</td>
+    <td>-</td>
+    <td>For how many seconds the temperature has to be above the melting point until the item is smelted.</td>
+    <td>redmeat, plank, ore-ungraded</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_smokelevel" data-tt-parent="p_combustibleprops">smokelevel</div></td>
+    <td>decimal number</td>
+    <td>1</td>
+    <td>How much smoke this item produces when being used as fuel.</td>
+    <td>plank, ore-ungraded</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_smeltedratio" data-tt-parent="p_combustibleprops">smeltedratio</div></td>
+    <td>integer</td>
+    <td>1</td>
+    <td>How many items are required to produce one output stack.</td>
+    <td>nugget, ore-graded</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_liquidlevel" data-tt-parent="p_combustibleprops">smeltedstack</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>If set, the block/item is smeltable and this is the resulting itemstack once the MeltingPoint has been reached for the supplied duration.</td>
+    <td>nugget, ore-graded</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_requirescontainer" data-tt-parent="p_combustibleprops">requirescontainer</div></td>
+    <td>boolean</td>
+    <td>true</td>
+    <td>If set to true, the block/item requires a smelting/cooking/baking container such as the Crucible. If false, it can be directly baked/melted without smelting/cooking/baking container.</td>
+    <td>nugget, ore-graded, lime</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_combustibleprops_info" data-tt-parent="p_combustibleprops" data-invisible="true"></div></td>
+    <td colspan="4">
+This property can be used to define a burning material. '''Plank''' for example can get on fire:
+<syntaxhighlight lang="json">
+    combustibleProps: {
+        burnTemperature: 800,
+        burnDuration: 12,
+    },
+</syntaxhighlight>
+
+Furthermore it can be used to define smelting processes. An example would be an '''ingotmold''' which turns into an ingotmold-burned:
+<syntaxhighlight lang="json">
+    combustiblePropsByType: {
+        "ingotmold-raw": {
+            meltingPoint: 600,
+            meltingDuration: 30,
+            smeltedRatio: 1,
+            smeltedStack: { type: "block", code: "ingotmold-burned" },
+            requiresContainer: false
+        }
+    },
+</syntaxhighlight>
+	</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_nutritionprops" data-tt-parent="root">nutritionprops</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>Defines the nutritional qualities of an item.</td>
+    <td>fruit, grain, vegetable, redmeat</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_nutritionprops_foodcategory" data-tt-parent="p_nutritionprops">foodcategory</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Defines the type of food. It can be '''''fruit''''', '''''vegetable''''', '''''protein''''', '''''grain''''' and '''''dairy'''''.</td>
+    <td>fruit, grain, vegetable, redmeat</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_nutritionprops_saturation" data-tt-parent="p_nutritionprops">saturation</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>How much saturation it can restore.</td>
+    <td>fruit, grain, vegetable, redmeat</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_nutritionprops_health" data-tt-parent="p_nutritionprops">health</div></td>
+    <td>decimal number</td>
+    <td>0</td>
+    <td>How much health it can restore.</td>
+    <td>-</td> 
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_transprops" data-tt-parent="root">transitionableProps</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>Can be used to transition an item to another item or block.</td>
+    <td>redmeat, hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_type" data-tt-parent="p_transprops">type</div></td>
+    <td>-</td>
+    <td>-</td>
+    <td>The type of transition method to utilize.</td>
+    <td>redmeat, hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_type_cure" data-tt-parent="p_tprops_type">Cure</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Will "cure" an item by showing percent progress until cured.</td>
+    <td>hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_type_perish" data-tt-parent="p_tprops_type">Perish</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Will gradually reduce the saturation of a food item once it's fresh period has passed, eventually converting into the product item (usually rot).</td>
+    <td>hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_fresh" data-tt-parent="p_transprops">freshHours</div></td>
+    <td>number (hours)</td>
+    <td>-</td>
+    <td>An optional "fresh" period that must pass before the transition time starts. With food, this is the period of time that saturation is not affected.</td>
+    <td>bread, vegetable, redmeat</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_ttime" data-tt-parent="p_transprops">transitionHours</div></td>
+    <td>number (hours)</td>
+    <td>-</td>
+    <td>Number of hours before the item transitions into a different item.</td>
+    <td>redmeat, hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_stack" data-tt-parent="p_transprops">transitionedStack</div></td>
+    <td>object (item or block)</td>
+    <td>-</td>
+    <td>The item or block that the item will transition into.</td>
+    <td>redmeat, hide</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tprops_ratio" data-tt-parent="p_transprops">transitionRatio</div></td>
+    <td>number</td>
+    <td>-</td>
+    <td>The quantity of the item that will be consumed after the transition period.</td>
+    <td>redmeat, hide</td>
+  </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_transition_info" data-tt-parent="p_transprops" data-invisible="true"></div></td>
+<td colspan="4">
+
+Here we'll show an example of a custom food item that transitions into rot:
+
+<syntaxhighlight lang="json">
+transitionableProps: [{
+  type: "Perish",
+  freshHours: { avg: 240 },
+  transitionHours: { avg: 48 },
+  transitionedStack { type: "item", code: "game:rot", quantity: 2 },
+  transitionRatio: 1
+}]
+</syntaxhighlight>
+
+We can see that it will take on average 10 days before the food begins to spoil, after which it will degrade over 2 days before turning into 2 rot. 
+</tr>
+  <tr>
+    <td colspan="5" style='font-size: 14pt; border-bottom: 2pt solid black; padding-left: 100px;'><b>Rendering</b></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures" data-tt-parent="root">texture</div></td>
+    <td>string</td>
+    <td>required</td>
+    <td>The texture definition for the item held in hand or dropped on the ground.</td>
+    <td>Any Item</td>   
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures_shape" data-tt-parent="root">textures</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Used to define the textures of a shape the item uses, rather than the singular item texture it pulls from. This is useful for items that use a shape and have visually distinct variants that you want to control in the item JSON.</td>
+    <td>ingot, redmeat</td>  
+  </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_textures_info" data-tt-parent="p_textures_shape" data-invisible="true"></div></td>
+<td colspan="4">
+
+A very simple example is how the ingot item uses the metal variants to change the texture of the shape it uses. Where "metal" is the texture defined in the ingot shape JSON, and is overrode here in the item JSON:
+
+  <syntaxhighlight lang="json">
+    textures: {
+      "metal": { base: "block/metal/ingot/{metal}" },
+    },
+  </syntaxhighlight>
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shape" data-tt-parent="root">shape</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>The items shape. If left empty the item will instead use the texture assigned to it and turn it into a shape by default.</td>
+    <td>flint, stone</td> 
+</tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shape_vox" data-tt-parent="p_shape">voxelizeTexture</div></td>
+    <td>boolean</td>
+    <td>-</td>
+    <td>Tells an item to render it's texture as a shape rather than utilizing the assigned shape</td>
+    <td>redmeat (vintage)</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shape_alt" data-tt-parent="p_shape">alternatives</div></td>
+    <td>array of shapes</td>
+    <td>-</td>
+    <td>Can be used to give an item alternative shapes based off of different states.</td>
+    <td>bow</td>
+</tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_shapealt_info" data-tt-parent="p_shape" data-invisible="true"></div></td>
+<td colspan="4">
+<syntaxhighlight lang="json">
+shape: {
+  base: "item/tool/bow/{type}",
+  alternates: [
+    { base: "item/tool/bow/{type}-charge1" },
+    { base: "item/tool/bow/{type}-charge2" },
+    { base: "item/tool/bow/{type}-charge3" }  
+  ]
+},
+</syntaxhighlight>
+
+In this example taken from the bow we can see that it will use alternative shapes when the bow is in different "charged" states. 
+</tr>
+
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shapeinventory" data-tt-parent="root">shapeinventory</div></td>
+    <td>object</td>
+    <td>-</td>
+    <td>If used, gives the item a different shape while it's in the player's inventory.</td>
+    <td>lantern</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_guitransform" data-tt-parent="root">guiTransform</div></td>
+    <td>object</td>
+    <td>item default</td>
+    <td>Used for scaling, rotation or offsetting the item when rendered in guis.</td>
+    <td>Any Item</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_fphandtransform" data-tt-parent="root">fphandtransform</div></td>
+    <td>object</td>
+    <td>item default</td>
+    <td>Used for scaling, rotation or offsetting the item when rendered in the first person mode hand.</td>
+    <td>Any Item</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_tphandtransform" data-tt-parent="root">tphandtransform</div></td>
+    <td>object</td>
+    <td>item default</td>
+    <td>Used for scaling, rotation or offsetting the item when rendered in the third person mode hand.</td>
+    <td>Any Item</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_groundtransform" data-tt-parent="root">groundtransform</div></td>
+    <td>object</td>
+    <td>item default</td>
+    <td>Used for scaling, rotation or offsetting the rendered as a dropped item on the ground.</td>
+    <td>Any Item</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_toolracktransform" data-tt-parent="root">toolrackTransform</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>If the item can be placed on a toolrack (using the rackable property) this will transform its position while on the toolrack.</td>
+    <td>Axe, Hoe, Scythe, Sword</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_glowlevel" data-tt-parent="root">glowLevel</div></td>
+    <td>number</td>
+    <td>0</td>
+    <td>Gives the item a light value that it produces when held and dropped on the ground.</td>
+    <td>gear (temporal)</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animation_use" data-tt-parent="root">heldTpUseAnimation</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>The animation played when an item is used with a right-click function.</td>
+    <td>hoe</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animation_hit" data-tt-parent="root">heldTpHitAnimation</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>The animation played when swinging the item with the left-click mouse button.</td>
+    <td>axe, hoe, sword</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_animation_idle" data-tt-parent="root">heldTpIdleAnimation</div></td>
+    <td>string</td>
+    <td>-</td>
+    <td>Gives the item a unique animation when being idly held by the player.</td>
+    <td>strawdummy</td>
+  </tr>
+<tr>
+<td scope="row"><div class="tt" data-tt-id="p_attributes_info" data-tt-parent="root" data-invisible="true"></div></td>
+<td colspan="4">
+The following are available animations used by items in the game:
+
+''axe, breaktool, hoe, holdbothhandslarge, holdunderarm, knap, scythe, shears, shoveldig, smithing, spearhit, swordhit, twohandplaceblock, water.
+
+</tr>
+
+
+ </table>
+
+
+
+{{Navbox/modding|Vintage Story}}

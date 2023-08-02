@@ -1,0 +1,170 @@
+<languages/>
+<translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+__FORCETOC__
+Before customizing textures, it's suggested you read the [[Basic Item]], [[Basic Block]] and [[Basic Entity]] pages first in order to understand this tutorial.
+
+
+== Texturing an Item == <!--T:2-->
+
+=== Flat Texturing === <!--T:3-->
+
+<!--T:4-->
+Texturing your items and blocks in vintage story is quite simple, but there's some things to consider when using shapes. Lets start off with just using a flat texture for an item:
+
+<!--T:5-->
+<code>texture: { base: "item/resource/texture" }</code>
+
+<!--T:6-->
+If your item has a variant you can also use it in the textures, even without the byType function:
+
+<!--T:7-->
+<code>texture: { base: "path to texture/texture-{variant}" }</code>
+
+=== Shape Texturing === <!--T:8-->
+
+<!--T:9-->
+If your item is rendered with a custom shape using <code>shape: { base: "path to shape" }</code> you can control it's textures using the plural version "textures". Doing so requires that you use the same "#texture" identifier used on each side of a shape cube.
+
+<!--T:10-->
+Lets see an example. First we'll look at a few cubes in a shape JSON:
+
+<!--T:11-->
+<syntaxhighlight lang="json">
+{
+  "name": "Cube_1",
+  "from": [ 0.5, 0.0, 2.0 ], 
+  "to": [ 5.5, 1.0, 2.5 ], 
+  "rotationOrigin": [ 1.0, 0.0, -1.0 ],
+  "faces": {
+    "north": { "texture": "#metal", "uv": [ 0.0, 0.0, 5.0, 1.0 ] },
+    "east": { "texture": "#metal", "uv": [ 7.0, 3.0, 7.5, 4.0 ] },
+    "south": { "texture": "#metal", "uv": [ 1.0, 2.0, 6.0, 3.0 ] },
+    "west": { "texture": "#metal", "uv": [ 7.0, 0.0, 7.5, 1.0 ] },
+    "up": { "texture": "#metal", "uv": [ 0.0, 3.0, 5.0, 3.5 ] },
+    "down": { "texture": "#metal", "uv": [ 0.0, 0.0, 5.0, 0.5 ] }
+  }
+}
+{
+  "name": "Cube_2",
+  "from": [ 0.5, 0.0, 2.0 ], 
+  "to": [ 5.5, 1.0, 2.5 ], 
+  "rotationOrigin": [ 1.0, 0.0, -1.0 ],
+  "faces": {
+    "north": { "texture": "#wood", "uv": [ 0.0, 0.0, 5.0, 1.0 ] },
+    "east": { "texture": "#wood", "uv": [ 7.0, 3.0, 7.5, 4.0 ] },
+    "south": { "texture": "#wood", "uv": [ 1.0, 2.0, 6.0, 3.0 ] },
+    "west": { "texture": "#wood", "uv": [ 7.0, 0.0, 7.5, 1.0 ] },
+    "up": { "texture": "#wood", "uv": [ 0.0, 3.0, 5.0, 3.5 ] },
+    "down": { "texture": "#wood", "uv": [ 0.0, 0.0, 5.0, 0.5 ] }
+  }
+}
+</syntaxhighlight>  
+
+<!--T:12-->
+Now we can assign the #texture references from our item or block JSON using this format, which can also utilize variants in the regular {variant} format:
+
+<!--T:13-->
+<syntaxhighlight lang="json">
+"textures": {
+  "metal": {"base": "path to metal texture" },
+  "wood": {"base": "path to wood texture" }
+},
+</syntaxhighlight>
+
+<!--T:14-->
+This is a useful method since both "metal" and "wood" can be assigned to multiple cubes within the shape JSON.
+
+=== Voxelized Texture Shapes === <!--T:15-->
+
+<!--T:16-->
+If you decide you want a variant of an item to not be rendered using a JSON shape you can use the "voxelizeTexture property when defining a shape. Lets take a look at what the redmeat JSON does:
+
+<!--T:17-->
+<syntaxhighlight lang="json">
+"shapebytype": { 
+  "redmeat-vintage": { "base": "item/empty", "voxelizeTexture": true },
+  "*": { "base": "item/food/meat/red" },
+},
+"texturesbytype": {
+  "redmeat-raw": { 
+    "meat": {"base": "item/food/meat/raw" }
+  },
+  "redmeat-cooked":  { 
+    "meat": {"base": "item/food/meat/cooked" }
+  },
+  "redmeat-cured":  { 
+    "meat": {"base": "item/food/meat/cured" }
+  },
+  "redmeat-vintage": {
+    "item/empty":  { "base": "item/food/meat/vintage" }
+  }
+},
+</syntaxhighlight>
+
+<!--T:18-->
+We can see here that only the "vintage" variant will be rendered as a regular voxelized item texture, while the rest will use the redmeat shape and apply their texture to it.
+
+== Texturing a Block == <!--T:19-->
+
+=== Simple Block === <!--T:20-->
+
+<!--T:21-->
+Blocks are textured a little differently since they default to generic "cube" shape. This means they don't use the singular "texture" method, and instead always use a version of the plural "textures":
+
+<!--T:22-->
+<syntaxhighlight lang="json">
+"textures": {
+  "all": {"base": "path to texture*"}
+},
+</syntaxhighlight>
+
+=== Texturing Other Block Faces === <!--T:23-->
+
+<!--T:24-->
+When assigning textures "all" will give every side the same texture, but we can easily customize each side, especially if we want to use some block behaviors like <code>"Pillar"</code> or <code>"HorizontalOrientable"</code>:
+
+<!--T:25-->
+<syntaxhighlight lang="json">
+"textures": {
+  "up": { "base": "path to top texture" },
+  "down": { "base": "path to bottom texture" },
+  "south": { "base": "path to back texture" },
+  "north": { "base": "path to front texture" },
+  "west": { "base": "path to left texture" },
+  "east": { "base": "path to right texture" },
+},
+</syntaxhighlight>
+
+<!--T:26-->
+Keep in mind that if you're using the <code>"Pillar"</code> or <code>"HorizontalOrientable"</code> behaviors you'll need directional variants for each (such as updown, northsouth, eastwest etc.) and you'll likely have to organize it using the ByType functionality. A great example of this is the log (Pillar) and altar (HorizontalOrientable) JSONS.
+
+== Texturing an Entity == <!--T:27-->
+
+=== Basic Entity Texture === <!--T:28-->
+
+<!--T:29-->
+All entities utilize a shape, but generally they are applied using a single entity map texture, which is essentially a texture file with each cube side mapped onto it. Doing this manually would be incredibly tedious, and is best done with the Vintage Story Model Builder found [[VS Model Creator| here]].  
+
+<!--T:30-->
+Once you have your properly mapped out texture you can assign it to your entity:
+
+<!--T:31-->
+<code>texture: { base: "path to texture map" }</code>
+
+=== Alternative Entity Textures === <!--T:32-->
+
+<!--T:33-->
+after defining the first texture, you can also add alternatives to the same entity. Lets look at the Wolf for an example:
+
+
+<!--T:34-->
+<syntaxhighlight lang="json">
+"texture": { "base": "entity/wolf/wolf1", "alternates": [ { "base": "entity/wolf/wolf2" }, { "base": "entity/wolf/wolf2" }, {...} ] }
+</syntaxhighlight>
+Each successive alternative should be numbered (starting with 1). 
+
+<!--T:35-->
+{{Navbox/modding|Vintage Story}}
+</translate>

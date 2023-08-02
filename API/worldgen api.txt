@@ -1,0 +1,445 @@
+{{GameVersion|1.15}}
+<languages/><translate>
+== Intro == <!--T:1-->
+
+<!--T:2-->
+We will be walking through how to plug in and add your own features to the world generation code of Vintage Story by looking at a demo mod called VSTreasureChest. The full source code for this project can be found [https://github.com/anegostudios/VSTreasureChest on Github]. We are going to walk through coding it from scratch.
+
+== VSTreasureChest Mod== <!--T:3-->
+This mod places treasure chests around the world for the user to find. Each treasure chest has a random number of ingots in them. The mod only places treasure chests beside trees. It also adds a server command that can be run in the chat window called /treasure that places a treasure chest in front of the player. This can be useful for testing in case you want to change what items are in the chest and you don't want to bother looking for the chest for verification.
+
+<!--T:4-->
+[[File:treasure chest.png|thumb]]
+
+== Getting started == <!--T:5-->
+Please follow the instructions [[Setting up your Development Environment|here]] for setting up your development environment. We named our project VSTreasureChest but you can choose any name you like. We will do one different thing. When you get to the debug command line arguments instead of passing /flatworld we are going to pass /stdworld:test. The reason we are doing this is because we are going to be placing our chest beside a tree. The /flatworld generates a flat world with no trees so that won't help us much in this scenario. However, depending on the specific terrain gen features you are doing you may want to use /flatworld in the future.
+
+
+== The VSTreasureChestMod class == <!--T:6-->
+The main class and the starting point of our mod will be VSTreasureChestMod.
+
+</translate>
+
+<syntaxhighlight lang="c#">
+using System;
+using System.Collections.Generic;
+using Vintagestory.API;
+using Vintagestory.API.Datastructures;
+using Vintagestory.API.Interfaces;
+
+namespace Vintagestory.Mods.TreasureChest
+{
+    public class VSTreasureChestMod : ModSystem
+    {
+        private ICoreServerAPI api;
+
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            this.api = api;
+        }
+
+        public override bool ShouldLoad(EnumAppSide side)
+        {
+            return side == EnumAppSide.Server;
+        }
+    }
+}
+</syntaxhighlight>
+
+The first thing to note is the '''using''' directives at the top. Those that start with Vintagestory will allow us to access classes in the Vintagestory api. Next the '''StartServerSide''' is a method we are overriding from '''ModSystem''' that is called once when the server is start up. Here we start by just storing a reference to the '''ICoreServerAPI''' for convenient access later. We will also be registering call backs for other events here. We also override '''ShouldLoad''' to tell the system to only load this on the server side and not the client side. It would work without this but it's not necessary for the client to load this mod since all our code happens server side.
+
+== The /treasure command ==
+Next we are going to add the '''/treasure''' command. To do this we must register a delegate so that we can be notified when the user types our command. We do this with the '''ICoreServerAPI.RegisterCommand''' method.
+
+In '''StartServerSide''' add the following line:
+<syntaxhighlight lang="c#">
+this.api.RegisterCommand("treasure", "Place a treasure chest with random items", "", PlaceTreasureChestInFrontOfPlayer, Privilege.controlserver);
+</syntaxhighlight>
+This is registering a '''treasure''' command with the server with a brief description that is used to describe the command for when the user types '''/help'''. The other important argument is the '''PlaceTreasureChestInFrontOfPlayer''' argument which is a reference to a method we haven't written yet. So lets add the following method below '''StartServerSide'''.
+<syntaxhighlight lang="c#">
+private void PlaceTreasureChestInFrontOfPlayer(IServerPlayer player, int groupId, CmdArgs args)
+{
+}
+</syntaxhighlight>
+This method will now be called when the user types '''/treasure''' command in the chat window. Wasn't that easy!!! Now we need to write the code to place our chest in that method.
+
+== Placing our chest ==
+The first thing we need to do is figure out how to tell the API that we want a chest and not grass or stone or some other block. Every Block has a numerical ID that gets assigned when the server starts but this ID may change. Luckily there is a property of the Block class that identifies it and does not change. This is the Code property. Block codes can be found in '''Vintagestory\assets\blocktypes''' in json files. The one for chest is '''Vintagestory\assets\blocktypes\wood\generic\chest.json'''. If you open that file you will see at the very top the code property is set to "chest". We also need to append the type of the shape that basically tells the system which way the chest is facing. So for simplicity we are going to pick south. So the resulting block code we will be using is "chest-south". Ok lets see some code.
+<syntaxhighlight lang="c#">
+private void PlaceTreasureChestInFrontOfPlayer(IServerPlayer player, int groupId, CmdArgs args)
+{
+    // Old, don't work on latest version
+    // ushort blockID = api.WorldManager.GetBlockId("chest-south");
+    // Block chest = api.WorldManager.GetBlockType(blockID);
+    // chest.TryPlaceBlockForWorldGen(api.World.BlockAccessor, player.Entity.Pos.HorizontalAheadCopy(2).AsBlockPos, BlockFacing.UP);
+
+    // New, work on latest version
+    Block chest = api.World.GetBlock(new AssetLocation("chest-south"));
+    chest.TryPlaceBlockForWorldGen(api.World.BlockAccessor, 
+        player.Entity.Pos.HorizontalAheadCopy(2).AsBlockPos, BlockFacing.UP, null
+    );
+}
+</syntaxhighlight>
+The first line of code asks the '''IWorldManagerAPI''' to get the numeric block id for the block code "chest-south". Next we get the '''Block''' class that represents that chest. And finally we call a method called '''TryPlaceBlockForWorldGen''' and pass in an IBlockAccessor. There are many implementations of '''IBlockAccessor''' and we will cover that in a little more detail later. For now we are using this one. The second argument just calculates the world coordinates for 2 blocks in front of the player.
+
+Now if you run the mod from Visual Studio by pressing "Start" at the top you should be able to execute the '''/treasure''' command in the game. Once you do that you will have a fancy new chest appear in front of you with no items. Well I guess it's time for us to add some items.
+
+== Adding items to our chest ==
+We want to add some items to the chest since after all it is a "treasure" chest. For now we are going to add various ingots to the chest. However there are lots of items in Vintagestory and I encourage you to play with this and feel free to add other items. We also want to add items at random. Not only the type of items should be random but also the ingots we add should be random. There are all kinds of ways to do this but lets write a data structure that represents a grab bag full of items and lets pull items out of that bag and place them in the chest like Santa Claus! We will create a '''ShuffleBag''' class so in Visual Studio right click on your project and go to Add->Class. Call it '''ShuffleBag.cs''' and press Add. Here's the code to place in the '''ShuffleBag''' class.
+<syntaxhighlight lang="c#">
+using System;
+using System.Collections.Generic;
+
+namespace Vintagestory.Mods.TreasureChest
+{
+    /// <summary>
+    /// Data structure for picking random items
+    /// </summary>
+    public class ShuffleBag<T>
+    {
+        private Random random = new Random();
+        private List<T> data;
+
+        private T currentItem;
+        private int currentPosition = -1;
+
+        private int Capacity { get { return data.Capacity; } }
+        public int Size { get { return data.Count; } }
+
+        public ShuffleBag(int initCapacity)
+        {
+            this.data = new List<T>(initCapacity);
+            this.random = new Random();
+        }
+
+        public ShuffleBag(int initCapacity, Random random)
+        {
+            this.random = random;
+            this.data = new List<T>(initCapacity);
+        }
+
+        /// <summary>
+        /// Adds the specified number of the given item to the bag
+        /// </summary>
+        public void Add(T item, int amount)
+        {
+            for (int i = 0; i < amount; i++)
+                data.Add(item);
+
+            currentPosition = Size - 1;
+        }
+
+        /// <summary>
+        /// Returns the next random item from the bag
+        /// </summary>
+        public T Next()
+        {
+            if (currentPosition < 1)
+            {
+                currentPosition = Size - 1;
+                currentItem = data[0];
+
+                return currentItem;
+            }
+
+            var pos = random.Next(currentPosition);
+
+            currentItem = data[pos];
+            data[pos] = data[currentPosition];
+            data[currentPosition] = currentItem;
+            currentPosition--;
+
+            return currentItem;
+        }
+    }
+}
+</syntaxhighlight>
+This is all basic C# stuff but the idea is that we are going to call '''Add''' on our '''ShuffleBag''' several times to load it up, then we are going to call '''Next''' to pull items out of it. This will let us kind of control the probability or rarity of items placed in chests. Items that are more rare will have fewer items in the bag.
+
+Lets add a couple of class variables to control the minimum and maximum number of items that will go in our chest.
+<syntaxhighlight lang="c#">
+private const int MIN_ITEMS = 3;
+private const int MAX_ITEMS = 10;
+</syntaxhighlight>
+Since we will want to create a new ShuffleBag with each chest we place lets go ahead and create a MakeShuffleBag method.
+<syntaxhighlight lang="c#">
+private ShuffleBag<string> MakeShuffleBag()
+{
+    ShuffleBag<string> shuffleBag = new ShuffleBag<string>(100, api.World.Rand);
+    shuffleBag.Add("ingot-iron", 10);
+    shuffleBag.Add("ingot-bismuth", 5);
+    shuffleBag.Add("ingot-silver", 5);
+    shuffleBag.Add("ingot-zinc", 5);
+    shuffleBag.Add("ingot-titanium", 5);
+    shuffleBag.Add("ingot-platinum", 5);
+    shuffleBag.Add("ingot-chromium", 5);
+    shuffleBag.Add("ingot-tin", 5);
+    shuffleBag.Add("ingot-lead", 5);
+    shuffleBag.Add("ingot-gold", 5);
+    return shuffleBag;
+}
+</syntaxhighlight>
+This loads up our '''ShuffleBag''' with various ingots. The only more common item is iron. Feel free to change the item counts as you see fit. One thing to note here is the API does give us an instance of Random that we can use so we pass it in to our ShuffleBag.
+
+We are almost ready to place these items in the chest but we need to create an '''ItemStack''' for each slot we will be taking up in the chest. The chest is an instance of '''IBlockEntityContainer''' which has an '''Inventory''' property. An '''Inventory''' is made up of several '''IItemSlot''' instances. We need a utility method to create a list of '''ItemStacks''' to place in those slots.
+<syntaxhighlight lang="c#">
+private IEnumerable<ItemStack> MakeItemStacks()
+{
+    ShuffleBag<string> shuffleBag = MakeShuffleBag();
+    Dictionary<string, ItemStack> itemStacks = new Dictionary<string, ItemStack>();
+    int grabCount = api.World.Rand.Next(MIN_ITEMS, MAX_ITEMS);
+    for (int i = 0; i < grabCount; i++)
+    {
+        string nextItem = shuffleBag.Next();
+        Item item = api.World.GetItem(nextItem);
+        if (itemStacks.ContainsKey(nextItem))
+        {
+            itemStacks[nextItem].StackSize++;
+        }
+        else
+        {
+            itemStacks.Add(nextItem, new ItemStack(item));
+        }
+    }
+    return itemStacks.Values;
+}
+</syntaxhighlight>
+Here we make our '''ShuffleBag''' by calling '''MakeShuffleBag'''. We calculate a '''grabCount''' which is random number between '''MIN_ITEMS''' and '''MAX_ITEMS''' that controls the number of times Santa is going to reach into his bag. We don't want to create an '''ItemStack''' for each item because we may get 3 iron ingots for example. We don't want 3 slots with one iron ingot, we want one slot with 3 iron ingots. So we create a '''Dictionary''' and add items of the same type to the same '''ItemStack'''. This method returns an '''IEnumerable''' that we can loop over so we need to add a method that can loop over a list of '''ItemStacks''' and add them to our chest.
+<syntaxhighlight lang="c#">
+private void AddItemStacks(IBlockEntityContainer chest, IEnumerable<ItemStack> itemStacks)
+{
+    int slotNumber = 0;
+    foreach (ItemStack itemStack in itemStacks)
+    {
+        slotNumber = Math.Min(slotNumber, chest.Inventory.QuantitySlots - 1);
+        IItemSlot slot = chest.Inventory.GetSlot(slotNumber);
+        slot.Itemstack = itemStack;
+        slotNumber++;
+    }
+}
+</syntaxhighlight>
+This method does just that. It advances the '''IItemSlot''' number each time, ensuring not to place more '''ItemStacks''' than there are '''IItemSlots''', and sets the '''IItemSlot.ItemStack''' value to the current '''ItemStack''' in the loop. We are almost there! We have all the pieces. Now we just need to get a reference to our chest that we have already placed and pass it to this method along with the '''ItemStacks'''.
+
+Lets go back to our '''PlaceTreasureChest''' method and replace the last line with the following code snippet.
+<syntaxhighlight lang="c#">
+BlockPos pos = player.Entity.Pos.HorizontalAheadCopy(2).AsBlockPos;
+chest.TryPlaceBlockForWorldGen(api.World.BlockAccessor, pos, BlockFacing.UP, null);
+IBlockEntityContainer chestEntity = (IBlockEntityContainer)api.World.BlockAccessor.GetBlockEntity(pos);
+AddItemStacks(chestEntity, MakeItemStacks());
+</syntaxhighlight>
+The first line is just capturing the '''BlockPos''' position object so that we can use it in two places. The next is the same as before, just placing the chest in the world. Next we go back to the '''IBlockAccessor''' to get the block entity at that position. It's important to call '''GetBlockEntity''' here because a chest is an '''Entity'''. An '''Entity''' is something that has extra behavior attached to it as opposed to a normal block. This method returns an '''IBlockEntity''' which is a generic interface for all block entities. However we specifically need a block entity that has an Inventory. Since we know the block entity we just placed is a chest then it's safe to to cast the returned '''IBlockEntity''' to an '''IBlockEntityContainer''' which is a specialized version of '''IBlockEntity''' that provides access to an '''Inventory'''. Now that we have that we pass it along to our '''AddItemStacks''' method we created earlier and additionally pass in the list of '''ItemStacks''' that are created by our '''MakeItemStacks''' method that we also created earlier. Now if you run the code again and type '''/treasure''' you should have random items in there! Try it several times and you will see them change.
+
+That's really cool and all but not real fun for a game play experience. We want the player to find these chests and encourage them to explore the world! So lets plug in to world gen next!
+
+== Hooking in to the world gen API ==
+Hooking into the world gen api is very similar to how we registered our command. We will pass a delegate callback that gets called when a chunk column is generated.
+
+Add the following to '''StartServerSide'''
+<syntaxhighlight lang="c#">
+this.api.Event.ChunkColumnGeneration(OnChunkColumnGeneration, EnumWorldGenPass.Vegetation, "standard");
+</syntaxhighlight>
+
+The first argument is a delegate, which is a reference to a method. You will get a compiler error after adding that line because we have not yet created the '''OnChunkColumnGeneration''' method. We will create that next. The second argument is an Enum that indicates which world generation pass we need to hook into. Vintage story uses several passes to generate the world. Different features are available during different world gen passes. Since we will be placing chests next to trees, we need trees to be in the world so we choose to be notified during the '''EnumWorldGenPass.Vegetation''' which tells the engine that we need neighbor chunks, block layers, tall grass, bushes and trees to be available.
+<syntaxhighlight lang="c#">
+private void OnChunkColumnGeneration(IServerChunk[] chunks, int chunkX, int chunkZ)
+{
+}
+</syntaxhighlight>
+The above code is our empty '''OnChunkColumnGeneration''' which will be called when a chunk is generated. Now we need to look at how to place blocks in this method. We have already seen the '''IBlockAccessor''' interface and we will be using that to place our blocks but we can't use the implementation we used before. In the next section we will see how to get the '''IBlockAccessor''' we need and use it to place our chest.
+
+== Placing blocks during world gen ==
+The server does not generate chunks on the main game thread because the game's frame rate would drop significantly and it would really be disruptive to game play. The server spawns a separate thread for this and there is a special '''IBlockAccessor''' that is used in that thread that we need to get a reference to in order to place our chest. First lets add two variables at the top of our class of type '''IBlockAccessor'''. One to hold our game thread '''IBlockAccessor''' and one to hold the one used by the server world gen thread.
+<syntaxhighlight lang="c#">
+private IBlockAccessor chunkGenBlockAccessor;
+private IBlockAccessor worldBlockAccessor;
+</syntaxhighlight>
+
+Let's initialize '''worldBlockAccessor''' at the top of '''StartServerSide'''. This is the '''IBlockAccessor''' we used in our '''/treasure''' command. Later we will refactor that code to use this variable.
+<syntaxhighlight lang="c#">
+this.worldBlockAccessor = api.World.BlockAccessor;
+</syntaxhighlight>
+Next we will register a call back delegate to be passed the '''IBlockAccessor''' we need. Place this in '''StartServerSide'''.
+<syntaxhighlight lang="c#">
+this.api.Event.GetWorldgenBlockAccessor(OnWorldGenBlockAccessor);
+</syntaxhighlight>
+Then add this method to your class:
+<syntaxhighlight lang="c#">
+private void OnWorldGenBlockAccessor(IChunkProviderThread chunkProvider)
+{
+    chunkGenBlockAccessor = chunkProvider.GetBlockAccessor(true);
+}
+</syntaxhighlight>
+Let's do a quick refactoring before we move on. Remember our '''PlaceTreasureChestInFrontOfPlayer''' method? The code in that to place the chest is going to be reused by our world gen code but we won't have a player in that case and we will also need to use a different '''IBlockAccessor''' to place our block. So let's refactor that to use a new method we call '''PlaceTreasureChest'''. So replace '''PlaceTreasureChestInFrontOfPlayer''' with the following.
+<syntaxhighlight lang="c#">
+private void PlaceTreasureChestInFrontOfPlayer(IServerPlayer player, int groupId, CmdArgs args)
+{
+    PlaceTreasureChest(worldBlockAccessor, player.Entity.Pos.HorizontalAheadCopy(2).AsBlockPos);
+}
+
+private bool PlaceTreasureChest(IBlockAccessor blockAccessor, BlockPos pos)
+{
+    ushort blockID = api.WorldManager.GetBlockId("chest-south");
+    Block chest = api.WorldManager.GetBlockType(blockID);
+    chest.TryPlaceBlockForWorldGen(blockAccessor, pos, BlockFacing.UP);
+    IBlockEntityContainer chestEntity = (IBlockEntityContainer)blockAccessor.GetBlockEntity(pos);
+    if (chestEntity != null)
+    {
+        AddItemStacks(chestEntity, MakeItemStacks());
+        System.Diagnostics.Debug.WriteLine("Placed treasure chest at " + pos.ToString(), new object[] { });
+        return true;
+    }
+    else
+    {
+        System.Diagnostics.Debug.WriteLine("FAILED TO PLACE TREASURE CHEST AT " + pos.ToString(), new object[] { });
+        return false;
+    }
+}
+</syntaxhighlight>
+So what we did is make a '''PlaceTreasureChest''' that takes an '''IBlockAccessor''' and a '''BlockPos''' for placing the chest. The null check on '''chestEntity''' is probably not necessary however while developing this I found I was misusing the API by using the wrong IBlockAccessor so the null check helps detect this scenario and provides a more meaningful message than just a NullReferenceException so I suggest leaving this in. Also notice that we are printing a message to the console when a chest is placed. This is also optional however it's helpful for finding chests in the world when testing. Our '''PlaceTreasureChestInFrontOfPlayer''' method now calls our new method passing it the appropriate '''IBlockAccessor''' and the '''BlockPos''' 2 blocks in front of the player. Now that this refactoring has been done, we are ready to find a suitable spot to place our chests.
+
+== Finding where to place the chest ==
+Now we are ready to place code in our '''OnChunkColumnGeneration''' to find a suitable spot for our chest. We are going to set up a nested for loop to loop through each x,y,z location in the chunk and see if that spot is beside a tree. Before we set up our loop we are going to add a few more variables at the top of our class. 
+<syntaxhighlight lang="c#">
+private const int MAX_CHESTS_PER_CHUNK = 1;
+private const float CHEST_SPAWN_PROBABILITY = 0.80f;
+private int chunkSize;
+private ISet<string> treeTypes;
+</syntaxhighlight>
+They are mostly self explanatory. The first one indicates how many chests we are going to allow to be placed per chunk. '''CHEST_SPAWN_PROBABILITY''' is a probability of placing a chest in the current chunk at all. '''chunkSize''' is just stored as a convenient way to access the chunk size. To initialize it we need the following in '''StartServerSide''':
+<syntaxhighlight lang="c#">
+this.chunkSize = worldBlockAccessor.ChunkSize;
+</syntaxhighlight>
+Make sure to add this after you set '''worldBlockAccessor'''!
+
+I'll explain the '''treeTypes''' variable in a bit. Just add it for now.
+
+Replace the empty '''OnChunkColumnGeneration''' with the following:
+<syntaxhighlight lang="c#">
+private void OnChunkColumnGeneration(IServerChunk[] chunks, int chunkX, int chunkZ)
+{
+    int chestsPlacedCount = 0;
+    for (int i = 0; i < chunks.Length; i++)
+    {
+        if (ShouldPlaceChest())
+        {
+            BlockPos blockPos = new BlockPos();
+            for (int x = 0; x < chunkSize; x++)
+            {
+                for (int z = 0; z < chunkSize; z++)
+                {
+                    for (int y = 0; y < worldBlockAccessor.MapSizeY; y++)
+                    {
+                        if (chestsPlacedCount < MAX_CHESTS_PER_CHUNK)
+                        {
+                            blockPos.X = chunkX * chunkSize + x;
+                            blockPos.Y = y;
+                            blockPos.Z = chunkZ * chunkSize + z;
+
+                            BlockPos chestLocation = TryGetChestLocation(blockPos);
+                            if (chestLocation != null)
+                            {
+                                bool chestWasPlaced = PlaceTreasureChest(chunkGenBlockAccessor, chestLocation);
+                                if (chestWasPlaced)
+                                {
+                                    chestsPlacedCount++;
+                                }
+                            }
+                        }
+                        else//Max chests have been placed for this chunk
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private bool ShouldPlaceChest()
+{
+    int randomNumber = api.World.Rand.Next(0, 100);
+    return randomNumber > 0 && randomNumber <= CHEST_SPAWN_PROBABILITY * 100;
+}
+
+private BlockPos TryGetChestLocation(BlockPos pos)
+{
+    return null;
+}
+</syntaxhighlight>
+We've added a couple of methods here that I'll explain first. The '''ShouldPlaceChest''' method simply generates a random number between 0 and 100. If the number is between 0 and our '''CHEST_SPAWN_PROBABILITY''' multiplied by 100 then it returns true. This is called before we do our loop to see whether we should proceed in placing our chest. We will fill in the details of '''TryGetChestLocation''' in the next section so just leave it for now. The loop goes through each x, z then y coordinate and converts the coordinates to world coordinates by multiplying the '''chunkX''' coordinate by the '''chunkSize''' and adding our x coordinate in the loop. The same goes for Z. This is very important! Our '''IBlockAccessor''' expects world coordinates. World coordinates start at the beginning of the world whereas chunk coordinates start at the beginning of the chunk. Always keep your coordinate system in mind. Another thing to note here is that '''BlockPos''' is created outside our loop and reused to cut down on object creation. You don't want to create a ton of objects and cause garbage collection because this will negatively impact performance. Try to create as few objects as you can in code that will be executed frequently. The meat of the code calls our '''TryGetChestLocation''' to get a '''BlockPos'''. If the method returns null that means the current x,y,z is not a suitable location. However if it is then it moves on to our '''PlaceTreasureChest''' and increments the '''chestsPlaced''' counter which is used to check and make sure we aren't placing more chests in the chunk than '''MAX_CHESTS_PER_CHUNK'''.
+
+Our loop and main logic is finished. Now it's time to implement '''TryGetChestLocation''' to detect trees.
+
+== Detecting trees ==
+Remember the '''treeTypes''' variable we created at the top of our class? Now it's time to populate that with the block codes of the tree logs we will be looking for. Let's add a method called '''LoadTreeTypes'''.
+<syntaxhighlight lang="c#">
+private void LoadTreeTypes(ISet<string> treeTypes)
+{
+    WorldProperty treeTypesFromFile = api.Assets.TryGet("worldproperties/block/wood.json").ToObject<WorldProperty>();
+    foreach (WorldPropertyVariant variant in treeTypesFromFile.Variants)
+    {
+        treeTypes.Add("log-" + variant.Code + "-ud");
+    }
+}
+</syntaxhighlight>
+This method reads the log types from '''worldproperties/block/wood.json''' and adds them to our '''treeTypes''' set. Since we are looking for logs we prepend "log-" and we pick the variant "-ud" which means "Up/Down" since that's the variant of the tree log that is at the base of trees. Now to initialize our '''treeTypes''' set just add the following to '''StartServerSide''':
+<syntaxhighlight lang="c#">
+this.treeTypes = new HashSet<string>();
+LoadTreeTypes(treeTypes);
+</syntaxhighlight>
+
+Now to detect our logs we can simply compare the '''Block.Code''' property to values in our '''treeTypes''' set. Lets write a quick helper method for this:
+<syntaxhighlight lang="c#">
+private bool IsTreeLog(Block block)
+{
+    return treeTypes.Contains(block.Code);
+}
+</syntaxhighlight>
+
+The algorithm we will use to detect the tree log is pretty simple. We will see if the current block is a tree log, if so we will iterate downward to find the bottom log by detecting the first non-log type. Once we find it we simply find an adjacent air Block. Air blocks have a '''Block.Id''' value of 0. Here's the code:
+<syntaxhighlight lang="c#">
+private BlockPos TryGetChestLocation(BlockPos pos)
+{
+    Block block = chunkGenBlockAccessor.GetBlock(pos);
+    if (IsTreeLog(block))
+    {
+        for (int posY = pos.Y; posY >= 0; posY--)
+        {
+            while (pos.Y-- > 0)
+            {
+                Block underBlock = chunkGenBlockAccessor.GetBlock(pos);
+                if (IsTreeLog(underBlock)) continue;
+
+                foreach (BlockFacing facing in BlockFacing.HORIZONTALS)
+                {
+                    BlockPos adjacentPos = pos.AddCopy(facing).Up();
+                    if (chunkGenBlockAccessor.GetBlock(adjacentPos).Id == 0)
+                    {
+                        return adjacentPos;
+                    }
+                }
+            }
+        }
+    }
+    return null;
+}
+</syntaxhighlight>
+There are some improvements that could be made to this algorithm. I list them in the Exercises below. However, now you should be able to run the code and find treasure chests in your world!!
+
+
+== Summary ==
+You should now have an idea of how to register commands and place blocks during world gen. There's plenty more to explore. If you want to take this code further please see the suggested exercises below.
+
+== Excercises ==
+A few things could be done to improve this code and it's left as an exercise for the reader. Doing this will help you get familiar with the API without overwhelming you.
+<ul>
+<li>Currently the code will place chests over water or air. Change '''TryGetChestLocation''' to only place chests over solid blocks.</li>
+<li>Make the chest face away from the tree log(and player) correctly. Currently it always faces south. Hint: use chest-north, chest-east, chest-west.</li>
+<li>Make chests a more rare item to find.</li>
+<li>Chests should have more interesting items. Modify the code to put some more useful things in there. Maybe tools or weapons that can't be crafted.</li>
+<li>A harder exercise might be to only place chests in caves.</li>
+</ul>
+
+
+{{Navbox/modding|Vintage Story}}

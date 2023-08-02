@@ -1,0 +1,78 @@
+<languages/>
+<translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+__FORCETOC__
+First, if you haven't done it already, please read the tutorial [[Getting Started with Advanced Modding#Domains|Getting Started]]. This tutorial should introduce you to the basics of using JSON files to add an item to the game. If you want to add an item with functionality, you should check out the tutorial for [[Advanced Items]]. That page contains a full list of all properties that can be defined inside the json file [[Item Json Properties]]. Adding a block to the game is similar to adding an item, so if you have already learned how to do that, most of the following steps should be familiar.
+
+== A Simple Item == <!--T:2-->
+The first thing we need is an idea. What does this game need? Wait! I got it ... the game needs a cool wand. Let's call this mod '''BasicItem''', because this is the Basic Item tutorial, and we're making a wand.
+
+== Workspace == <!--T:3-->
+First create a folder to put the mod files in, which will become your '''workspace''' where we will create the mod itself. We will have to add several folders inside the main folder to keep our files organized. The Vintage Story mod loader requires some files to be placed in specific folders so the loader can find what it needs to load. For this mod, everything will go in our namespaced assets folder. For us, this folder is <code>assets/basicwand/</code>. ''Note'': the namespace does not need to be the same as the name of the mod.
+
+<!--T:4-->
+All mods that add content must be in the <assets folder> and their own namespace directory. The namespace, for us is <code>basicwand</code>. This convention prevents multiple mods that use the same item code from causing issues. For example, if you enable extended debug info with the command <code>.edi</code>, you may notice that all the items in the game are prefixed with <code>game:</code>, which is the namespace for all the vanilla content.
+
+<!--T:5-->
+After getting our workspace ready, we can move on to actually making the wand.
+
+== Adding a Texture == <!--T:6-->
+Let's start with the texture we will use: [[File:Wand.png]] <br>
+(To create your own textures, you can use programs like [https://www.dotpdn.com/downloads/pdn.html/ PaintDotNet(free)], [https://www.piskelapp.com/ Piskel(free)], [https://www.gimp.org/ GIMP(free)], or [https://github.com/aseprite/aseprite/ Aseprite(free open source, or pay for precompiled)])
+
+<!--T:7-->
+In order to use the texture, we need to put it in the right place (so the mod loader can find it). To do this we will create the folder <code>textures/item/</code>. Remember, this is in our namespaced folder so the full path is <code>assets/basicwand/textures/item/</code>.
+
+== Creating the Item File == <!--T:8-->
+To create the actual wand item, we need to create a JSON file inside the <code>itemtypes/</code> folder. In this example we name it <code>wand.json</code>. This file contains the basic properties of our item. (we recommend to use an editor with syntax highlighting, such as [https://notepad-plus-plus.org/ Notepad++] or [https://www.sublimetext.com/ Sublime Text]. If you are going to have many json files or some C#, then [https://code.visualstudio.com/ Visual Studio Code] is also a good pick).
+
+<!--T:9-->
+The most basic item requires two things:
+* '''code''': A unique identifier for the item.
+* '''texture''': What textures to apply to the item.
+
+<!--T:10-->
+We also need to include this property to allow us access to our item in the creative inventory:
+* '''creativeinventory''': defines the creative inventory tabs where the item should be shown
+
+<!--T:11-->
+For now, our values for each property are simple:
+* <code>code</code>: <code>wand</code>
+* <code>texture</code>: <code>item/wand</code> (Note that the specified path does '''not''' include <code>texture</code> in the path.)
+* <code>creativeinventory</code>: <code>general</code>
+
+<!--T:12-->
+''Finally'' the values in the actual JSON look like this:
+<syntaxhighlight lang="json">
+{
+  code: "wand",
+  creativeinventory: {
+    "general": ["*"]
+  },
+  texture: {
+    base: "game:item/wand"
+  }
+}
+</syntaxhighlight>
+
+<!--T:13-->
+You might have noticed that the <code>creativeinventory</code> and <code>textures</code> properties aren't as simple as the <code>code</code> values. The reason for the differences in <code>textures</code> and <code>creativeinventory</code> isn't something we'll cover in this tutorial, but is discussed in advanced tutorials.
+
+== Naming the Item == <!--T:14-->
+Now we've got almost everything ready, except for a proper name. To do this we create another JSON file: <code>lang/en.json</code>. The game uses this file to look up the name of the item. The language files have a very simple syntax: <code>"item-code": "Item Name"</code>.
+
+<!--T:15-->
+For our wand, this means our file should look something like this:
+<syntaxhighlight lang="json">
+{
+  "item-wand": "Wand"
+}
+</syntaxhighlight>
+
+== Conclusion == <!--T:16-->
+Together, the item and language files are technically enough to be a complete mod. But they don't add the cool wand I said we would make at the beginning of this tutorial. In order to add more properties, we have to head over to the [[Modding:Advanced Item]] tutorial where I explain how we can do way cooler things with items than just create a measly stick.
+
+<!--T:17-->
+{{Navbox/modding|Vintage Story}}
+</translate>

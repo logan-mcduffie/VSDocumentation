@@ -1,0 +1,88 @@
+{{GameVersion|1.15}}
+<languages/><translate>
+== Landforms == <!--T:1--> 
+
+<!--T:2-->
+Landforms define the shape of the terrain. Let's take a look at an existing landform.
+
+<!--T:3-->
+<syntaxhighlight lang="json">
+{
+	"code": "landforms",
+	"variants": 
+	[
+		{
+			"code":  "humongous mountain",
+			"comment": "humongous mountains with caverns in them",
+			"hexcolor": "#5BC184",
+			"weight": 2,
+			"useClimateMap": false,
+			"terrainOctaves":          [0, 0, 0, 0, 1,   1, 1, 1, 0.6, 0.2],
+			"terrainOctaveThresholds": [0, 0, 0, 0, 0.5, 0, 0,   0,   0, 0],
+			"terrainYKeyPositions":    [0, 0.33, 0.37, 0.42, 0.43, 0.5, 0.6, 0.7, 0.9, 0.97, 1],
+			"terrainYKeyThresholds":   [1,    1, 0.87, 0.84, 0.7, 0.94, 1, 1, 0.1, 0.05, 0]
+		},
+	]
+}
+</syntaxhighlight >
+
+
+<!--T:4-->
+There are 2 system at work that let you control the shape of the terrain - the octaves and the Y-Thresholds.
+
+=== Octaves === <!--T:5-->
+
+<!--T:6-->
+If you know perlin noise, you will know what this is, but shortly explained low octaves will give you very smooth terrain whereas high octave give you rugged/chaotic terrain. You can mix an match freely between those. Examples:
+
+<!--T:7-->
+* <code>terrainOctaves: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]</code> would give you veeeery gradually changing terrain
+* <code>terrainOctaves: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1]</code> would give you veeeery rugged and chaotic terrain
+
+<!--T:8-->
+'''Octave Thresholds'''
+
+<!--T:9-->
+These act as substractor to the octaves. This allows you for example to generate a flat terrain with a few rare bumps, by setting something like this:
+
+<!--T:10-->
+<code>
+terrainOctaves:          [1, 1, 1, 0, 0, 0,   1, 0, 0, 0],<br>
+terrainOctaveThresholds: [0, 0, 0, 0, 0, 0, 0.7, 0, 0, 0],
+</code>
+
+<!--T:11-->
+This causes the 7th octave to be only active 30% of the time, as most of it is substracted away.
+
+<!--T:12-->
+Note: The amount of octaves is always fixed at 10. You can't configure less or more than 10.
+
+=== Y-Thresholds === <!--T:13-->
+
+<!--T:14-->
+Imagine you had a side view of a mountain and you could make it wider and thinner at any given elevation. This is approximately how the y-threshold system works. terrainYKeyPositions are the relative (0=bottom, 1=top of the world) coordinates and terrainYKeyThresholds define how much Percent of terrain should be solid blocks (0 = always solid, 1 = always air), or in other words it's density. We could also make a graph of this:
+
+<!--T:15-->
+[[File:Densitygraph.png]]
+
+<!--T:16-->
+In this example at maximum world height the density is 0, so there will always be air blocks. In the middle we have a jump where the y-position changes, but not the density, so this will create cliffs in the mountain. On the lower end the opposite happens. The Y-Position changes very little but it's density increases a lot. If that position happens to be at the sealevel we would get flat beaches. The default sealevel y-position is 0.43 
+And below a certain y-position the density is always 1. If we would set that to a lower value, we would get very deep lakes.
+
+<!--T:17-->
+The amount of configurable Y-Thresholds is arbitrary you may use any quantity, just make sure both lists have the same amount of elements. However, it wouldn't make sense to configure more than 256 thresholds for a world height of 256 blocks.
+
+<!--T:18-->
+You can build such graph using the new [http://tyron.at/vs/landformcreator.html world gen tool]
+
+=== Testing Landforms === <!--T:19-->
+
+<!--T:20-->
+You can trial&error landforms very quickly without the need to restart the game every time you made changes to the landforms.json
+<ol>
+<li><code>/wgen autogen 0</code> - disables automatic generation of chunks</li>
+<li><code>/wgen del 10</code> - delete all chunks with a radius 10 chunks (Warning: Cannot be undone!)</li>
+<li><code>/wgen regen 5</code> - Reloads the landforms.json then deletes and regenerates all chunks with a radius of 5 chunks</li>
+</ol>
+</translate>
+{{Navbox/modding|Vintage Story}}

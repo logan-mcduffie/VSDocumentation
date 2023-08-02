@@ -1,0 +1,104 @@
+<languages/>
+{{GameVersion|1.15}}
+<translate>
+<!--T:1-->
+Ever wanted to know how to add a command to the game? If yes, this is the right place to get an answer.
+
+== Preparations == <!--T:2-->
+
+<!--T:3-->
+The idea is to add a command which makes it easier for your mates to locate you. Therefore we will spawn some particles alongside a playing sound, so others can see and hear where you are at the moment.
+
+<!--T:4-->
+You can download the required assets [https://wiki.vintagestory.at/images/1/16/Here_Assets.zip here]. Just extract them in your mods directory and you are good to go.
+
+== Implementation == <!--T:5-->
+
+<!--T:6-->
+First of all you need to add another mod to your workspace. I will use the modid <code>here</code>, so I will type in <code>add here</code> in modtools to create a new mod. Additionally I will create <code>Command.cs</code> in the <code>src</code> directory.
+
+<!--T:7-->
+As always we need to create a class extending <code>ModSystem</code>:
+<syntaxhighlight lang="c#">
+public class CommandMod : ModSystem
+{
+
+<!--T:8-->
+}
+</syntaxhighlight>
+
+<!--T:9-->
+Commands are processed by the server, so our mod only needs to load on the server's side:
+<syntaxhighlight lang="c#">
+        public override bool ShouldLoad(EnumAppSide side)
+        {
+            return side == EnumAppSide.Server;
+        }
+</syntaxhighlight>
+
+<!--T:10-->
+Now we need to register the command itself:
+<syntaxhighlight lang="c#">
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            base.StartServerSide(api);
+            api.RegisterCommand("here", "spawns particles around the player", "",
+                (IServerPlayer player, int groupId, CmdArgs args) =>
+                    {
+
+                    <!--T:11-->
+}, Privilege.chat);
+        }
+</syntaxhighlight>
+
+<!--T:12-->
+This command can be used by any player who is allowed to send a message (by default everyone). When a player types in <code>/here</code>, the command will be executed. Now we the only thing missing is the actual code to spawn particles and to play the sound.
+
+<!--T:13-->
+<syntaxhighlight lang="c#">
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            base.StartServerSide(api);
+            AssetLocation sound = new AssetLocation("here", "sounds/partyhorn"); // Create sound location
+            api.RegisterCommand("here", "spawns particles around the player", "",
+                (IServerPlayer player, int groupId, CmdArgs args) =>
+                    {
+                        EntityPlayer byEntity = player.Entity;
+                        byEntity.World.PlaySoundAt(sound, byEntity); // Play sound
+
+                        <!--T:14-->
+Vec3d pos = byEntity.Pos.XYZ.Add(0, byEntity.EyeHeight, 0); // Setting up position to spawn particles
+                        Random rand = new Random();
+                        for (int i = 0; i < 100; i++) // Spawn 100 particles
+                        {
+                            Vec3d realPos = pos.AddCopy(-0.1 + rand.NextDouble() * 0.2, 0, -0.1 + rand.NextDouble() * 0.2);
+                            Vec3f velocity = new Vec3f(-0.2F + (float) rand.NextDouble() * 0.4F, 0.4F + (float) rand.NextDouble() * 2F, -0.2F + (float) rand.NextDouble() * 0.4F);
+                            byEntity.World.SpawnParticles(1, ColorUtil.ColorFromRgba(255, rand.Next(0, 255), rand.Next(0, 255), rand.Next(0, 255)),
+                                realPos, realPos,
+                                velocity, velocity, (float) rand.NextDouble()*1 + 1, 0.01F,
+                                1, EnumParticleModel.Cube);
+                        }
+                    }, Privilege.chat);
+        }
+</syntaxhighlight>
+
+<!--T:15-->
+If you want to learn more about how to use particles you can check out this [[Simple Particles|tutorial]].
+
+== Testing == <!--T:16-->
+
+<!--T:17-->
+Finally, we are ready to run our first test:
+
+<!--T:18-->
+<youtube>XjHMtl6rSF4</youtube>
+
+== Download == <!--T:19-->
+
+<!--T:20-->
+Feel free to try it out yourself:
+
+<!--T:21-->
+[https://wiki.vintagestory.at/images/5/5f/Here_v1.1.zip Here_v1.1.zip]
+</translate>
+{{Navbox/modding|Vintage Story}}

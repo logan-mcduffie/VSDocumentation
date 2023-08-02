@@ -1,0 +1,298 @@
+__FORCETOC__
+{{GameVersion|1.15}}
+<languages/><translate>
+<!--T:1-->
+Before starting, you should have a development environment set up. If you don't have one already you should read the tutorial [[Setting up your Development Environment]]. Furthermore, we assume that you have a basic understanding of the C# language and Object Oriented Programming. Let's get started!
+
+== Introduction == <!--T:2-->
+
+<!--T:3-->
+VintageStory allows you to set and retrieve custom data to the world's game save as well as individual chunks. The way it works is actually quite simple!
+
+<!--T:4-->
+Custom data is stored as an array of bytes to save space, but we can easily convert any valid C# type to <code>byte[]</code> with a very convenient class in the VintageStory API: [http://apidocs.vintagestory.at/api/Vintagestory.API.Util.SerializerUtil.html <code>SerializerUtil</code>]. This class provides us with two static methods that allow us to quickly <code>Serialize</code> into byte arrays, and <code>Deserialize<T></code> them into other types.
+
+<!--T:5-->
+You can check out the methods for storing and retrieving these arrays of bytes for [http://apidocs.vintagestory.at/api/Vintagestory.API.Server.IServerChunk.html Chunks] and for [http://apidocs.vintagestory.at/api/Vintagestory.API.Server.ISaveGame.html#methods SaveGame]
+
+== Custom Data in SaveGame == <!--T:6-->
+
+<!--T:7-->
+Let us show you this powerful set of tools by making an example mod in which we implement an open list of players currently looking for a group to play with ingame.
+
+<!--T:8-->
+This list will be a <code>List<string></code> of players which will be stored to the world's <code>SaveGame</code>. Anyone can join it, leave it, or see who needs a group. We'll store this list as an array of bytes, and it can be accessed by the key "lfg".
+
+== Preparation == <!--T:9-->
+
+<!--T:10-->
+Let's start by creating a new .cs file for this mod, and adding our imports and the <code>VintageStory.ServerMods</code> namespace to wrap our class in. Additionally, we'll declare the class <code>LookingForGroup</code> that will inherit from <code>ModSystem</code> which is the base class for mod systems. You can read more about this [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.ModSystem.html here].
+</translate>
+
+<syntaxhighlight lang="c#">
+using System.Collections.Generic;
+using Vintagestory.API.Common;
+using Vintagestory.API.Server;
+using Vintagestory.API.Util;
+
+namespace Vintagestory.ServerMods
+{
+    class LookingForGroup : ModSystem
+    {
+        ICoreServerAPI serverApi;
+        List<string> lfgList;
+
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            serverApi = api;
+
+            api.Event.SaveGameLoaded += OnSaveGameLoading;
+            api.Event.GameWorldSave += OnSaveGameSaving;
+
+            api.RegisterCommand("lfg", "List or join the lfg list", "[list|join|leave]", OnLfg);
+        }
+    }
+}
+</syntaxhighlight>
+
+In this class, we create an override for the <code>StartServerSide</code> method. This method of the <code>ModSystem</code> is called for all mods on the Server side by the game.
+
+The Core Server API contains an additional API for <code>Event</code> registration; this, in turn, contains two very important events (among others): <code>SaveGameLoaded</code> and <code>GameWorldSave</code>. These events are fired when the game is loaded, and when the game saves, respectively. We can assign delegates that will be called when the events fire by assigning these to the event with the <code>+=</code> operator. 
+
+When the Server side starts, we add two event delegates that will retrieve our list from the <code>SaveGame</code> when the we game loads, and that will save the list when the game saves. We also register a command that players will use to access our list of those looking for group. This will be <code>/lfg</code> with the arguments list, join or leave.
+
+Let us now define the event delegates!
+
+== Retrieving and Storing the List ==
+
+When the game loads, <code>OnSaveGameLoading</code> gets called and attempts to get our list of players looking for group. The Core Server Api has a member called <code>WorldManager</code> which we use to access everything World related, including our <code>SaveGame</code>.
+
+<syntaxhighlight lang="c#">
+        private void OnSaveGameLoading()
+        {
+            byte[] data = serverApi.WorldManager.SaveGame.GetData("lfg");
+
+            lfgList = data == null ? new List<string>() : SerializerUtil.Deserialize<List<string>>(data);
+        }
+</syntaxhighlight>
+
+We attempt to get our list by exposing the <code>GetData</code> method and passing it an identifier for our custom data, in this case our "lfg" list.
+
+'''Hint''': If nothing is found stored under the key we provide, the <code>GetData</code> method returns null. In our mod example, this will happen until at least one player enters the list!
+
+<code>byte[] data = serverApi.WorldManager.SaveGame.GetData("lfg");</code>
+
+As you can see, we're retrieving an array of bytes, which is the data type we actually store on the <code>SaveGame</code>. Let's convert it to a <code>List</code> of strings:
+
+<code>lfgList = data == null ? new List<string>() : SerializerUtil.Deserialize<List<string>>(data);</code>
+
+Here we use a ternary operator to assign our <code>lfgList</code> field a new <code>List<string></code> if there was nothing stored under the "lfg" key.
+
+If <code>data</code> is not null, we expose the <code>Deserialize<T></code> method of the <code>SerializerUtil</code> class. This method will deserialize an array of bytes into an instance of the type argument we pass it. Now that we have a delegate that fetches our list of players "lfg", let's create the delegate that stores this list when the Game World is saved:
+
+<syntaxhighlight lang="c#">
+        private void OnSaveGameSaving()
+        {
+            serverApi.WorldManager.SaveGame.StoreData("lfg", SerializerUtil.Serialize(lfgList));
+        }
+</syntaxhighlight>
+
+Here we call the <code>StoreData</code> method to save our list under the "lfg" key for later retrieval! Because we can only store data in the form of <code>byte[]</code>, we use the <code>Serialize</code> method of the <code>SerializerUtil</code> class to turn <code>lfgList</code> back to an array of bytes, which we pass as the second argument. 
+
+We now have implemented a way to assign our list from storageto <code>lfgList</code> when the <code>SaveGame</code> is loaded, and a way to store this list once the game is saved. In between these two events, we want players to be added or removed from <code>lfgList</code> via our command. Let's create our command delegate!
+
+== Handling the Command ==
+
+Server chat commands have three parameters: the player issuing the command, the group in which this command was entered, and the arguments sent for the command.
+
+<syntaxhighlight lang="c#">
+        private void OnLfg(IServerPlayer player, int groupId, CmdArgs args)
+        {
+            string cmd = args.PopWord();
+            switch (cmd)
+            {
+                case "join":
+                    break;
+
+                case "leave":
+                    break;
+
+                case "list":
+                    break;
+
+                default:
+                    player.SendMessage(groupId, "/lfg [list|join|leave]", EnumChatType.CommandError);
+                    break;
+            }
+        }
+</syntaxhighlight>
+
+We use the <code>PopWord</code> of our <code>CmdArgs</code> parameter to collect the first argument passed (ignoring anything subsequent). We then start a switch statement for our valid arguments, and default to showing these to the player if none of them match or <code>cmd</code> is null.
+
+Let's handle each of these:
+
+<syntaxhighlight lang="c#">
+                case "join":
+                    if (lfgList.Contains(player.PlayerUID))
+                    {
+                        player.SendMessage(groupId, "You're already in the list!", EnumChatType.CommandError);
+                    }
+                    else
+                    {
+                        lfgList.Add(player.PlayerUID);
+                        player.SendMessage(groupId, "Successfully joined.", EnumChatType.CommandSuccess);
+                    }
+                    break;
+</syntaxhighlight>
+
+If <code>/lfg join</code> was entered, we'll first check if the player is already on the "lfg" list, letting the player know if so. Alternatively, we add the player's unique identifier to the list and show a success message. 
+
+'''Hint:''' We do not want to store player names directly. This is because player names may change, therefore our list could become inaccurate.
+
+Next we handle <code>/lfg leave</code>:
+
+<syntaxhighlight lang="c#">
+                case "leave":
+                    if (!lfgList.Remove(player.PlayerUID))
+                    {
+                        player.SendMessage(groupId, "You're not in the list!", EnumChatType.CommandError);
+                    }
+                    else
+                    {
+                        player.SendMessage(groupId, "Successfully left.", EnumChatType.CommandSuccess);
+                    }
+                    break;
+</syntaxhighlight>
+
+The <code>Remove</code> method returns false if nothing matching the argument passed to it was found and removed, and true if it was. We let the player know if they were not on the list, or if they were and got successfully taken out of it.
+
+Finally, we handle <code>/lfg list</code>:
+
+<syntaxhighlight lang="c#">
+                case "list":
+                    if (lfgList.Count == 0)
+                    {
+                        player.SendMessage(groupId, "Noone is looking for a group.", EnumChatType.CommandSuccess);
+                    }
+                    else
+                    {
+                        string response = "Players looking for group:";
+                        lfgList.ForEach((playerUid) =>
+                        {
+                            response += "\n" + serverApi.World.PlayerByUid(playerUid).PlayerName;
+                        });
+
+                        player.SendMessage(groupId, response, EnumChatType.CommandSuccess);
+                    }
+                    break;
+</syntaxhighlight>
+
+In this case we simply let the player know if there is noone on the list, but if there are we build a string with all the player names on the list.
+
+== Conclusion ==
+
+If you followed the steps correctly, you should have the following code:
+
+<syntaxhighlight lang="c#">
+using System.Collections.Generic;
+using Vintagestory.API.Common;
+using Vintagestory.API.Server;
+using Vintagestory.API.Util;
+
+namespace Vintagestory.ServerMods
+{
+    class LookingForGroup : ModSystem
+    {
+        ICoreServerAPI serverApi;
+        List<string> lfgList;
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            serverApi = api;
+
+            api.Event.SaveGameLoaded += OnSaveGameLoading;
+            api.Event.GameWorldSave += OnSaveGameSaving;
+
+            api.RegisterCommand("lfg", "Access the lfg list.", "[list|join|leave]", OnLfg);
+        }
+
+        private void OnSaveGameLoading()
+        {
+            byte[] data = serverApi.WorldManager.SaveGame.GetData("lfg");
+
+            lfgList = data == null ? new List<string>() : SerializerUtil.Deserialize<List<string>>(data);
+        }
+        private void OnSaveGameSaving()
+        {
+            serverApi.WorldManager.SaveGame.StoreData("lfg", SerializerUtil.Serialize(lfgList));
+        }
+
+        private void OnLfg(IServerPlayer player, int groupId, CmdArgs args)
+        {
+            string cmd = args.PopWord();
+            switch (cmd)
+            {
+                case "join":
+                    if (lfgList.Contains(player.PlayerUID))
+                    {
+                        player.SendMessage(groupId, "You're already in the list!", EnumChatType.CommandError);
+                    }
+                    else
+                    {
+                        lfgList.Add(player.PlayerUID);
+                        player.SendMessage(groupId, "Successfully joined.", EnumChatType.CommandSuccess);
+                    }
+                    break;
+
+                case "leave":
+                    if (!lfgList.Remove(player.PlayerUID))
+                    {
+                        player.SendMessage(groupId, "You're not in the list!", EnumChatType.CommandError);
+                    }
+                    else
+                    {
+                        player.SendMessage(groupId, "Successfully left.", EnumChatType.CommandSuccess);
+                    }
+                    break;
+
+                case "list":
+                    if (lfgList.Count == 0)
+                    {
+                        player.SendMessage(groupId, "Noone is looking for a group.", EnumChatType.CommandSuccess);
+                    }
+                    else
+                    {
+                        string response = "Players looking for group:";
+                        lfgList.ForEach((playerUid) =>
+                        {
+                            response += "\n" + serverApi.World.PlayerByUid(playerUid).PlayerName;
+                        });
+
+                        player.SendMessage(groupId, response, EnumChatType.CommandSuccess);
+                    }
+                    break;
+                    
+                case null:
+                default:
+                    player.SendMessage(groupId, "/lfg [list|join|leave]", EnumChatType.CommandError);
+                    return;
+            }
+        }
+    }
+}
+
+</syntaxhighlight>
+
+== Testing ==
+
+Let's test our mod. Once you're ingame, try entering <code>/lfg join</code>. Now quit the game and join back in. Upon entering <code>/lfg list</code>, you should see your name on the list; this means that your custom data has persisted in the <code>SaveGame</code>!
+
+== Distribution ==
+
+To distribute this mod, you may run the following command in the modtools cli pack <your mod id>, then copy the .zip file into your VintageStory mods folder.
+
+Here are the official versions:
+
+* for VS v1.12.4: [https://wiki.vintagestory.at/images/8/84/LookingForGroup_vs1.12.4_v1.0.0.zip LookingForGroup_vs1.12.4_v1.0.0.zip]
+* for VS v1.6: [https://wiki.vintagestory.at/images/f/f0/LookingForGroup_vs1.6_v1.0.0.zip LookingForGroup_vs1.6_v1.0.0.zip]
+
+{{Navbox/modding|Vintage Story}}

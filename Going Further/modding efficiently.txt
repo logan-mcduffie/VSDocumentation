@@ -1,0 +1,55 @@
+<languages/><translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+
+<!--T:2-->
+Modding and even Game development itself usually requires a lot of trial & error. The more time you can save on those iteration times the better, as it accumulates quickly. Besides being quick to start up, VS offers a bundle more tricks to help you mod fast and efficiently. Here are some of the tricks every serious modder should use.
+
+== Shortcuts == <!--T:3-->
+
+<!--T:4-->
+* Use macros! Switching from/to creative/survival mode and <code>/time set day</code> bound to a keyboard shortcut is a must have. Hit CTRL+M to open the macro manager which will let you set those up!
+* When you edit textures and shape files - these can be reloaded without restart using the commands <code>.reload textures</code> and <code>.reload shapes</code>. The latter may require you to place&remove a block so that the chunk gets redrawn
+* Translation entries can be reloaded with <code>.reload lang</code>, the handbook can be reloaded with <code>.reloadhandbook</code>
+* Set up a quickstart.bat script, that contains e.g. <code>VintageStory.exe -oTestWorld -pcreativebuilding</code> - this will insta-launch you into a super flat creative world named "TestWorld"
+* Don't fully restart the game to test out changes! In 95% of cases its enough to just leave the game world and rejoin or use ingame reload commands. You can quickly reload a world using the shortcut <code>CTRL+F1</code>
+* Leave your mod unpacked in the mods folder! No need to zip it up, it'll load up just fine unpacked :-)
+* Use <code>.tfedit</code> to modify the lookings of your item/block inside the GUI, Hands or on the ground - with live preview.
+* Use <code>.bsedit</code> to edit block selection and collisionboxes ingame - with live preview. 
+* Use the <code>/expclang</code> command to generate a neatly pre-formatted list of language entries destined for your en.json, it's placed in a file named collectiblelang.json in the same folder where VintageStory.exe is. It creates language entries for any block or item that currently has no translation. Can save you a ton of time by not needing to handwrite your en.json file.
+* If you modify a json file and want to include only the changes in your mod, you can create a [[Modding:JSON_Patching|JSON patch]]. Usually you can even save the time writing it yourself by using the ModMaker 3000™, a command line tool that ships with the game, to build the patches for you
+
+== Finding Issues == <!--T:5-->
+* If you are stuck with an asset problem, look through the server-main.txt and client-main.txt! The engine is very talkative when it comes to asset errors.
+* Permanently enable the error reporter via <code>/errorreporter 1</code> to save yourself the work of finding and scouring through the log files for problems. This feature will make it so that a dialog pop ups during after up of the game if any errors were encountered.
+
+== When writing C# mods == <!--T:6-->
+* Use break points for debugging
+* Browse through the many utility classes provided by the VS API, you might be able to save a lot of coding efforts! (e.g. [https://github.com/anegostudios/vsapi/blob/master/Math/ColorUtil.cs ColorUtil], [https://github.com/anegostudios/vsapi/blob/master/Math/GameMath.cs GameMath], [https://github.com/anegostudios/vsapi/blob/master/Util/ArrayExtensions.cs ArrayExtensions], [https://github.com/anegostudios/vsapi/blob/master/Util/DictExtensions.cs DictExtensions], [https://github.com/anegostudios/vsapi/blob/master/Util/HashsetExtensions.cs HashsetExtensions], [https://github.com/anegostudios/vsapi/blob/master/Util/JsonUtil.cs JsonUtil], [https://github.com/anegostudios/vsapi/blob/master/Util/JsonUtil.cs ReaderWriterExtensions], [https://github.com/anegostudios/vsapi/blob/master/Util/SerializerUtil.cs SerializerUtil], [https://github.com/anegostudios/vsapi/blob/master/Util/WildcardUtil.cs WildcardUtil])
+* If you don't know it already, the [https://docs.microsoft.com/en-us/dotnet/csharp/tutorials/working-with-linq LINQ] extension, part of the .net framework, is an extremely powerful tool to make code more expressive.
+* Use the [https://devblogs.microsoft.com/dotnet/introducing-net-hot-reload/ Hot reload] feature of Visual Studio to modify code while the game is running, to see your changes immediately without restarting the world.
+** Note that this feature works if you use the [[Modding:Setting_up_your_Development_Environment|official mod template]] and set up your mod as a "compiled" mod. It does not work if you set up your mod as a "source" mod, and it may not work with all other development environment setups.
+* If you don't have already make sure the games log output ends up in the Visual Studio output window
+* If you are working with shaders, you can reload them with <code>.reload shaders</code>
+* Do not hold static references unless its primitive data. Static references are not garbage collected when the player leaves a server / game world. Example: Holding a static reference of a <code>Block</code> will keep that block in memory, which in turn keeps the API Instance in memory, which in turn keeps the entire game world in memory.
+* The game client and server have a number of [[Client startup parameters|startup arguments]] to make your live easier
+
+=== Efficient Search Methods === <!--T:7-->
+
+<!--T:8-->
+More often than not, you'd want your code to find something in the game world. As you might already know, computers are not exactly the best at parallel processing like human eyes are, so they have to sequentially look through the entire search space. When doing so, keep in mind that, first and foremost, the most efficient search method is one that never runs, within a search space that is of size zero ;-)<br> In other words, sometimes you can avoid searches altogether through other clever means! If you still need to do a search, here's some more optimal ways than the brute force way:
+
+<!--T:9-->
+<ul>
+<li><strong>Entity Search</strong><br>
+Use [https://github.com/anegostudios/vsessentialsmod/blob/master/Systems/EntityPartitioning.cs EntityPartitioning] - <code>api.ModLoader.GetModSystem<EntityPartitioning>().WalkEntityPartitions()</code>. This system partitions entities into 8x8x8 block buckets through the entire loaded game world, then only searches inside those buckets, within your supplied search radius, greatly reducing the search space.</li>
+<li><strong>Block Search</strong><br>
+a) If you want an entity to find a certain, not extremely common block, use the [https://github.com/anegostudios/vsessentialsmod/blob/master/Systems/POIRegistry.cs POI Registry]. This registry lets block entities register a point of interest that entities can search through very efficiently. They are also partitioned into chunk column buckets to additionally reduce the search space. For a code sample, check out the [https://github.com/anegostudios/vssurvivalmod/blob/master/BlockEntity/BEBerryBush.cs berry bush block entity]<br>
+b) For regular full chunk scans, I recommend a separate background thread that loads the chunk and access the raw block data via <code>chunk.Blocks</code>. It's an array indexed with <code>(y * chunksize + z) * chunksize + x</code>, where the xyz are local coordinate from 0 to chunkize-1. You should only write to a chunk in the main thread however! If you want to avoid threading for now, you can still iterate through <code>chunk.Blocks</code> in the main thread and even slice up the task across multiple ticks, like vanilla beehives do.<br>
+c) For rare area scans, there is <code>api.World.GetBlockAccessorPrefetch()</code>. This block accessor lets you pre-load an area and then rather efficiently iterate through each block in given area
+</li>
+</ul>
+
+<!--T:10-->
+{{Navbox/modding|Vintage Story}}
+</translate>

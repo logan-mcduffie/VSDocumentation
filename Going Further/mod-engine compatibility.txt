@@ -1,0 +1,19 @@
+<languages/><translate>
+<!--T:1-->
+The Vintage Story Game engine is not immune to code deprecation. When new releases are made, some API components may become obsolete or removed entirely. However, we the VS Team do very carefully consider every API breaking change to minimize breakage as much as possible. 
+In general, if your mod consists mostly of JSON assets, you are likely safe from breakage across several major updates. And even if your mod contains C# code, I'd like to believe 9 out of 10 times, the breakage on a major update, if any, should be minimal and fixable within an hour or two. Every API change is also documented in every devlog entry, to help you with your migration process.
+
+<!--T:2-->
+We also have a prolonged and consistent release cycle to prepare modders for a new major update.
+
+<!--T:3-->
+1. '''pre''': A preview release, we consider the major API changes to be 90% complete at this point, but there can still be adjustments. The main focus in later previews is finishing up minor game content and any issues which have emerged during the preview phase.<br>
+2. '''rc''': A release candidate, we consider all major API changes to be complete by this stage as well as all game features. The main focus is bugfixing. <br>
+3. '''stable''': A stable version. We only change the API in extraordinary circumstances after this point.  <br>
+
+<!--T:4-->
+If you experience a pattern of major breakage that requires many hours of updating to get your mod working again - the dev team always has an open ear for suggestions. Please also keep in mind, we are not perfect. Sometimes breakage does happen, sometimes unintentionally.
+
+</translate>
+
+{{tnt|Navbox/modding}}

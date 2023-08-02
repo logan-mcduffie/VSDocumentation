@@ -1,0 +1,119 @@
+<languages/><translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+
+<!--T:2-->
+If your mod changes only visuals, sounds, and other "theming" assets, refer also to the [[Modding:Theme_Pack|Theme Pack]] page.
+
+== Zip Files == <!--T:3-->
+
+<!--T:4-->
+To make your mod easy to install and use, it should be packed into a [https://en.wikipedia.org/wiki/Zip_(file_format) zip file]. Any assets (images, .json files, etc) go in a "assets" directory in the root of the zip, any source files into the "src" folder and any DLLs (and optionally, PDB files) go directly into the zip file root folder.
+
+<!--T:5-->
+Please note that if you have a code mod that has no assets (AKA, your mod is a single C# DLL), it is possible to ship the bare DLL without packing it into a zip. This is not really a good idea though, as when distributed this way it is hard to include a PDB file and downloading DLLs directly in Windows can lead to issues with your mod failing to load due to security policies applied to files downloaded from the internet.
+
+<!--T:6-->
+<table id="treeviewtable" class="table table-bordered tt-table" style='table-layout: fixed'>
+  <tr style='background-color: rgba(180, 160, 128, 0.15);'>
+    <th width='500px' align='left'>Zip File Structure</th>
+  </tr>
+  <tr>
+    <td><div class="tt" data-tt-id="root">.zip</div></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="assets" data-tt-parent="root" data-hide="false">assets</div></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="your-domain" data-tt-parent="assets" data-hide="false">domain</div></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="stuff" data-tt-parent="your-domain">asset files ([[The Asset System|tree overview]])</div></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="modinfo.json" data-tt-parent="root">modinfo.json</div></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="modicon.png" data-tt-parent="root">modicon.png</div></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="dll" data-tt-parent="root">compiled sources files (*.dll and *.pdb)</div></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="src" data-tt-parent="root" data-hide="false">src</div></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="src-dll" data-tt-parent="src">source code files - folders allowed (*.cs)</div></td>
+  </tr>
+</table>
+
+== Info file == <!--T:7-->
+
+<!--T:8-->
+Every zip-file mod requires a <code>modinfo.json</code> inside the root directory of the archive. Otherwise the entire mod will be ignored. This info file specifies what kind of mod it is, its name, author, etc.
+
+<!--T:9-->
+An example of a theme pack info file (<code>modinfo.json</code>):
+<syntaxhighlight lang=json>
+{
+  "type": "content",
+  "modid": "creativemdexamplemod",
+  "name": "My Example Content Mod",
+  "description" : "This is an example mod, which does nothing",
+  "authors": ["CreativeMD"],
+  "version": "1.0",
+  "dependencies": { 
+	"game": "",
+	"survival": ""
+  },
+  "website": "http://example.com"
+}
+</syntaxhighlight>
+
+<!--T:10-->
+----
+
+<!--T:11-->
+<syntaxhighlight lang=json>
+  "type": "content",
+</syntaxhighlight>
+
+<!--T:12-->
+Besides <code>"type": "content"</code>, there is also <code>"type": "theme"</code> and <code>"type": "code"</code>.
+
+<!--T:13-->
+* <code>"type": "content"</code>: Defines this mod as being a '''Content Mod'''. Content Mods cannot contain any C# code (if it does they will be ignored).
+* <code>"type": "theme"</code>: Defines this mod as being a '''Theme Pack'''. Theme Packs cannot override gameplay affecting assets categories (such as blocktypes, itemtypes and so on) and no C# code will be loaded.
+* <code>"type": "code"</code>: Defines this mod as being a '''Code Mod'''. Code Mods are the same as a Content Mods, except they can also load C# code to do things that are not possible with JSON.
+
+<!--T:14-->
+<syntaxhighlight lang=json>
+  "dependencies": {
+    "game": "1.5.3"
+  },
+</syntaxhighlight>
+
+<!--T:15-->
+Means it requires at least VintageStory v1.5.3 or a newer version. For more info see [[Modinfo]].
+
+== Icon == <!--T:16-->
+
+ <!--T:17-->
+'''Note:''' Mod icons supported starting from 1.16.
+The file <code>modicon.png</code> (if it exists) will be used and shown in the mod manager menu.
+
+<!--T:18-->
+[[File:Example Mod.png]]
+
+== Distribution and Installation == <!--T:19-->
+
+<!--T:20-->
+To install a mod simply place the zip file in the <code>Mods</code> directory in your [[Vintagestory folder|Vintagestory directory]].
+
+<!--T:21-->
+You can upload your mod to the [https://mods.vintagestory.at/ Vintage Story Mod Database] so people can find it.
+
+
+<!--T:22-->
+{{Navbox/modding|Vintage Story}}
+</translate>

@@ -1,0 +1,277 @@
+<languages/>
+<translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+__FORCETOC__
+
+<!--T:2-->
+Vintage Story loads most of its game content from asset JSONs. Many examples of these can be found inside the <code>assets</code> directory inside your [[Vintagestory folder]]. Things such as blocks, items, world generation, recipes, etc. are all loaded from assets during startup.
+
+== Finding the assets folder == <!--T:3-->
+
+<!--T:4-->
+All the functioning assets for Vintage Story are visible in the game's folder, allowing you to peruse them and learn to write your own. You can find these files using the following methods for each type of OS you're running Vintage Story on. If you're looking for source code (ie C# classes) your best option is to dive into the '''[https://github.com/anegostudios Vintage Story Github]''' and peruse the '''vsapi''', '''vssurvivalmod''', '''vsessentialsmod''' and '''vscreativemod''' repositories for class references. 
+
+=== Windows === <!--T:5-->
+If you're running Vintage Story on Windows you can navigate to this folder by typing %appdata% in desktop search bar, which will take you to your computer's roaming folder. Find the <code>Vintagestory</code> folder here and you'll immediately come across the assets folder, which contains assets for "creative", "game" and "survival". 
+* '''creative''' contains assets for creative mode only.   
+* '''game''' contains many universal assets, such as lang files, the player entity shape, and other essential assets to the game.
+* '''survival''' contains the bulk of the actual content most players will come across, and contains all the resources Vintage Story uses, such as textures sounds and world generation.
+
+== List of Asset Types == <!--T:6--> 
+
+<!--T:7-->
+The following are the categories of assets you can expect to use while modding for Vintage Story. Each are easily modifiable and can be used to easily add your own content or changes without having to do any advanced coding. You can also read some [[Modding:Basic Modding Examples|examples]] to learn about what you can do with it.
+
+<!--T:8-->
+<table id="treeviewtable" class="table table-bordered tt-table" style='table-layout: fixed'>
+  <tr style=''>
+    <th width='300' align='left'>Name</th>
+    <th width='200' align='left'>Affects Gameplay</th>
+    <th width='80' align='left'>Side Type</th>
+    <th align='left'>Usage</th>
+  </tr>
+  <tr>
+    <td><div class="tt" data-tt-id="root">AssetCategory</div></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_blocktypes" data-tt-parent="root">blocktypes</div></td>
+    <td>true</td>
+    <td>universal</td>
+    <td>Defines all the blocks that are in the game</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_itemtypes" data-tt-parent="root">itemtypes</div></td>
+    <td>true</td>
+    <td>universal</td>
+    <td>Defines all the Items that are in the game</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_lang" data-tt-parent="root">lang</div></td>
+    <td>false</td>
+    <td>universal</td>
+    <td>Translation</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_worldproperties" data-tt-parent="root">worldproperties</div></td>
+    <td>true</td>
+    <td>universal</td>
+    <td>Contains some commonly used lists of properties</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_worldproperties_abstract" data-tt-parent="p_worldproperties">abstract</div></td>
+    <td>true</td>
+    <td>universal</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_worldproperties_block" data-tt-parent="p_worldproperties">block</div></td>
+    <td>true</td>
+    <td>universal</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_sounds" data-tt-parent="root">sounds</div></td>
+    <td>false</td>
+    <td>universal</td>
+    <td>Sounds</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shapes" data-tt-parent="root">shapes</div></td>
+    <td>false</td>
+    <td>universal</td>
+    <td>Contains the 3d models for all the items, blocks and creatures</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shapes_block" data-tt-parent="p_shapes">block</div></td>
+    <td>false</td>
+    <td>universal</td>
+    <td>Shapes for blocks</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shapes_entity" data-tt-parent="p_shapes">entity</div></td>
+    <td>false</td>
+    <td>universal</td>
+    <td>Shapes for entities</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shapes_item" data-tt-parent="p_shapes">item</div></td>
+    <td>false</td>
+    <td>universal</td>
+    <td>Shapes for items</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_dialog" data-tt-parent="root">config</div></td>
+    <td>true</td>
+    <td>universal</td>
+    <td>Used for generic data that does not fit into the other categories.</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_recipes" data-tt-parent="root">recipes</div></td>
+    <td>true</td>
+    <td>server only</td>
+    <td>The crafting, knapping, smithing and clay forming recipes</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_recipes_alloy" data-tt-parent="p_recipes">alloy</div></td>
+    <td>true</td>
+    <td>server only</td>
+    <td>How metals can be combined to create alloys</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_recipes_grid" data-tt-parent="p_recipes">grid</div></td>
+    <td>true</td>
+    <td>server only</td>
+    <td>Recipes for 3x3 grid crafting</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_recipes_smithing" data-tt-parent="p_recipes">smithing</div></td>
+    <td>true</td>
+    <td>server only</td>
+    <td>Recipes for smithing on the anvil</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_worldgen" data-tt-parent="root">worldgen</div></td>
+    <td>true</td>
+    <td>server only</td>
+    <td>Contains all the configuration for world generation</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_worldgen_terrain" data-tt-parent="p_worldgen">terrain</div></td>
+    <td>true</td>
+    <td>server only</td>
+    <td>Defines how the terrain should look and with what it should be decorated with</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_worldgen_tree" data-tt-parent="p_worldgen">tree</div></td>
+    <td>true</td>
+    <td>server only</td>
+    <td>Defines the shapes of trees</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_entity" data-tt-parent="root">entity</div></td>
+    <td>true</td>
+    <td>server only</td>
+    <td>Creatures and other entities</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shaders" data-tt-parent="root">shaders</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Contains GLSL source code, that defines how the game is rendered</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_shaderincludes" data-tt-parent="root">shaderincludes</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Contains GLSL source code, that defines how the game is rendered</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures" data-tt-parent="root">textures</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Contains all the graphics of the game</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures_blocks" data-tt-parent="p_textures">block</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Block textures</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures_items" data-tt-parent="p_textures">item</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Item textures</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures_decal" data-tt-parent="p_textures">decal</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Decaltextures</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures_entities" data-tt-parent="p_textures">entities</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Entities textures</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures_environment" data-tt-parent="p_textures">environment</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Environment textures (Sky, Moon, Sun, etc.)</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures_gui" data-tt-parent="p_textures">gui</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Gui textures</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures_hud" data-tt-parent="p_textures">hud</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Hud textures</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_textures_particle" data-tt-parent="p_textures">particle</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Particle textures</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_music" data-tt-parent="root">music</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>The games music tracks and its configuration</td>
+  </tr>
+  <tr>
+    <td scope="row"><div class="tt" data-tt-id="p_dialog" data-tt-parent="root">dialog</div></td>
+    <td>false</td>
+    <td>client only</td>
+    <td>Contains some of the dialog layouts</td>
+  </tr>
+
+<!--T:9-->
+</table>
+
+= Domains = <!--T:10-->
+
+<!--T:11-->
+Domains are used to separate mod added content from the original one. Basically a domain is a prefix for any given code (identifier for item, block, etc.) or path (textures, sounds, etc.). VintageStory itself has its own prefix <code>game</code> for all its assets (game, survival and creative folders).
+
+<!--T:12-->
+When [[Mod Packaging|packaging a mod]] you specify a domain by placing a directory inside the mod <code>assets</code> directory with all your mod assets inside. The name of your domain directory will be the "current domain" for all assets inside it. If no domain has been specified in an asset code the game will assume it is in the current domain, meaning you only have to add a domain prefix if you want to refer to something outside the current domain.
+
+<!--T:13-->
+For example, if you want to create a new block which uses the original leather texture, you would have to specify the domain (since your block has a different one). Instead of using  <code>block/leather</code> for <code>assets/survival/textures/block/leather.png</code>, you would have add the prefix for the domain <code>game:block/leather</code>.
+
+
+== Overwriting assets == <!--T:14-->
+
+<!--T:15-->
+There are no limitations to the system. So you can overwrite assets from Vintagestory itself by using the <code>game</code> domain folder.
+
+<!--T:16-->
+To overwrite the bed blocktype you can put your own json file inside your mod zip archive with the following path: <code>assets/game/blocktypes/wood/bed.json</code>. So Vintagestory will load your json file instead of the original one.
+
+<!--T:17-->
+Theme packs can only override assets that do not affect game mechanics, the other mod types can override any asset.
+
+== Accessing assets in code == <!--T:18--> 
+
+<!--T:19-->
+To access assets in a code mod, you can use the [[Modding:AssetManager| AssetManager]].
+
+= Moving Forward = <!--T:20--> 
+
+<!--T:21-->
+Once you have an idea of what assets are and how they're organized, it's time to move onto your first content mod. Head over to the '''[[Modding:Basic Block | Basic Block ]]''' page to learn how to make your first block, or go to the '''[[Modding:Basic Item |Basic Item]]''' page if you'd like to start by making an item. Both are great ways to learn how to make your first mod. 
+
+<!--T:22-->
+{{Navbox/modding|Vintage Story}}
+</translate>

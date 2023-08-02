@@ -1,0 +1,94 @@
+<languages/><translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+Vintagetext Markup Language (VTML), is a (obviously) completely novel and highly advanced markup language designed to display richly formatted text inside Vintage Story. Definitely has nothing in common with the old and outdated HTML standard ;-)
+__TOC__
+
+== Tags == <!--T:2-->
+
+<!--T:3-->
+*'''<nowiki><br></nowiki>'''<br>Causes a line break
+*'''<nowiki><i>text</i></nowiki>'''<br>Causes the text to be in italic font
+*'''<nowiki><strong>text</strong></nowiki>'''<br>Causes the text to be in bold font
+*'''<nowiki><a href="url">text</a></nowiki>'''<br>Turns text into a clickable link. You can link to websites (http://), handbook pages (handbook://pagecode), search results in the handbook (handbooksearch://text_in_your_language) or trigger hotkeys (hotkey://code)
+*'''<nowiki><font size="num" color="hexcolor" weight="bold" lineheight="1.2" align="right" opacity="0.5">text</font></nowiki>'''<br>Formats the text by given properties, all properties are optional
+*'''<nowiki><hk>command</hk> or <hotkey>command</hotkey></nowiki>'''<br>Display the actual current mapping of the "command" key, e.g <hk>sprint</hk> displays the current key used to activate the sprint in your game.
+
+===Icons=== <!--T:4-->
+
+<!--T:5-->
+'''<nowiki><icon name="[icon name]"></icon></nowiki>'''<br>Draws a symbol, selected from a list of predefined, hardcoded symbols, which can be used when modifying the Handbook or any other rich text in the game. These icons can be scaled and coloured by adding the appropriate commands.
+
+[[File:Icons hardcoded.png|500px|thumb|right]]
+====Normal Icons==== <!--T:6-->
+These icons are used in World Edit, for the equipment slots and for the tutorial.
+*'''<nowiki><icon name=dice></icon></nowiki>'''<br>Adds a dice icon
+*'''<nowiki><icon name=paintbrush></icon></nowiki>'''<br>Adds a paintbrush icon
+*'''<nowiki><icon name=raiselower></icon></nowiki>'''<br>Adds a terraforming icon
+*'''<nowiki><icon name=airbrush></icon></nowiki>'''<br>Adds an airbrush icon
+*'''<nowiki><icon name=erode></icon></nowiki>'''<br>Adds an erosion icon
+*'''<nowiki><br><icon name=move></icon></nowiki>'''<br>Adds an arrow icon
+*'''<nowiki><icon name=import></icon></nowiki>'''<br>Adds an import icon
+*'''<nowiki><icon name=eraser></icon></nowiki>'''<br>Adds an eraser icon
+*'''<nowiki><icon name=growshrink></icon></nowiki>'''<br>Adds a size changing icon
+*'''<nowiki><icon name=line></icon></nowiki>'''<br>Adds a line icon
+*'''<nowiki><br><icon name=lake></icon></nowiki>'''<br>Adds a water icon
+*'''<nowiki><icon name=floodfill></icon></nowiki>'''<br>Adds an overflowing bucket icon
+*'''<nowiki><icon name=tree></icon></nowiki>'''<br>Adds a tree icon
+*'''<nowiki><icon name=undo></icon></nowiki>'''<br>Adds an undo icon
+*'''<nowiki><icon name=redo></icon></nowiki>'''<br>Adds a redo icon
+*'''<nowiki><br><icon name=copy></icon></nowiki>'''<br>Adds a copy icon
+*'''<nowiki><icon name=select></icon></nowiki>'''<br>Adds a select icon
+*'''<nowiki><icon name=repeat></icon></nowiki>'''<br>Adds a repeat icon
+*'''<nowiki><icon name=trousers></icon></nowiki>'''<br>Adds a trouser icon
+*'''<nowiki><icon name=gloves></icon></nowiki>'''<br>Adds a glove icon
+*'''<nowiki><br><icon name=hat></icon></nowiki>'''<br>Adds a hat icon
+*'''<nowiki><icon name=shirt></icon></nowiki>'''<br>Adds a shirt icon
+*'''<nowiki><icon name=boots></icon></nowiki>'''<br>Adds a boot icon
+*'''<nowiki><icon name=basket></icon></nowiki>'''<br>Adds a basket icon
+*'''<nowiki><icon name=cape></icon></nowiki>'''<br>Adds a cape icon
+*'''<nowiki><br><icon name=ring></icon></nowiki>'''<br>Adds a ring icon
+*'''<nowiki><icon name=medal></icon></nowiki>'''<br>Adds a medal icon
+*'''<nowiki><icon name=belt></icon></nowiki>'''<br>Adds a belt icon
+*'''<nowiki><icon name=necklace></icon></nowiki>'''<br>Adds a necklace icon
+*'''<nowiki><icon name=pullover></icon></nowiki>'''<br>Adds a pullover icon
+*'''<nowiki><br><icon name=mask></icon></nowiki>'''<br>Adds a mask icon
+*'''<nowiki><icon name=bracers></icon></nowiki>'''<br>Adds a bracer icon
+*'''<nowiki><icon name=handheld></icon></nowiki>'''<br>Adds an icon of a hand holding a tool
+*'''<nowiki><icon name=left></icon></nowiki>'''<br>Adds an icon of an arrow pointing left
+*'''<nowiki><icon name=right></icon></nowiki>'''<br>Adds an icon of an arrow pointing right
+*'''<nowiki><icon name=offhand></icon></nowiki>'''<br>Adds an icon of a left empty hand
+*'''<nowiki><icon name=leftmousebutton></icon></nowiki>'''<br>Adds an icon of a mouse with highlighted left button
+*'''<nowiki><icon name=rightmousebutton></icon></nowiki>'''<br>Adds an icon of a mouse with highlighted right button
+
+====Waypoint Icons==== <!--T:7-->
+These are the icons that are already used for the waypoints and map images ingame.
+*'''<nowiki><icon name=wpCircle></icon></nowiki>'''<br>Adds an icon of a circle
+*'''<nowiki><icon name=wpTurnip></icon></nowiki>'''<br>Adds an icon of a turnip
+*'''<nowiki><icon name=wpGrain></icon></nowiki>'''<br>Adds an icon of grain
+*'''<nowiki><icon name=wpApple></icon></nowiki>'''<br>Adds an icon of an apple
+*'''<nowiki><icon name=wpBerries></icon></nowiki>'''<br>Adds an icon of berries
+*'''<nowiki><icon name=wpMushroom></icon></nowiki>'''<br>Adds an icon of a mushroom
+*'''<nowiki><icon name=wpBee></icon></nowiki>'''<br>Adds an icon of a bee
+*'''<nowiki><icon name=wpCave></icon></nowiki>'''<br>Adds an icon of a mountain
+*'''<nowiki><icon name=wpGear></icon></nowiki>'''<br>Adds an icon of a gear
+*'''<nowiki><icon name=wpGravestone></icon></nowiki>'''<br>Adds an icon of a gravestone
+*'''<nowiki><icon name=wpHome></icon></nowiki>'''<br>Adds an icon of a house
+*'''<nowiki><icon name=wpLadder></icon></nowiki>'''<br>Adds an icon of a ladder out of a hole
+*'''<nowiki><icon name=wpPick></icon></nowiki>'''<br>Adds an icon of a pickaxe
+*'''<nowiki><icon name=wpRocks></icon></nowiki>'''<br>Adds an icon of rocks
+*'''<nowiki><icon name=wpRuins></icon></nowiki>'''<br>Adds an icon of a ruin
+*'''<nowiki><icon name=wpSkull_and_crossbones></icon></nowiki>'''<br>Adds a skull and crossbones icon
+*'''<nowiki><icon name=wpSpiral></icon></nowiki>'''<br>Adds an icon of a spiral
+*'''<nowiki><icon name=wpStar1></icon></nowiki>'''<br>Adds an icon of a four point star
+*'''<nowiki><icon name=wpStar2></icon></nowiki>'''<br>Adds an icon of a five point star
+*'''<nowiki><icon name=wpTrader></icon></nowiki>'''<br>Adds an icon of a trader's caravan
+*'''<nowiki><icon name=wpTree></icon></nowiki>'''<br>Adds an icon of an evergreen tree
+*'''<nowiki><icon name=wpTree2></icon></nowiki>'''<br>Adds an icon of a deciduous tree
+*'''<nowiki><icon name=wpVessel></icon></nowiki>'''<br>Adds an icon of a vessel
+*'''<nowiki><icon name=wpX></icon></nowiki>'''<br>Adds an icon of an X
+*'''<nowiki><icon name=wpCross></icon></nowiki>'''<br>Adds an icon of a cross
+
+</translate>
+{{Navbox/modding|Vintage Story}}
+{{Game navbox}}

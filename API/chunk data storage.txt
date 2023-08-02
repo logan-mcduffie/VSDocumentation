@@ -1,0 +1,270 @@
+__FORCETOC__
+{{GameVersion|1.12}}
+<languages/><translate>
+<!--T:1-->
+Before starting, you should have a development environment set up. If you don't have one already you should read the tutorial [[Setting up your Development Environment]]. Furthermore, we assume that you have a basic understanding of the C# language and Object Oriented Programming. Let's get started!
+
+==Introduction== <!--T:2-->
+
+<!--T:3-->
+VintageStory allows you to set and retrieve custom data to the world's game save as well as individual chunks. The way it works is actually quite simple!
+
+<!--T:4-->
+Custom data is stored as an array of bytes to save space, but we can easily convert any valid C# type to <code>byte[]</code> with a very convenient class in the VintageStory API: [http://apidocs.vintagestory.at/api/Vintagestory.API.Util.SerializerUtil.html <code>SerializerUtil</code>]. This class provides us with two static methods that allow us to quickly <code>Serialize</code> into byte arrays, and <code>Deserialize<T></code> them into other types.
+
+<!--T:5-->
+You can check out the methods for storing and retrieving these arrays of bytes for [http://apidocs.vintagestory.at/api/Vintagestory.API.Server.IServerChunk.html Chunks] and for [http://apidocs.vintagestory.at/api/Vintagestory.API.Server.ISaveGame.html#methods SaveGame]
+
+==Custom Chunk Data== <!--T:6-->
+
+<!--T:7-->
+In this example mod we'll show you how to store custom data to chunks represented on the server side. We'll create a mod that keeps track of how many times players have died on a given chunk, and this sum of total deaths on the chunk will be used to inflict damage onto players sleeping in it! Spooky!
+
+<!--T:8-->
+We'll use a <code>Dictionary<IServerChunk, int></code> to hold a list of chunks and the amount of player deaths that occurred on them (which we'll call haunting level). This list will be updated ingame as players die or use beds, and each chunk's haunting level will fetched from custom data if the chunk ever had such value. When the game saves, we iterate through our <code>Dictionary<IServerChunk, int></code> and store the haunting level for each chunk as persistent custom data!
+
+==Preparation== <!--T:9-->
+
+<!--T:10-->
+Let's start by creating a new .cs file for this mod, and adding our imports and the <code>VintageStory.ServerMods</code> namespace to wrap our class in. Additionally, we'll declare the class <code>ChunkDataStorage</code> that will inherit from <code>ModSystem</code> which is the base class for mod systems. You can read more about this [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.ModSystem.html here].
+</translate>
+
+<syntaxhighlight lang='c#'>
+using System.Collections.Generic;
+using Vintagestory.GameContent;
+using Vintagestory.API.Common;
+using Vintagestory.API.Server;
+using Vintagestory.API.Util;
+
+namespace Vintagestory.ServerMods
+{
+    internal class ChunkDataStorage : ModSystem
+    {
+        private ICoreServerAPI serverApi;
+        private Dictionary<IServerChunk, int> hauntedChunks;
+
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            serverApi = api;
+
+            api.Event.SaveGameLoaded += OnSaveGameLoading;
+            api.Event.GameWorldSave += OnSaveGameSaving;
+
+            api.Event.PlayerDeath += OnPlayerDeath;
+            api.Event.DidUseBlock += OnUseBlock;
+        }
+    }
+}
+</syntaxhighlight>
+
+In this class, we declare the field <code>serverApi</code> for the server api, and <code>hauntedChunks</code> which will be a list of hunated chunks and their haunting level. We also create an override for the <code>StartServerSide</code> method, which is a member of <code>ModSystem</code> and is called for all mods on the Server side by the game.
+
+The Core Server API contains an additional API for <code>Event</code> registration; this object contains a list of server sided events that we can attach our delegates to, which will be invoked every time the event fires. We do this by assigning a delegate to an exposed event with the <code>+=</code> operator. In our case, we register to four seperate events, each with their own delegates that we'll define later. The purpose of each is as follows:
+
+* <code>api.Event.SaveGameLoaded += OnSaveGameLoading;</code> We create a blank, new instance of a <code>hauntedChunks</code> when the game loads.
+* <code>api.Event.GameWorldSave += OnSaveGameSaving;</code> We'll store each chunk's haunting level as custom chunk data.
+* <code>api.Event.PlayerDeath += OnPlayerDeath;</code> When a player dies, we want to increase haunting level on the chunk they died in by 1.
+* <code>api.Event.DidUseBlock += OnUseBlock;</code> We check if the player used a bed, if so we try damaging them according to how haunted the chunk is.
+
+Let us now define these event delegates!
+
+===Load and Save delegates===
+
+Let's begin by defining the delegates that fire when the game loads and when the game saves:
+
+<syntaxhighlight lang='c#'>
+        private void OnSaveGameLoading()
+        {
+            hauntedChunks = new Dictionary<IServerChunk, int>();
+        }
+
+        private void OnSaveGameSaving()
+        {
+            foreach (KeyValuePair<IServerChunk, int> chunk in hauntedChunks)
+            {
+                if(chunk.Value == 0) continue;
+                chunk.Key.SetServerModdata("haunting", SerializerUtil.Serialize(chunk.Value));
+            }
+        }
+</syntaxhighlight>
+
+With <code>OnSaveGameLoading</code> we simply create a new instance of a <code>Dictionary</code> in which we hold all the haunted chunks as <code>IServerChunk</code> for the key, and the chunk's haunting level as <code>int</code> for the value.
+
+<code>OnSaveGameSaving</code> has the purpose of going through every chunk we've collected from the last time the server launched, storing the haunting level as <code>byte[]</code>. We do this with a <code>foreach</code> loop that iterates through all the entries of <code>hauntedChunks</code> and sets custom data for each entry's chunk according to its haunting level. The <code>SetServerModdata</code> method's first argument is an arbitrary <code>string</code> key, which we choose to name "haunting"; the second argument passed is an array of <code>byte</code>, which we get by using the <code>Serialize</code> method of the <code>SerializerUtil</code> class. This simply turns data (in our case an <code>int</code>) into a <code>byte[]</code>.
+
+Let's now define the other two delegates!
+
+===Player death and block use delegates===
+
+<syntaxhighlight lang='c#'>
+        private void OnPlayerDeath(IServerPlayer byPlayer, DamageSource damageSource)
+        {
+            IServerChunk chunk = serverApi.WorldManager.GetChunk(byPlayer.Entity.ServerPos.AsBlockPos);
+
+            if (!hauntedChunks.ContainsKey(chunk))
+            {
+                AddChunkToDictionary(chunk);
+            }
+
+            hauntedChunks[chunk]++;
+        }
+</syntaxhighlight>
+
+The <code>OnPlayerDeath</code> delegate that we used to listen for player death events, will first retrieve the chunk the player died on, by calling the <code>GetChunk</code> method of the server's <code>WorldManager</code>, an object that is used for a myriad of game world functionality such as accessors for Blocks, Chunks and more. For more information, check out the documentation [http://apidocs.vintagestory.at/api/Vintagestory.API.Server.IWorldManagerAPI.html here]. Once we have the chunk's instance as <code>IServerChunk</code>, we check to see if we're not already holding this chunk in memory by seeing if <code>hauntedChunks</code> contains it. If it doesn't we'll add it with a method we'll call <code>AddChunkToDictionary</code>, and this method should look like this:
+
+<syntaxhighlight lang='c#'>
+        private void (IServerChunk chunk)
+        {
+            byte[] data = chunk.GetServerModdata("haunting");
+            int haunting = data == null ? 0 : SerializerUtil.Deserialize<int>(data);
+
+            hauntedChunks.Add(chunk, haunting);
+        }
+</syntaxhighlight>
+
+Here we simply call <code>GetServerModdata</code>, which returns the data stored in the exposing chunk in the form of a <code>byte[]</code>, or null if nothing is stored under the given <code>string</code> identifier. In our case we pass it "haunting" which is what we chose to save our haunting level under. We then declare a new <code>int</code> called haunting, and use a ternary operator to assign 0 if data is null and if not we use the <code>Deserialize<T></code> method to convert data into type <code>T</code> (in our case, an integer).
+
+'''Hint''': Holding custom data as <code>byte[]</code> means we don't know know the type that is stored. This warrants extra attention when using it, and we should make sure we're always storing and retrieving the same type under for a given key.
+
+Now let's handle our final delegate.
+
+<syntaxhighlight lang='c#'>
+        private void OnUseBlock(IServerPlayer byPlayer, BlockSelection blockSel)
+        {
+            if (serverApi.World.BlockAccessor.GetBlock(blockSel.Position).GetType() != typeof(BlockBed))
+            {
+                return;
+            }
+
+            IServerChunk chunk = serverApi.WorldManager.GetChunk(blockSel.Position);
+
+            if (!hauntedChunks.ContainsKey(chunk))
+            {
+                AddChunkToDictionary(chunk);
+            }
+
+            int haunting = hauntedChunks[chunk];
+            if (haunting > 0)
+            {
+                byPlayer.Entity.ReceiveDamage(new DamageSource()
+                {
+                    Source = EnumDamageSource.Void,
+                    Type = EnumDamageType.BluntAttack
+                }, haunting);
+            }
+        }
+</syntaxhighlight>
+
+We begin by checking whether or not the block used is of type <code>BlockBed</code>, which is a block class defined in the game's Survival mod that corresponds to all beds in the base game. We find the block the player is using by using the <code>GetBlock</code> method of the World's <code>BlockAccessor</code> object which holds a lot of ingame block functionality, such as getting, removing and replacing blocks. Check out the [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.IBlockAccessor.html documentation] for more info. If the block being used by the player is not a bed, there's no need to go further so we return.
+
+'''Hint''': Note that the <code>BlockAccessor</code> is part of the <code>World</code> object, which is not to be confused with the aforementioned <code>WorldManager</code> object. The main difference being that WorldManager is only Server sided, while <code>World</code> is on both Client and Server side, and contains functionality to access more general aspects of the game world and has a broader scope.
+
+We then get the chunk, the same way we got it previously by exposing <code>GetChunk</code>, but this time we pass it the position of the bed block. We then check if the <code>hauntedChunks</code> list contains the chunk, if not we add it with <code>AddChunkToDictionary</code>.
+
+Finally, we check if the chunk's haunting level is above 0, and if so we damage the player by using the <code>ReceiveDamage</code> method of the player's <code>Entity</code>. This method takes two arguments. The first one is the <code>DamageSource</code> which we pass in as newly created instance. The <code>Source</code> and <code>Type</code> fields we populate determine how the player's entity will handle this damage. For instance, damage of type <code>Heal</code> will increase the entity's health points! The second argument passed is the amount of damage we want the entity to receive, in our case this number will be the haunting level of this chunk, aka the amount of player deaths that happened on the chunk.
+
+The mod is now complete!
+
+==Conclusion==
+
+If you followed the steps correctly, you should have the following code:
+
+<syntaxhighlight lang='c#'>
+using System.Collections.Generic;
+using Vintagestory.GameContent;
+using Vintagestory.API.Common;
+using Vintagestory.API.Server;
+using Vintagestory.API.Util;
+
+namespace Vintagestory.ServerMods
+{
+    internal class ChunkDataStorage : ModSystem
+    {
+        private ICoreServerAPI serverApi;
+        private Dictionary<IServerChunk, int> hauntedChunks;
+
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            serverApi = api;
+
+            api.Event.SaveGameLoaded += OnSaveGameLoading;
+            api.Event.GameWorldSave += OnSaveGameSaving;
+
+            api.Event.PlayerDeath += OnPlayerDeath;
+            api.Event.DidUseBlock += OnUseBlock;
+        }
+
+        private void OnSaveGameLoading()
+        {
+            hauntedChunks = new Dictionary<IServerChunk, int>();
+        }
+
+        private void OnSaveGameSaving()
+        {
+            foreach (KeyValuePair<IServerChunk, int> chunk in hauntedChunks)
+            {
+                if(chunk.Value == 0) continue;
+                chunk.Key.SetServerModdata("haunting", SerializerUtil.Serialize(chunk.Value));
+            }
+        }
+
+        private void OnPlayerDeath(IServerPlayer byPlayer, DamageSource damageSource)
+        {
+            IServerChunk chunk = serverApi.WorldManager.GetChunk(byPlayer.Entity.ServerPos.AsBlockPos);
+
+            if (!hauntedChunks.ContainsKey(chunk))
+            {
+                AddChunkToDictionary(chunk);
+            }
+
+            hauntedChunks[chunk]++;
+        }
+
+        private void OnUseBlock(IServerPlayer byPlayer, BlockSelection blockSel)
+        {
+            if (serverApi.World.BlockAccessor.GetBlock(blockSel.Position).GetType() != typeof(BlockBed))
+            {
+                return;
+            }
+
+            IServerChunk chunk = serverApi.WorldManager.GetChunk(blockSel.Position);
+
+            if (!hauntedChunks.ContainsKey(chunk))
+            {
+                AddChunkToDictionary(chunk);
+            }
+
+            int haunting = hauntedChunks[chunk];
+            if (haunting > 0)
+            {
+                byPlayer.Entity.ReceiveDamage(new DamageSource()
+                {
+                    Source = EnumDamageSource.Void,
+                    Type = EnumDamageType.BluntAttack
+                }, haunting);
+            }
+        }
+
+        private void AddChunkToDictionary(IServerChunk chunk)
+        {
+            byte[] data = chunk.GetServerModdata("haunting");
+            int haunting = data == null ? 0 : SerializerUtil.Deserialize<int>(data);
+
+            hauntedChunks.Add(chunk, haunting);
+        }
+    }
+}
+</syntaxhighlight>
+
+== Testing == 
+
+Let's run the mod now! Once you're ingame, enter the command /kill. From now on, you will receive 1 damage every time you sleep in the chunk you died in.
+
+== Distribution ==
+
+To distribute this mod, you may run the following command in the modtools cli <code>pack <your mod id></code>, then copy the .zip file into your VintageStory mods folder.
+
+Here are the official versions:
+* for VS v1.12.14: [https://wiki.vintagestory.at/index.php?title=File:HauntedChunks_vs1.12.14_v1.0.0.zip HauntedChunks_vs1.12.14_v1.0.0.zip]
+
+{{Navbox/modding|Vintage Story}}

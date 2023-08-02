@@ -1,0 +1,225 @@
+<languages />
+<translate>
+<!--T:1-->
+__FORCETOC__
+{{GameVersion|1.15}}
+
+= Introduction = <!--T:2-->
+Block Behaviors are useful when you want different blocks to act in the same way, as you can attach one or more block behaviors to an arbitrary number of blocks.
+You may want to have a look at the existing [[Block Json Properties#p_behaviors|block behaviors]] before implementing your own.
+
+<!--T:3-->
+In this tutorial we'll create a new Behavior that we can attach to blocks to make them movable by right clicking them.
+
+== Setting up == <!--T:4-->
+
+<!--T:5-->
+A [[Setting up your Development Environment|development workspace]] is required. Additionally you will need the assets (blocktype, texture and lang file). You can either create your one owns or use those pre-made ones: [https://wiki.vintagestory.at/images/2/2f/Moving_-_No_CS_File.zip Moving - No CS File.zip]
+
+== Creating the behavior == <!--T:6-->
+
+<!--T:7-->
+So first of all we need to create the behavior itself, which is a class extending BlockBehavior
+<syntaxhighlight lang="csharp">
+class Moving : BlockBehavior
+{
+    public Moving(Block block) : base(block)
+    {
+        
+    } 
+}
+</syntaxhighlight>
+
+<!--T:8-->
+This class provides several methods we can override. When you use Visual Studio you can find a full list of a methods by hovering with the mouse of "BlockBehavior" and pressing "F12".
+
+<!--T:9-->
+----
+
+<!--T:10-->
+The method <code>bool OnPlayerInteract(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ref EnumHandling handling)</code> looks to be ideal for our purpose.
+
+<!--T:11-->
+What should it do?
+
+<!--T:12-->
+# Calculate the new position of the block depending on the face the player is looking at
+# Check if the block can be placed at this position
+# Remove the original block
+# Place the new block using the previously calculated position
+
+<!--T:13-->
+<syntaxhighlight lang="c#">
+    public override bool OnPlayerInteract(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ref EnumHandling handling)
+    {
+        // Find the target position
+        BlockPos pos = blockSel.Position.AddCopy(blockSel.Face.GetOpposite());
+
+        <!--T:14-->
+// Can we place the block there?
+        if (world.BlockAccessor.GetBlock(pos).IsReplacableBy(block))
+        {
+            // Remove the block at the current position and place it at the target position
+            world.BlockAccessor.SetBlock(0, blockSel.Position);
+            world.BlockAccessor.SetBlock(block.BlockId, pos);
+        }
+
+        <!--T:15-->
+// Notify the game engine other block behaviors that we handled the players interaction with the block.
+        // If we would not set the handling field the player would still be able to place blocks if he has them in hands.
+        handling = EnumHandling.PreventDefault;
+        return true;
+    }
+</syntaxhighlight>
+
+== Register == <!--T:16-->
+
+<!--T:17-->
+In order the register the BlockBehavior we need to create a mod class, override <code>Start(ICoreAPI)</code> and register it with the given name:
+
+<!--T:18-->
+<syntaxhighlight lang="c#">
+    public class MovingBlocks : ModSystem
+    {
+
+        <!--T:19-->
+public override void Start(ICoreAPI api)
+        {
+            base.Start(api);
+            api.RegisterBlockBehaviorClass("Moving", typeof(Moving));
+        }
+
+    <!--T:20-->
+}
+</syntaxhighlight>
+
+== Distribution == <!--T:21-->
+
+<!--T:22-->
+In order to finish everything, open the modtools and type in <code>pack <your mod id></code>. Now you can take the zip file and share it with other people.
+* for VS 1.9: [https://wiki.vintagestory.at/images/2/2a/Moving_v1.0.0.zip Moving_v1.0.0.zip]
+* for VS 1.6: [https://wiki.vintagestory.at/images/c/cb/Moving.zip Moving.zip]
+
+== Testing == <!--T:23-->
+
+<!--T:24-->
+<youtube>8eVG0uQF2xs</youtube>
+
+= Advanced Behavior = <!--T:25-->
+
+<!--T:26-->
+Our behavior is still rather simple, but there are a lot more possibilities. A behavior can have special properties, which can be defined by the blocktype itself.
+
+== Example == <!--T:27-->
+
+<!--T:28-->
+The behavior liquid supports some special properties as shown in this example of the water blocktype:
+
+<!--T:29-->
+<syntaxhighlight lang="json">
+	behaviors: [
+		{
+			name: "FiniteSpreadingLiquid", 
+			properties:
+			{
+				spreadDelay: 150, 
+				liquidCollisionSound: "hotmetal", 
+				sourceReplacementCode: "obsidian", 
+				flowingReplacementCode: "basalt"
+			}
+		}
+	],
+</syntaxhighlight>
+
+== Parsing properties == <!--T:30-->
+
+<!--T:31-->
+In order to take care of special properties there is a method called <code>Initialize(JsonObject)</code>. Each blocktype creates a new instance of the behavior, so the method can be used to parse the properties.
+
+<!--T:32-->
+So what kind of properties could we add?
+* push distance
+* pull block if player is sneaking
+
+<!--T:33-->
+First of all, we need to override the method in our block behavior class ...
+
+<!--T:34-->
+<syntaxhighlight lang="c#">
+        public override void Initialize(JsonObject properties)
+        {
+            base.Initialize(properties);
+        }
+</syntaxhighlight>
+
+<!--T:35-->
+Additionally we need to add two fields, one for the distance and another one if the player should pull the block while sneaking ...
+
+<!--T:36-->
+<syntaxhighlight lang="c#">
+        public int distance = 1;
+        public bool pull = false;
+</syntaxhighlight>
+
+<!--T:37-->
+Now we can parse the two properties like so:
+
+<!--T:38-->
+<syntaxhighlight lang="c#">
+        distance = properties["distance"].AsInt(1);
+        pull = properties["pull"].AsBool(false);
+</syntaxhighlight>
+
+<!--T:39-->
+----
+
+<!--T:40-->
+The next thing we need to change is the interact method itself, so that it takes care of the distance and the pull properties ...
+<syntaxhighlight lang="c#">
+        public override bool OnPlayerInteract(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ref EnumHandling handling)
+        {
+            BlockPos pos = blockSel.Position.AddCopy(pull && byPlayer.WorldData.EntityControls.Sneak ? blockSel.Face : blockSel.Face.GetOpposite(), distance);
+            if (world.BlockAccessor.GetBlock(pos).IsReplacableBy(block))
+            {
+                world.BlockAccessor.SetBlock(0, blockSel.Position);
+                world.BlockAccessor.SetBlock(block.BlockId, pos);
+            }
+            handling = EnumHandling.PreventDefault;
+            return true;
+        }
+</syntaxhighlight>
+
+== Adding another block == <!--T:41-->
+
+<!--T:42-->
+Let's create another block using this behavior, but this time we will configure some additional properties ...
+
+<!--T:43-->
+<syntaxhighlight lang="json">
+	behaviors: [
+		{
+			name: "Moving",
+			properties: {
+				"distance": 2,
+				"pull": true
+			}
+		}
+	],	
+</syntaxhighlight>
+
+<!--T:44-->
+The block will be pushed two blocks instead of one and the player can pull it by sneaking while right clicking.
+
+= Mod Download = <!--T:45-->
+
+<!--T:46-->
+* for VS 1.9: [https://wiki.vintagestory.at/images/7/7b/Advancedmoving_v1.0.0.zip AdvancedMoving_v1.0.0.zip]
+* for VS 1.6: [https://wiki.vintagestory.at/images/7/72/AdvancedMoving.zip AdvancedMoving.zip]
+
+
+
+<!--T:47-->
+{{Navbox/modding|Vintage Story}}
+
+
+</translate>

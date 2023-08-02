@@ -1,0 +1,439 @@
+<languages/><translate>
+<!--T:1-->
+{{GameVersion|1.15}}
+__FORCETOC__
+This article requires a setup development environment. If you don't have one, read the tutorial
+on [https://wiki.vintagestory.at/index.php?title=Modding:Setting_up_your_Development_Environment setting up your development environment.] For brevity, this article presupposes some familiarity with
+VintageStory code modding, primarily [https://wiki.vintagestory.at/index.php?title=Modding:Mod_Packaging how mods are packaged] and [https://wiki.vintagestory.at/index.php?title=Modding:Setting_up_your_Development_Environment#Project_Setup_.28Compiled_Zip.29 how to setup a compiled mod project.]
+If you are looking to create your first code mod, we recommend starting [https://wiki.vintagestory.at/index.php?title=Modding:Advanced_Blocks here] instead.
+
+== Introduction == <!--T:2-->
+
+<!--T:3-->
+VintageStory makes all loaded mods available through it's expansive API, which you can explore in [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.ICoreAPI.html the API docs.]
+This makes it possible for code mods to interact with each other and access each other's public properties. It does, however, make whatever mod is including another mod dependent on that mod. If the mod being included is not present or disabled, the including mod will not work.  
+
+<!--T:4-->
+The loading and retrieving of mods is done through the [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.IModLoader.html <code>IModLoader</code>], which we retrieve from [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.ICoreAPI.html <code>ICoreAPI</code>]. We can retrieve both the full [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.Mod.html <code>Mod</code>], with all it's useful data, as well as it's contained [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.ModSystem.html <code>ModSystems</code>].
+
+<!--T:5-->
+This is superbly useful in multiple scenarios, for example -
+* Splitting up a large mod into smaller logical parts that communicate - a modpack.
+* Extendable mods, for example - the creative GUI tool for growing trees, which lets you register new tree types and easily test them.
+
+<!--T:6-->
+In this article, we will be creating two mods. Our first mod will provide a method for our second mod to interact with.
+We will demonstrate the use of the <code>ModLoader</code> and also explain how to reference an external mod and have that reference
+resolve at game runtime. 
+
+<!--T:7-->
+<small>Note that, excluding the use of reflection or the use of an intermediary library, which is outside the scope of this article,
+<b>only compiled mods can interact with eachother</b>.</small>
+
+== TipMod & SpawnMod == <!--T:8-->
+
+<!--T:9-->
+The two mods we will be creating are named "TipMod" and "SpawnMod".
+* "TipMod" will store useful gameplay tips and periodically print them in chat. It will also provide a method which other mods can use to add their own tips.
+* "SpawnMod" will register a command which teleports the player to his set or default spawnpoint. It will also access "TipMod" and add it's own tips about the command.
+
+== Preparation == <!--T:10-->
+We start by setting up two empty mods, "TipMod" and "SpawnMod".
+In each mod, we add a new *.cs source file - we will be naming these files <code>TipMod.cs</code> and <code>SpawnMod.cs</code> respectively.
+In our .cs files, we do the following:
+* Add the necessary <code>using</code> directives.
+* Create a class named after the mod it's contained in - <code>TipMod</code> and <code>SpawnMod</code>.
+* Have our classes inherit <code>ModSystem</code> - the base for any VintageStory code mod.
+* Override the <code>StartServerSide</code> method to access [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.ICoreServerAPI.html <code>ICoreServerAPI</code>].
+* Make the <code>TipMod</code> class <code>public</code> so that it's accessible by other mods.
+
+<!--T:11-->
+<syntaxhighlight lang="c#">
+// In TipMod.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Vintagestory.API.Common;
+using Vintagestory.API.Server;
+
+<!--T:12-->
+namespace tipmod.src
+{
+    public class TipMod : ModSystem
+    {
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            base.StartServerSide(api);
+        }
+    }
+}
+</syntaxhighlight>
+
+<!--T:13-->
+<syntaxhighlight lang="c#">
+// In SpawnMod.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Vintagestory.API.Common;
+using Vintagestory.API.Server;
+
+<!--T:14-->
+namespace spawnmod.src
+{
+    class SpawnMod : ModSystem
+    {
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            base.StartServerSide(api);
+        }
+    }
+}
+</syntaxhighlight>
+This concludes setting up the basis of our mods. Lastly, in "TipMod", we create an additional file called <code>Tip.cs</code>, 
+where we will define the data structure for tips, called <code>Tip</code>.
+
+<!--T:15-->
+<syntaxhighlight lang="c#">
+// In Tip.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+
+<!--T:16-->
+namespace tipmod.src
+{
+    public class Tip
+    {
+        string author;
+        string tip;
+
+        <!--T:17-->
+public Tip(string author, string tip)
+        {
+            this.author = author;
+            this.tip = tip;
+        }
+
+        <!--T:18-->
+public override string ToString() {
+            return "Tip by \"" + author + "\": " + tip; 
+        }
+    }
+}
+</syntaxhighlight>
+Our resulting folder structure looks like this.
+[[File:ModdableModFolderStructure.png|none]]
+We are now ready to extend our mods, starting with "TipMod" - our moddable mod.
+
+== Setting up TipMod == <!--T:19-->
+For "TipMod", we do the following:
+* Store the <code>ICoreServerAPI</code> object as a field so that we can access it throughout our class.
+* Define a <code>List</code> that stores <code>Tip</code> objects.
+* Define a method that selects a random <code>Tip</code> from the <code>List</code> and prints it in chat for all players, printing a default message if the <code>List</code> is empty.
+* Register that method to be called at set intervals by the [http://apidocs.vintagestory.at/api/Vintagestory.API.Server.IServerEventAPI.html#Vintagestory_API_Server_IServerEventAPI_Timer_Vintagestory_API_Common_Action_System_Double_ <code>Timer</code>], which is available in the [http://apidocs.vintagestory.at/api/Vintagestory.API.Server.IServerEventAPI.html <code>IServerEventAPI</code>].
+* Define a <code>public</code> method for adding new <code>Tip</code> objects.
+
+<!--T:20-->
+<syntaxhighlight lang="c#">
+    // In TipMod.cs
+    public class TipMod : ModSystem
+    {
+        ICoreServerAPI api;
+
+        <!--T:21-->
+List<Tip> tips = new List<Tip>();
+        double tipInterval = 10;
+
+        <!--T:22-->
+public override void StartServerSide(ICoreServerAPI api)
+        {
+            base.StartServerSide(api);
+            this.api = api;
+
+            <!--T:23-->
+api.Event.Timer(OnInterval, tipInterval);
+        }
+
+        <!--T:24-->
+private void OnInterval()
+        {
+            int tipCount = tips.Count();
+            string message = "There aren't any listed tips";
+
+            <!--T:25-->
+if (tipCount > 0)
+            {
+                // Select a random number in the range of [0-1]
+                double random = api.World.Rand.NextDouble();
+                // Make the number relative to the size of our tips list
+                int randomTip = (int)Math.Floor(random * tipCount);
+
+                <!--T:26-->
+Tip tip = tips[randomTip];
+
+                <!--T:27-->
+message = tip.ToString();
+            } 
+
+
+            <!--T:28-->
+api.SendMessageToGroup(GlobalConstants.GeneralChatGroup, message, EnumChatType.AllGroups);
+        }
+
+        <!--T:29-->
+public void AddTip(Tip tip)
+        {
+            tips.Add(tip);
+        }
+    }
+</syntaxhighlight>
+For testing purposes, we set the interval to be very short (10 seconds). Feel free to change this accordingly.
+
+<!--T:30-->
+Remember, both <b>classes and methods which other mods will interact with have to be declared <code>public</code>.</b>
+In C#, classes and methods are not public by default. You can [https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/access-modifiers read more about this here.]
+
+We can now compile our mod, add it to our VintageStory mod folder and test it ingame. If the there are occasional chat messages saying "There aren't any listed tips", our mod is working. We are ready to move on to the next step - setting up "SpawnMod" and then having it interact with "TipMod".
+== Setting up SpawnMod == <!--T:31-->
+Let's first setup our mods functionality. We register a command which teleports the player to spawn. Conveniently, the [http://apidocs.vintagestory.at/api/Vintagestory.API.Server.IServerPlayer.html <code>IServerPlayer</code>] object stores it's spawn position, as well as the [http://apidocs.vintagestory.at/api/Vintagestory.API.Common.IPlayer.html#Vintagestory_API_Common_IPlayer_Entity <code>IPlayerEntity</code>], which defines a method for teleporting itself to a location. 
+<syntaxhighlight lang="c#">
+    // In SpawnMod.cs
+    class SpawnMod : ModSystem
+    {
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            base.StartServerSide(api);
+
+            <!--T:32-->
+api.RegisterCommand("spawn", "Teleport to spawn", "", OnCmdSpawn);
+        }
+
+        <!--T:33-->
+private void OnCmdSpawn(IServerPlayer player, int groupId, CmdArgs args)
+        {
+            player.Entity.TeleportTo(player.SpawnPosition);
+        }
+    }
+</syntaxhighlight>
+"SpawnMod" is ready. Let's test it. The command <code>/spawn</code> should now teleport us to spawn.
+If our mods are working, we're ready to make "SpawnMod" interact with "TipMod".
+
+== Mods interacting == <!--T:34-->
+Before we get started, we have to add a reference in "SpawnMod" to "TipMod". 
+=== Adding a reference to an external mod ===
+If you are using Visual Studio, in your Solution Explorer, directly under your project, right-click "References" and select "Add Reference".
+[[File:ADDINGAREFERENCERIGHTCLICK.png|none]]
+
+<!--T:35-->
+Here we locate either the "TipMod" project or the compiled .dll file, and add it.
+[[File:FindingReference.png|none]]
+
+<!--T:36-->
+After adding the reference, make sure it is not copying the file to the output folder when compiling -
+having multiple .dll files with <code>ModSystems</code> in them will break your mod.
+[[File:SettingCopyLocalToFalse.png|none]]
+
+=== Accessing the ModLoader === <!--T:37-->
+Now we're ready to have "SpawnMod" add tips. Let's go ahead and do the following.
+* Add a <code>using</code> directive for the namespace <code>tipmod.src</code>.
+* Retrieve <code>TipMod</code> through the <code>ModLoader</code> by passing it's type.
+* Call the <code>AddTip</code> method provided by <code>TipMod</code> and add a variety of tips.
+
+<!--T:38-->
+<syntaxhighlight lang="c#">
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            base.StartServerSide(api);
+
+            <!--T:39-->
+api.RegisterCommand("spawn", "Teleport to spawn", "", OnCmdSpawn);
+
+            <!--T:40-->
+using tipmod.src;
+            TipMod tipMod = api.ModLoader.GetModSystem<TipMod>();
+            tipMod.AddTip(new Tip("codemeister32", "To quickly return to spawn, type /spawn"));
+            tipMod.AddTip(new Tip("codemeister32", "Can't find your way home? Type /spawn"));
+            tipMod.AddTip(new Tip("codemeister32", "Being chased by wolves? Quick, type /spawn"));
+        }
+</syntaxhighlight>
+
+== Conclusion == <!--T:41-->
+
+<!--T:42-->
+Following the steps in this article, this is what our resulting code looks like, spread across two mods.
+
+<!--T:43-->
+<syntaxhighlight lang="c#">
+// In TipMod.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Vintagestory.API.Common;
+using Vintagestory.API.Config;
+using Vintagestory.API.Server;
+
+<!--T:44-->
+namespace tipmod.src
+{
+    public class TipMod : ModSystem
+    {
+        ICoreServerAPI api;
+
+        <!--T:45-->
+List<Tip> tips = new List<Tip>();
+        double tipInterval = 10;
+
+        <!--T:46-->
+public override void StartServerSide(ICoreServerAPI api)
+        {
+            base.StartServerSide(api);
+            this.api = api;
+
+            <!--T:47-->
+api.Event.Timer(OnInterval, tipInterval);
+        }
+
+        <!--T:48-->
+private void OnInterval()
+        {
+            int tipCount = tips.Count();
+            string message = "There aren't any listed tips";
+
+            <!--T:49-->
+if (tipCount > 0)
+            {
+                // Select a random number in the range of [0-1]
+                double random = api.World.Rand.NextDouble();
+                // Make the number relative to the size of our tips list
+                int randomTip = (int)Math.Floor(random * tipCount);
+
+                <!--T:50-->
+Tip tip = tips[randomTip];
+
+                <!--T:51-->
+message = tip.ToString();
+            } 
+
+
+            <!--T:52-->
+api.SendMessageToGroup(GlobalConstants.GeneralChatGroup, message, EnumChatType.AllGroups);
+        }
+
+        <!--T:53-->
+public void AddTip(Tip tip)
+        {
+            tips.Add(tip);
+        }
+    }
+}
+</syntaxhighlight>
+<syntaxhighlight lang="c#">
+// In Tip.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+
+<!--T:54-->
+namespace tipmod.src
+{
+    public class Tip
+    {
+        string author;
+        string tip;
+
+        <!--T:55-->
+public Tip(string author, string tip)
+        {
+            this.author = author;
+            this.tip = tip;
+        }
+
+        <!--T:56-->
+public override string ToString() {
+            return "Tip by \"" + author + "\": " + tip; 
+        }
+    }
+}
+</syntaxhighlight>
+<syntaxhighlight lang="c#">
+// In SpawnMod.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Vintagestory.API.Common;
+using Vintagestory.API.Server;
+using tipmod.src;
+
+<!--T:57-->
+namespace spawnmod.src
+{
+    class SpawnMod : ModSystem
+    {
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            base.StartServerSide(api);
+
+            <!--T:58-->
+api.RegisterCommand("spawn", "Teleport to spawn", "", OnCmdSpawn);
+
+            <!--T:59-->
+TipMod tipMod = api.ModLoader.GetModSystem<TipMod>();
+
+            <!--T:60-->
+tipMod.AddTip(new Tip("codemeister32", "To quickly return to spawn, type /spawn"));
+            tipMod.AddTip(new Tip("codemeister32", "Can't find your way home? Type /spawn"));
+            tipMod.AddTip(new Tip("codemeister32", "Being chased by wolves? Quick, type /spawn"));
+        }
+
+        <!--T:61-->
+private void OnCmdSpawn(IServerPlayer player, int groupId, CmdArgs args)
+        {
+            player.Entity.TeleportTo(player.SpawnPosition);
+        }
+    }
+}
+</syntaxhighlight>
+
+<!--T:62-->
+We're now ready to test our mods to see if they're interacting successfully. After placing both our compiled mods in the mods folder and booting into a world, we should see a random tip pop up in the chat every 10 seconds.
+[[File:ModdableModSuccess.png|none]]
+If so, well done! You've successfully followed the article and have created a moddable mod.
+
+== Troubleshooting == <!--T:63-->
+
+<!--T:64-->
+If you've ran into problems setting up either mod, check the error logs located at <code>VintagestoryData/Logs</code> in <code>server-main.txt</code>.
+Possible causes for either mod not working:
+* It's a .cs (source) mod and not a .dll (compiled) mod. Refer here [https://wiki.vintagestory.at/index.php?title=Modding:Setting_up_your_Development_Environment#Set_Mod for how to set a compiled mod.] 
+* It's missing <code>modinfo.json</code>.
+* Your version of VintageStory is outdated.
+* You have multiple .dll files containing <code>ModSystems</code> in your mod folder.
+* The referenced mod, "TipMod", is not present in the mod folder.
+
+== Distribution == <!--T:65-->
+To distribute this mod, run the following command in the vsmodtools cli <code>pack <your mod id></code>, then copy the .zip file into your VintageStory mods folder.
+
+<!--T:66-->
+Here are the official versions:
+* for VS v1.13.2: [https://wiki.vintagestory.at/index.php?title=File:TipMod_vs1.13.2_v1.0.0.zip TipMod_vs1.13.2_v1.0.0.zip] and [https://wiki.vintagestory.at/index.php?title=File:SpawnMod_vs1.13.2_v1.0.0.zip SpawnMod_vs1.13.2_v1.0.0.zip].
+
+<!--T:67-->
+{{Navbox/modding|Vintage Story}}
+</translate>

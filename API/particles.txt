@@ -1,0 +1,299 @@
+{{GameVersion|1.15}}
+<languages/><translate>
+<!--T:1-->
+VintageStory offers a variety of different types of particles. This tutorial will explain you how to create simple particles and show you some of the possibilities. If you want to have an example of where to use them I either suggested you to the read about the [[Block Json Properties#p_particleproperties|block particles]] or about [[Collectible|collectibles]].
+
+== Spawn particles == <!--T:2-->
+
+<!--T:3-->
+So let's spawn some basic particles. I suggest to create a static field for your particle properties:
+
+<!--T:4-->
+<syntaxhighlight lang="c#">
+        public static SimpleParticleProperties myParticles = new SimpleParticleProperties(1, 1, ColorUtil.ColorFromArgb(50, 220, 220, 220), new Vec3d(), new Vec3d(), new Vec3f(), new Vec3f());
+</syntaxhighlight>
+
+<!--T:5-->
+Now we have the property, the only thing left to do is to set the position and spawn the particles into the world. I'm gonna use the <code>OnHeldInteractStart</code> and *Step method inside a custom made Item class (you can read more about this in the [[Collectible|Collectibles Tutorial]]):
+<syntaxhighlight lang="c#">
+        public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, ref EnumHandHandling handHandling)
+        {
+            handHandling = EnumHandHandling.Handled;
+        }
+
+        <!--T:6-->
+public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
+        {
+            myParticles.minPos = byEntity.Pos.XYZ.Add(0, byEntity.EyeHeight(), 0).Ahead(1f, byEntity.Pos.Pitch, byEntity.Pos.Yaw);
+            byEntity.World.SpawnParticles(myParticles);
+
+            <!--T:7-->
+return true;
+        }
+</syntaxhighlight>
+
+<!--T:8-->
+This will spawn some white cube particles right in front of the player, which simply fall to the ground.
+
+<!--T:9-->
+[[File:BasicParticles.png|300px]]
+
+== Properties Overview == <!--T:10-->
+
+<!--T:11-->
+There are several things you can configure. Here is an overview which covers all of the properties:
+
+=== Position === <!--T:12-->
+
+<!--T:13-->
+Basically there are two properties. One of them is the <code>minPos</code> property, which will determine the exact position where particles will spawn. <code>addPos</code> is relative to this position, once a particle will spawn it will be randomized and added to the particle's position. If <code>addPos</code> is not defined all particles will spawn at the exact some position.
+
+<!--T:14-->
+Same position:
+
+<!--T:15-->
+[[File:Particle (equal position).png|300px]]
+
+<!--T:16-->
+If we now set <code>addPos</code> ...
+
+<!--T:17-->
+<syntaxhighlight lang="c#">
+    myParticles.addPos = new Vec3d(0.5, 0.5, 0.5);
+</syntaxhighlight>
+
+<!--T:18-->
+... particles will spawn in an 0.5³ area:
+
+<!--T:19-->
+[[File:Particle (differnt position).png|300px]]
+
+=== Velocity === <!--T:20-->
+
+<!--T:21-->
+It follows the same way as position. You can configure a minimum velocity (<code>minPos</code>) and an additional velocity (<code>addPos</code>).
+
+<!--T:22-->
+<syntaxhighlight lang="c#">
+    myParticles.minVelocity = new Vec3f(0, 3, 0);
+</syntaxhighlight>
+
+<!--T:23-->
+In this case all particles have the same velocity (particles fly in the air but will eventually fall down again):
+
+<!--T:24-->
+[[File:Particles (equal velocity).gif|300px]]
+
+=== Life length === <!--T:25-->
+
+<!--T:26-->
+This property is pretty straight forward. A life length of one equals one second.
+
+<!--T:27-->
+Particles will exist for one 200 milliseconds ...
+
+<!--T:28-->
+<syntaxhighlight lang="c#">
+    myParticles.lifeLength = 0.2F;
+</syntaxhighlight>
+
+<!--T:29-->
+[[File:Particles (short life).gif|300px]]
+
+
+<!--T:30-->
+Particles will exist for one second ...
+
+<!--T:31-->
+<syntaxhighlight lang="c#">
+    myParticles.lifeLength = 1F;
+</syntaxhighlight>
+
+<!--T:32-->
+[[File:Particles (long life).gif|300px]]
+
+=== Quantity === <!--T:33-->
+
+<!--T:34-->
+Determines how many particles will spawn.
+
+<!--T:35-->
+<syntaxhighlight lang="c#">
+    myParticles.minQuantity = 3;
+</syntaxhighlight>
+
+<!--T:36-->
+This will spawn 3 particles each tick.
+
+<!--T:37-->
+[[File:Particles (many).gif|300px]]
+
+<!--T:38-->
+Furthermore you can specify an additional quantity chance ...
+
+<!--T:39-->
+<syntaxhighlight lang="c#">
+    myParticles.minQuantity = 0;
+    myParticles.addQuantity = 100;
+</syntaxhighlight>
+
+<!--T:40-->
+This will spawn 0 to 100 particles per tick.
+
+<!--T:41-->
+[[File:Particles (random many).png|300px]]
+
+=== Color === <!--T:42-->
+
+<!--T:43-->
+A color can be specified using ARGB (Alhpa, Red, Green, Blue). All values have a range of 0 to 255.
+
+<!--T:44-->
+<syntaxhighlight lang="c#">
+    myParticles.color = ColorUtil.ToRGBABytes(ColorUtil.ColorFromArgb(255, 255, 0, 0));
+</syntaxhighlight>
+
+<!--T:45-->
+This will spawn red particles ...
+
+<!--T:46-->
+[[File:Particles (red).gif|300px]]
+
+<!--T:47-->
+<syntaxhighlight lang="c#">
+    Random rand = new Random();
+    myParticles.color = ColorUtil.ToRGBABytes(ColorUtil.ColorFromArgb(255, rand.Next(0, 255), rand.Next(0, 255), rand.Next(0, 255)));
+</syntaxhighlight>
+
+<!--T:48-->
+This will spawn particles with a random color ...
+
+<!--T:49-->
+[[File:Particles (random colors).gif|300px]]
+
+=== Glow === <!--T:50-->
+
+<!--T:51-->
+This property allows you to define whether the particles will be visible in the dark or not ...
+
+<!--T:52-->
+<syntaxhighlight lang="c#">
+    myParticles.glowLevel = 20;
+</syntaxhighlight>
+
+<!--T:53-->
+[[File:Particles (glowing).gif|300px]]
+
+<!--T:54-->
+<syntaxhighlight lang="c#">
+    myParticles.glowLevel = 255;
+</syntaxhighlight>
+
+<!--T:55-->
+[[File:Particles (glowing brightest).gif|300px]]
+
+=== Gravity === <!--T:56-->
+
+<!--T:57-->
+Gravity effect can not only be increase or decreased, ...
+
+<!--T:58-->
+<syntaxhighlight lang="c#">
+    myParticles.gravityEffect = 0.1F;
+</syntaxhighlight>
+
+<!--T:59-->
+[[File:Particles (low gravity).gif|300px]]
+
+<!--T:60-->
+...  but you can also disable it completely (using zero gravity) or invert it (particles will fly up).
+
+=== Size === <!--T:61-->
+
+<!--T:62-->
+Again, you can specify a minimum size and an additional randomized size ...
+
+<!--T:63-->
+<syntaxhighlight lang="c#">
+    myParticles.minSize = 0.1F;
+    myParticles.maxSize = 1.0F;
+</syntaxhighlight>
+
+<!--T:64-->
+[[File:Particles (random size).gif|300px]]
+
+<!--T:65-->
+Furthermore you can specify a <code>SizeEvolve</code> like so ...
+
+<!--T:66-->
+<syntaxhighlight lang="c#">
+    myParticles.minSize = 0.1F;
+    myParticles.maxSize = 1.0F;
+    myParticles.SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 2);
+</syntaxhighlight>
+
+<!--T:67-->
+[[File:Particles (growing size).gif|300px]]
+
+<!--T:68-->
+There are many EnumTransformFunctions you can play around with. Linear is the most basic one.
+
+=== Model === <!--T:69-->
+
+<!--T:70-->
+There are two types of models. <code>Cube</code> (the one we used so far) and <code>Quads</code>:
+
+<!--T:71-->
+<syntaxhighlight lang="c#">
+    myParticles.model = EnumParticleModel.Quad;
+</syntaxhighlight>
+
+<!--T:72-->
+[[File:Particles (quads).gif|300px]]
+
+=== Opacity === <!--T:73-->
+
+<!--T:74-->
+Quads support custom opacity. This allows you to make them transparent ...
+
+<!--T:75-->
+<syntaxhighlight lang="c#">
+    myParticles.color = ColorUtil.ToRGBABytes(ColorUtil.ColorFromArgb(130, rand.Next(0, 255), rand.Next(0, 255), rand.Next(0, 255)));
+</syntaxhighlight>
+
+<!--T:76-->
+[[File:Particles (opacity).gif|300px]]
+
+<!--T:77-->
+Similar to <code>SizeEvolve</code> you can add an <code>OpacityEvolve</code> ...
+
+<!--T:78-->
+<syntaxhighlight lang="c#">
+    myParticles.OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, -255);
+</syntaxhighlight>
+
+<!--T:79-->
+[[File:Particles (decreasing opacity).gif|300px]]
+
+=== Self Propelled === <!--T:80-->
+
+<!--T:81-->
+This property will make particles don't lose their velocity, even if they would collide with something, as soon as there is enough space they will continue to fly in the direction (with the same speed) ...
+
+<!--T:82-->
+<syntaxhighlight lang="c#">
+    myParticles.minVelocity = new Vec3f((float) (rand.NextDouble() - 0.5), 1f, (float) (rand.NextDouble() - 0.5));
+    myParticles.SelfPropelled = true;
+</syntaxhighlight>
+
+<!--T:83-->
+[[File:Particles (selfpropelled).gif|300px]]
+
+=== Die In Air/ Liquid === <!--T:84-->
+
+<!--T:85-->
+This property is useful for particles in water, which should disappear once they reach the surface (die in liquid). Of course this can also be used the other way round (die in air).
+
+</translate>
+
+{{Navbox/modding|Vintage Story}}
